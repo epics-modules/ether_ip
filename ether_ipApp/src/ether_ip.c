@@ -540,14 +540,23 @@ static const char *service_name(CN_Services service)
 {
     switch (service)
     {
-    case S_Get_Attribute_All:       return "Get_Attribute_All";
-    case S_Get_Attribute_Single:    return "Get_Attribute_Single";
-    case S_CIP_MultiRequest:        return "S_CIP_MultiRequest";
-    case S_CIP_ReadData:            return "CIP_ReadData";
-    case S_CIP_WriteData:           return "CIP_WriteData";
-    case S_CM_Unconnected_Send:     return "CM_Unconnected_Send";
-    case S_CM_Forward_Open:         return "CM_Forward_Open";
-    default:                        return "<unknown>";
+    case S_Get_Attribute_All:         return "Get_Attribute_All";
+    case S_Get_Attribute_Single:      return "Get_Attribute_Single";
+    case S_CIP_MultiRequest:          return "S_CIP_MultiRequest";
+    case S_CIP_ReadData:              return "CIP_ReadData";
+    case S_CIP_WriteData:             return "CIP_WriteData";
+    case S_CM_Unconnected_Send:       return "CM_Unconnected_Send";
+    case S_CM_Forward_Open:           return "CM_Forward_Open";
+
+    case S_Get_Attribute_All|0x80:    return "Get_Attribute_All-Reply";
+    case S_Get_Attribute_Single|0x80: return "Get_Attribute_Single-Reply";
+    case S_CIP_MultiRequest|0x80:     return "S_CIP_MultiRequest-Reply";
+    case S_CIP_ReadData|0x80:         return "CIP_ReadData-Reply";
+    case S_CIP_WriteData|0x80:        return "CIP_WriteData-Reply";
+    case S_CM_Unconnected_Send|0x80:  return "CM_Unconnected_Send-Reply";
+    case S_CM_Forward_Open|0x80:      return "CM_Forward_Open-Reply";
+
+    default:                          return "<unknown>";
     }
 }
 
