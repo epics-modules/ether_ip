@@ -31,8 +31,8 @@
 #include<string.h>
 #include<stdio.h>
 
-#ifndef true
 typedef int bool;
+#ifndef true
 #define true 1
 #define false 0
 #endif

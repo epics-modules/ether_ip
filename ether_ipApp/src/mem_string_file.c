@@ -19,11 +19,29 @@
  * allowing to capture the problem.
  */
 
+#ifndef NO_EPICS
+#include"epicsVersion.h"
+#endif
 #include"mem_string_file.h"
+
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#include"epicsMutex.h"
+epicsMutexId msfLock = 0;
+#else
 
 #ifdef vxWorks
 #include<semLib.h>
 SEM_ID msfLock = 0;
+#define epicsMutexCreate()    semMCreate(SEM_Q_PRIORITY | SEM_DELETE_SAFE | SEM_INVERSION_SAFE)
+#define epicsMutexLock(A)     semTake(A,WAIT_FOREVER)
+#define epicsMutexUnlock(A)   semGive(A)
+#else
+int msfLock = 0;
+#define epicsMutexCreate()    0
+#define epicsMutexLock(A)     msfLock=1
+#define epicsMutexUnlock(A)   msfLock=0
+#endif
+
 #endif
 
 size_t msfInitialBufferSize = 2*1024*1024;
@@ -55,9 +73,7 @@ static bool msfInit()
     msfBufferSize = msfInitialBufferSize;
     msfBufferEnd = msfBuffer + msfBufferSize;
     msfHead = msfTail = msfBuffer;
-#ifdef vxWorks
-    msfLock = semMCreate(SEM_Q_PRIORITY | SEM_DELETE_SAFE |SEM_INVERSION_SAFE);
-#endif
+    msfLock = epicsMutexCreate();
     return true;
 }
 
@@ -67,9 +83,7 @@ void msfAdd(const char *text, size_t length)
     
     if (!msfInit())
         return;
-#ifdef vxWorks
-    semTake(msfLock, WAIT_FOREVER);
-#endif
+    epicsMutexLock(msfLock);
     if (msfTail + length < msfBufferEnd)
     {   /* Full string fits onto tail */
         memcpy(msfTail, text, length);
@@ -114,9 +128,7 @@ void msfAdd(const char *text, size_t length)
         }
     }
     *msfTail = '\0';
-#ifdef vxWorks
-    semGive(msfLock);
-#endif
+    epicsMutexUnlock(msfLock);
 }
 
 /* Print into MSF Buffer.
@@ -157,13 +169,9 @@ static void msfWrite(FILE *f, const char *text, size_t length)
 /* Set buffer to empty */
 void msfClear()
 {
-#ifdef vxWorks
-    semTake(msfLock, WAIT_FOREVER);
-#endif
+    epicsMutexLock(msfLock);
     msfHead = msfTail;
-#ifdef vxWorks
-    semGive(msfLock);
-#endif
+    epicsMutexUnlock(msfLock);
 }
 
 
@@ -174,9 +182,7 @@ void msfDump(FILE *f)
 {
     if (!f)
         f = stdout;
-#ifdef vxWorks
-    semTake(msfLock, WAIT_FOREVER);
-#endif
+    epicsMutexLock(msfLock);
     if (msfHead < msfTail)
     {
         msfWrite(f, msfHead, msfTail - msfHead);
@@ -189,8 +195,6 @@ void msfDump(FILE *f)
         msfWrite(f, "\n", 1);
     }
     msfHead = msfTail;
-#ifdef vxWorks
-    semGive(msfLock);
-#endif
+    epicsMutexUnlock(msfLock);
 }
 

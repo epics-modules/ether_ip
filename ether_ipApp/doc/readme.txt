@@ -61,7 +61,7 @@ in your application library.
 
 2) IP Setup
 Since the driver uses TCP/IP, the route to the PLC has to defined.
-Therefore you have to add something like this to your vxWorks startup file:
+Therefore you have to add something like this to your IOC startup file:
     # Define the DNS name for the PLC, so we can it instead of the
     # raw IP address
     hostAdd "snsplc1", "128.165.160.146"
@@ -75,7 +75,7 @@ Therefore you have to add something like this to your vxWorks startup file:
     ping "snsplc1", 5
 
 3) Driver Configuration
-Before calling iocInit in your vxWorks startup file, the driver has to
+Before calling iocInit in your IOC startup file, the driver has to
 be configured. After loading the driver object code either directly
 or as part of an ADE library, issue the following commands.
 Note that the IP address (128.165.160.146), the DNS name (snsplc1)
@@ -107,6 +107,10 @@ and the name that the driver uses (plc1) are all related but different!
     # EtherIP driver verbosity, 0=silent, up to 10:
     EIP_verbosity=4
 
+NOTE for EPICS R3.14 Soft-IOCs:
+Replace variable assignments like "EIP_verbosity=4"
+by function calls like "EIP_verbosity(4)".
+
 4) Tell EPICS Database about Driver/Device
 To inform EPICS of this new driver/device, a DBD file is used.
 ether_ip.dbd looks like this:
@@ -126,7 +130,7 @@ Usually, however, you would use something like the makeBaseApp.pl ADE,
 have this:
        include "base.dbd"
        include "ether_ip.dbd"
-in your application DBD file and then in the vxWorks startup script,
+in your application DBD file and then in the IOC startup script,
 "dbLoadDatabase" loads the single application DBD file which
 includes the EtherIP DBD file.
 
@@ -236,7 +240,7 @@ has to match
    field(OUT, "@<plc name> <tag> [flags]")
 
 *** <plc name>
-    This is the driver's name for the PLC, defined in the vxWorks
+    This is the driver's name for the PLC, defined in the IOC
     startup script via
        drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
     Example:
@@ -294,7 +298,7 @@ has to match
        Device support will use the default of 1 secs,
        please complete the record config
 
-    In the vxWorks startup file, you can set the double-typed variable
+    In the IOC startup file, you can set the double-typed variable
     "drvEtherIP_default_rate" to provide a default rate.
     If you do that, the warning will vanish.
     The recommended practice, however, is to provide a per-record
@@ -361,7 +365,8 @@ information. In other cases it's used to find the scanlist.
     - # times when scan task was slow [count]
 
     field(INP, "@$(PLC) $(TAG) LIST_TICKS")
-    - vx Ticktime when tag's list was checked.
+    field(INP, "@$(PLC) $(TAG) LIST_TIME")
+    - vx Ticktime (3.13) or secs since 1990 (3.14) when tag's list was checked.
       Useful to monitor that the driver is still running.
 
     field(INP, "@$(PLC) $(TAG) LIST_SCAN_TIME"),
@@ -375,11 +380,11 @@ information. In other cases it's used to find the scanlist.
 The PLC_TASK_SLOW flag is of less use than anticipated. It's
 incremented when the scan task is done processing the list and then
 notices that it's already time to process the list again. Since all
-delays are specified in vxWorks ticks, defaulting to 60 ticks per
-second, this scheduling is rather coarse. With all the other task
-scheduling going on and ethernet delays, PLC_TASK_SLOW will increment
-quite often without a noticeable impact on the data (no time-outs, no
-old data).
+delays are specified in vxWorks ticks (3.13) or seconds (3.14), defaulting 
+to 60 ticks per second (3.13) or 1 second (3.14), this scheduling is rather 
+coarse. With all the other task scheduling going on and ethernet delays, 
+PLC_TASK_SLOW will increment quite often without a noticeable impact on the 
+data (no time-outs, no old data).
 
 * ao, Analog Output Record
 Like analog input, tags of type REAL, INT, DINT, BOOL are supported as
@@ -684,7 +689,7 @@ but is not guaranteed to work.
 
 * Debugging
 The driver can display information via the usual EPICS dbior call
-on the IOC vxWorks console (or a telnet connection to the IOC):
+on the IOC console (or a telnet connection to the IOC):
     dbior "drvEtherIP", 10
 A direct call to
     drvEtherIP_report 10
@@ -727,7 +732,7 @@ record is processed. The EtherIP device support shows some additional
 info on how it interpreted the INP/OUT link. Use a display manager, a
 command line channel access tool or
     dbpf "record.TPRO", "1"
-in the vxWorks shell to set TPRO. Set TPRO to "0" to switch this off again.
+in the IOC shell to set TPRO. Set TPRO to "0" to switch this off again.
 
 Example output for a binary input that addresses "DINTs[40]":
 process:   snsioc4:biDINTs40
@@ -821,7 +826,7 @@ Copy the current buffer into file (& clear the buffer):
     fclose(f)      
 
 The size of the memory string file defaults to 2MB.
-It can be changed in the vxWorks startup file:
+It can be changed in the IOC startup file:
     msfInitialBufferSize=10*1024*1024
 
 * Driver Operation Details
@@ -901,7 +906,7 @@ bit number 5 in there returned.
 * Files
 ether_ip.[ch]    EtherNet/IP protocol
 dl_list*         Double-linked list, used by the following
-drvEtherIP*      vxWorks driver
+drvEtherIP*      IOC driver
 devEtherIP*      EPICS device support
 ether_ip_test.c  main for Unix/Win32
 

@@ -8,19 +8,19 @@
  * kasemir@lanl.gov
  */
 
-#include <vxWorks.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <limits.h>
 #include <string.h>
 #include <alarm.h>
 #include <cvtTable.h>
 #include <dbDefs.h>
 #include <dbAccess.h>
+#include <recGbl.h>
 #include <recSup.h>
 #include <devSup.h>
 #include <link.h>
-#include <devLib.h>
 #include <dbScan.h>
 #include <menuConvert.h>
 #include <aiRecord.h>
@@ -41,8 +41,6 @@
 #include"mem_string_file.h"
 #endif
 
-#define SEM_TIMEOUT sysClkRateGet()*2
-
 /* Flags that pick special values instead of the tag's "value" */
 typedef enum
 {
@@ -58,7 +56,8 @@ typedef enum
     SPCO_LIST_MIN_SCAN_TIME  = (1<<9),
     SPCO_LIST_MAX_SCAN_TIME  = (1<<10),
     SPCO_TAG_TRANSFER_TIME   = (1<<11),
-    SPCO_INVALID             = (1<<12)
+    SPCO_LIST_TIME           = (1<<12),
+    SPCO_INVALID             = (1<<13)
 } SpecialOptions;
 
 static struct
@@ -74,11 +73,13 @@ static struct
   { "PLC_ERRORS",         10 }, /* Connection error count for tag's PLC */
   { "PLC_TASK_SLOW",      13 }, /* How often scan task had no time to wait */
   { "LIST_ERRORS",        11 }, /* Error count for tag's list */
-  { "LIST_TICKS",         10 }, /* Ticktime when tag's list was checked */
+  { "LIST_TICKS",         10 }, /* 3.13-Ticktime when tag's list was checked */
   { "LIST_SCAN_TIME",     14 }, /* Time for handling scanlist */
   { "LIST_MIN_SCAN_TIME", 18 }, /* min. of '' */
   { "LIST_MAX_SCAN_TIME", 18 }, /* max. of '' */
   { "TAG_TRANSFER_TIME",  17 }, /* Time for last round-trip data request */
+  { "LIST_TIME",           9 }, /* 3.14-# of seconds since 0000 Jan 1, 1990 */
+                                /*      when tag's list was checked */
 };
 
 /* Device Private:
@@ -127,7 +128,7 @@ static void dump_DevicePrivate(const dbCommon *rec)
 
 /* Helper: check for valid DevicePrivate, lock data
  * and see if it's valid */
-static bool lock_data(const dbCommon *rec)
+static eip_bool lock_data(const dbCommon *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     if (!pvt ||
@@ -139,7 +140,8 @@ static bool lock_data(const dbCommon *rec)
             printf("devEtherIP lock_data (%s): no tag\n", rec->name);
         return false;
     }
-    if (semTake(pvt->tag->data_lock, SEM_TIMEOUT) != OK)
+    if (epicsEventWaitWithTimeout(pvt->tag->data_lock, EIP_MEDIUM_TIMEOUT) !=
+        epicsEventWaitOK)
     {
         if (rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
             printf("devEtherIP lock_data (%s): no lock\n", rec->name);
@@ -148,7 +150,7 @@ static bool lock_data(const dbCommon *rec)
     if (pvt->tag->valid_data_size <= 0  ||
         pvt->tag->elements <= pvt->element)
     {
-        semGive(pvt->tag->data_lock);
+        epicsEventSignal(pvt->tag->data_lock);
         if (rec->tpro &&
             rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
             printf("devEtherIP lock_data (%s): no data\n", rec->name);
@@ -160,7 +162,7 @@ static bool lock_data(const dbCommon *rec)
 /* Like lock_data, but w/o the lock because
  * data_lock is already taken in callbacks
  */
-static bool check_data(const dbCommon *rec)
+static eip_bool check_data(const dbCommon *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     return pvt && pvt->plc && pvt->tag && pvt->tag->scanlist &&
@@ -178,7 +180,7 @@ static bool check_data(const dbCommon *rec)
  * 1) NOBT might change but MASK is only set once
  * 2) MASK doesn't help when reading bits accross UDINT boundaries
  */
-static bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
+static eip_bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
@@ -216,7 +218,7 @@ static bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
 }
 
 /* Pendant to get_bits */
-static bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
+static eip_bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
@@ -312,7 +314,7 @@ static void check_ao_callback(void *arg)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     double        dbl;
     CN_DINT       dint;
-    bool          process = false;
+    eip_bool      process = false;
 
     /* We are about the check and even set val, & rval -> lock */
     dbScanLock((dbCommon *)rec);
@@ -422,7 +424,7 @@ static void check_bo_callback(void *arg)
     struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     unsigned long rval;
-    bool          process = false;
+    eip_bool      process = false;
 
     /* We are about the check and even set val, & rval -> lock */
     dbScanLock((dbCommon *)rec);
@@ -483,7 +485,7 @@ static void check_mbbo_callback(void *arg)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     unsigned long rval, *state_val;
     size_t        i;
-    bool          process = false;
+    eip_bool      process = false;
 
     /* We are about the check and even set val, & rval -> lock */
     dbScanLock((dbCommon *)rec);
@@ -552,7 +554,7 @@ static void check_mbbo_direct_callback(void *arg)
     struct rset      *rset= (struct rset *)(rec->rset);
     DevicePrivate    *pvt = (DevicePrivate *)rec->dpvt;
     unsigned long    rval;
-    bool             process = false;
+    eip_bool         process = false;
 
     /* We are about the check and even set val, & rval -> lock */
     dbScanLock((dbCommon *)rec);
@@ -687,14 +689,14 @@ static long analyze_link(dbCommon *rec,
     size_t         i, tag_len, last_element, bit=0;
     unsigned long  mask;
     double         period = 0.0;
-    bool           single_element = false;
+    eip_bool       single_element = false;
     SpecialOptions special = 0;
     
     if (! EIP_strdup(&pvt->link_text, link->value.instio.string,
                      strlen (link->value.instio.string)))
     {
         errlogPrintf("devEtherIP (%s): Cannot copy link\n", rec->name);
-        return S_dev_noMemory;
+        return S_db_noMemory;
     }
     /* Find PLC */
     p = find_token(pvt->link_text, &end);
@@ -707,7 +709,7 @@ static long analyze_link(dbCommon *rec,
     if (! EIP_strdup(&pvt->PLC_name, p, end-p))
     {
         errlogPrintf("devEtherIP (%s): Cannot copy PLC\n", rec->name);
-        return S_dev_noMemory;
+        return S_db_noMemory;
     }
 
     /* Find Tag */
@@ -722,7 +724,7 @@ static long analyze_link(dbCommon *rec,
     if (! EIP_strdup(&pvt->string_tag, p, tag_len))
     {
         errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
-        return S_dev_noMemory;
+        return S_db_noMemory;
     }
     
     /* Check for more flags */
@@ -818,7 +820,7 @@ static long analyze_link(dbCommon *rec,
             }
             /* read element number */
             pvt->element = strtol(p+1, &end, 0);
-            if (end==p+1 || pvt->element==LONG_MAX || pvt->element == LONG_MIN)
+            if (end==p+1 || pvt->element==LONG_MAX || pvt->element==LONG_MIN)
             {
                 errlogPrintf("devEtherIP (%s): malformed array tag in '%s'\n",
                              rec->name, pvt->link_text);
@@ -924,7 +926,7 @@ static long check_link(dbCommon *rec, EIPCallback cbtype,
 }
 
 /* device init: Start driver after all records registered  */
-static bool driver_started = false;
+static eip_bool driver_started = false;
 static long init(int run)
 {
     if (run==1 && driver_started==false)
@@ -944,7 +946,7 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
     if (! pvt)
     {
         errlogPrintf("devEtherIP (%s): cannot allocate DPVT\n", rec->name);
-        return S_dev_noMemory;
+        return S_db_noMemory;
     }
     if (link->type != INST_IO)
     {
@@ -1042,7 +1044,7 @@ static long ai_read(aiRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
-    bool ok;
+    eip_bool ok;
     CN_DINT rval;
 
     if (rec->tpro)
@@ -1095,39 +1097,40 @@ static long ai_read(aiRecord *rec)
         {
             rec->val = (double) pvt->tag->scanlist->list_errors;
             status = 2;
-        }
-        else if (pvt->special & SPCO_LIST_TICKS)
+        }   
+        else if ((pvt->special & SPCO_LIST_TICKS) ||
+                 (pvt->special & SPCO_LIST_TIME))
         {
-            rec->val = (double) pvt->tag->scanlist->scan_ticktime;
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+            rec->val = (double) pvt->tag->scanlist->scan_time.secPastEpoch;
+#else
+            rec->val = (double) pvt->tag->scanlist->scan_time;
+#endif
             status = 2;
         }
         else if (pvt->special & SPCO_LIST_SCAN_TIME)
         {
-            rec->val = (double) pvt->tag->scanlist->last_scan_ticks
-                / sysClkRateGet();
+            rec->val = pvt->tag->scanlist->last_scan_time / EIP_TIME_CONVERSION;
             status = 2;
         }
         else if (pvt->special & SPCO_LIST_MIN_SCAN_TIME)
         {
-            rec->val = (double) pvt->tag->scanlist->min_scan_ticks
-                / sysClkRateGet();
+            rec->val = pvt->tag->scanlist->min_scan_time / EIP_TIME_CONVERSION;
             status = 2;
         }
         else if (pvt->special & SPCO_LIST_MAX_SCAN_TIME)
         {
-            rec->val = (double) pvt->tag->scanlist->max_scan_ticks
-                / sysClkRateGet();
+            rec->val = pvt->tag->scanlist->max_scan_time / EIP_TIME_CONVERSION;
             status = 2;
         }
         else if (pvt->special & SPCO_TAG_TRANSFER_TIME)
         {
-            rec->val = (double) pvt->tag->transfer_ticktime
-                / sysClkRateGet();
+            rec->val = pvt->tag->transfer_time / EIP_TIME_CONVERSION;
             status = 2;
         }
         else
             ok = false;
-        semGive (pvt->tag->data_lock);
+        epicsEventSignal (pvt->tag->data_lock);
     }
     
     if (ok)
@@ -1142,7 +1145,7 @@ static long bi_read(biRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
-    bool ok;
+    eip_bool ok;
     
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
@@ -1155,7 +1158,7 @@ static long bi_read(biRecord *rec)
     if (lock_data((dbCommon *)rec))
     {
         ok = get_bits((dbCommon *)rec, 1, &rec->rval);
-        semGive(pvt->tag->data_lock);
+        epicsEventSignal(pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1172,7 +1175,7 @@ static long mbbi_read (mbbiRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
-    bool ok;
+    eip_bool ok;
     
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
@@ -1187,7 +1190,7 @@ static long mbbi_read (mbbiRecord *rec)
     if (lock_data ((dbCommon *)rec))
     {
         ok = get_bits ((dbCommon *)rec, rec->nobt, &rec->rval);
-        semGive (pvt->tag->data_lock);
+        epicsEventSignal (pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1204,7 +1207,7 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
-    bool ok;
+    eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
@@ -1219,7 +1222,7 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
     if (lock_data ((dbCommon *)rec))
     {
         ok = get_bits ((dbCommon *)rec, rec->nobt, &rec->rval);
-        semGive (pvt->tag->data_lock);
+        epicsEventSignal (pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1236,7 +1239,7 @@ static long si_read(stringinRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
-    bool ok;
+    eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
@@ -1249,7 +1252,7 @@ static long si_read(stringinRecord *rec)
     if (lock_data((dbCommon *)rec))
     {
         ok = get_CIP_STRING(pvt->tag->data, &rec->val[0], MAX_STRING_SIZE);
-        semGive (pvt->tag->data_lock);
+        epicsEventSignal (pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1266,7 +1269,7 @@ static long wf_read(waveformRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
-    bool ok;
+    eip_bool ok;
     CN_DINT *dint;
     double  *dbl;
     size_t i;
@@ -1330,7 +1333,7 @@ static long wf_read(waveformRecord *rec)
                 }
             }
         }
-        semGive (pvt->tag->data_lock);
+        epicsEventSignal (pvt->tag->data_lock);
     }
     
     if (!ok)
@@ -1345,7 +1348,7 @@ static long ao_write(aoRecord *rec)
     long          status;
     double        dbl;
     CN_DINT       dint;
-    bool          ok = true;
+    eip_bool      ok = true;
 
     if (rec->pact) /* Second pass, called for write completion ? */
     {
@@ -1387,7 +1390,7 @@ static long ao_write(aoRecord *rec)
             {
                 if (rec->tpro)
                     printf("'%s': write %ld (0x%lX)!\n",
-                           rec->name, rec->rval, rec->rval);
+                           rec->name, (long)rec->rval, (long)rec->rval);
                 ok = put_CIP_DINT(pvt->tag->data, pvt->element, rec->rval);
                 if (pvt->tag->do_write)
                     EIP_printf(6,"'%s': already writing\n", rec->name);
@@ -1396,7 +1399,7 @@ static long ao_write(aoRecord *rec)
                 rec->pact=TRUE;
             }
         }
-        semGive(pvt->tag->data_lock);
+        epicsEventSignal(pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1414,7 +1417,7 @@ static long bo_write(boRecord *rec)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
     unsigned long rval;
-    bool          ok = true;
+    eip_bool      ok = true;
 
     if (rec->pact)
     {
@@ -1447,7 +1450,7 @@ static long bo_write(boRecord *rec)
                 rec->pact=TRUE;
             }
         }
-        semGive(pvt->tag->data_lock);
+        epicsEventSignal(pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1464,7 +1467,7 @@ static long mbbo_write (mbboRecord *rec)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
     unsigned long rval;
-    bool          ok = true;
+    eip_bool      ok = true;
 
     if (rec->pact)
     {
@@ -1495,7 +1498,7 @@ static long mbbo_write (mbboRecord *rec)
                 pvt->tag->do_write = true;
             rec->pact=TRUE;
         }
-        semGive(pvt->tag->data_lock);
+        epicsEventSignal(pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1513,7 +1516,7 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
     unsigned long rval;
-    bool          ok = true;
+    eip_bool      ok = true;
 
     if (rec->pact)
     {
@@ -1546,7 +1549,7 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
                 pvt->tag->do_write = true;
             rec->pact=TRUE;
         }
-        semGive(pvt->tag->data_lock);
+        epicsEventSignal(pvt->tag->data_lock);
     }
     else
         ok = false;

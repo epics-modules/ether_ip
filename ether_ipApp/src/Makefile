@@ -1,3 +1,43 @@
-TOP=../..
+# Makefile
+TOP = ../..
+ifdef EPICS_HOST_ARCH
+
+include $(TOP)/configure/CONFIG
+#----------------------------------------
+#  ADD MACRO DEFINITIONS AFTER THIS LINE
+
+# No optimization, we want debugging info:
+HOST_OPT=NO
+
+# On WIN32, have to add socket library
+# to build the test program
+SYS_PROD_LIBS_WIN32 = wsock32
+
+PROD_HOST += ether_ip_test
+ether_ip_test_SRCS += ether_ip_test.c
+ether_ip_test_LIBS += Com
+
+DBD = ether_ip.dbd
+
+LIBRARY_IOC = ether_ip
+DLL_LIBS = ca Com
+SYS_DLL_LIBS = wsock32
+ether_ip_RCS_WIN32 = ether_ip.rc
+
+ether_ip_SRCS += dl_list.c 
+ether_ip_SRCS += ether_ip.c 
+ether_ip_SRCS += drvEtherIP.c 
+ether_ip_SRCS += devEtherIP.c 
+ether_ip_SRCS += mem_string_file.c
+ether_ip_SRCS += drvEtherIPRegister.cpp
+
+include $(TOP)/configure/RULES
+#----------------------------------------
+#  ADD RULES AFTER THIS LINE
+
+else
+
 include $(TOP)/config/CONFIG_APP
 include $(TOP)/config/RULES_ARCHS
+
+endif

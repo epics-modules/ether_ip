@@ -1,5 +1,23 @@
 -*- outline -*-
 
+* 2003, 04/20 V2.0
+Stephanie Allison, saa@SLAC.Stanford.EDU, 
+ported the EtherIP support to EPICS R3.14!
+This added some #ifdefs, the R3.13 support
+is hopefully as before.
+
+With R3.14 it now seems to run on
+- mv167/vxWorks/R3.13.6
+- ppc604/vxWorks/R3.14.1
+- ppc604/RTEMS/R3.14.1
+- sparc/solaris/R3.14.1
+- Linux (RedHat 8.0)
+
+Thanks a lot to Stephanie!
+
+* V1.11
+forgot what changed
+
 * 2002, 10/16 V1.10
 Tested read access for various numbers of scalar and array tags.
 Found that all is OK until either the request or response buffer

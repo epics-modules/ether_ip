@@ -23,20 +23,23 @@ cvs -d :ext:kasemir@ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot \
 
 What you have to do is
 - compile the ether_ip driver/device sources
-- somehow load them into vxWorks on the IOC
+- somehow load them in the IOC
 - include the DBD descriptions of the new device support
   so that EPICS knows about them
 - create EPICS records that use the new driver
 
 The directory structure and Makefiles were created by 
-makeBaseApp.pl from EPICS R3.13.3 base.
+makeBaseApp.pl from EPICS R3.13.3 base.  The configure directory
+was added and the Makefiles changed to work with EPICS 3.14.1 base.
 In case you choose to skip reading the manual on makeBaseApp:
+- If you set the EPICS_HOST_ARCH environment variable, the build
+  will be done using 3.14 configure files.  
 - Choose (or override the base config) for the target architecture
-  in config/CONFIG.
+  in config/CONFIG (3.13) or configure/CONFIG (3.14).
 - In iocBoot/iocether_ip/Makefile, select the ARCH for the test IOC
   (if you want to use that test setup).
-- You have to modify config/RELEASE so that ETHER_IP point to where you
-  put the stuff, e.g.
+- You have to modify config/RELEASE (3.13) configure/RELEASE (3.14) 
+  so that ETHER_IP point to where you put the stuff, e.g.
     ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/current
 
 * I. ether_ip directory structure:
@@ -57,8 +60,11 @@ ether_ip/
         Db   -- contains sample databases using the ether_ip driver.
         dm2k -- contains sample dm2k adl display files.
 
-    config -- configuration setup with RELEASE referring to location
-              of ETHER_IP for use by the example in testether_ipApp
+    config -- 3.13 only - configuration setup with RELEASE referring to 
+              location of ETHER_IP for use by the example in testether_ipApp
+
+    configure -- 3.14 only - configuration setup with RELEASE referring to 
+              location of ETHER_IP for use by the example in testether_ipApp
 
     Makefile -- setup to build 1st ether_ipApp, 
                 then config, 
@@ -74,6 +80,8 @@ ether_ip/
 2. cd $SUP/ether_ip
 3. cvs export -r ether_ip-<RELEASE> -d <RELEASE> ether_ip
 4. cd <RELEASE>
+4.1.  unsetenv EPICS_HOST_ARCH              (for EPICS 3.13)
+4.2.  setenv   EPICS_HOST_ARCH <your_arch>  (for EPICS 3.14)
 5. gmake (or gnumake, make, ...)
 6. Changing the type of ioc: 
    This code was tested with pc486, mvme2700 and mvme2100 iocs.
@@ -109,29 +117,33 @@ ether_ip/
 
 2. Set up ETHER_IP definitions  in the configuration directory
    for your application by: 
-2.1. cd  <your ioc application>/config
+2.1. cd  <your ioc application>/config (3.13) or /configure (3.14)
 2.2. edit the file RELEASE file, add the line 
      ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/<RELEASE>
 2.3. Make sure the new definitions take effect by
            gmake clean
            gmake
-     in the config directory.
+     in the config (3.13) or configure (3.14) directory.
 3. Set up the  dbd include file in your src directory to include
    ether_ip.dbd by adding the line
              include "ether_ip.dbd"
    after the line include "../base.dbd".
-   There is an example in testether_ipApp/src/ether_ipInclude.dbd.
+   There is an example in testether_ipApp/src/ether_ipInclude.dbd (3.13)
+   or /ether_ip_testInclude.dbd (3.14).
 
-   Now that RELEASE file has been edited and config has been
-   rebuilt the Makefile.Host will be able to find ether_ip.dbd
+   Now that RELEASE file has been edited and config or configure has been
+   rebuilt the Makefile will be able to find ether_ip.dbd
    when it expands your dbd file.
 4. Set up your application to include the object libraries by
-   including the line
+   including the following line in Makefile.Vx (3.13):
                    LIBOBJS += $(ETHER_IP_BIN)/ether_ipLib
-   in your Makefile.Vx file.
+   or the following lines in Makefile (3.14):
+                   <app>_LIBS += ether_ip
+		   ether_ip_DIR = $(ETHER_IP_LIB)
 
-   ETHER_IP_BIN will be automatically defined for every type of
-   ioc for which your application is built.
+   ETHER_IP_BIN (3.13) or ETHER_IP_LIB (3.14) will be automatically 
+   defined for every type of ioc for which your application is built.
 
 R. Wright, K. Kasemir
+3.14 notes added by S. Allison
 

@@ -14,13 +14,10 @@
 #include<time.h>
 #include"ether_ip.c"
 #include"mem_string_file.c"
-//#ifdef _WIN32
-//#include "Win32Timer.h"
-//#endif
 
 #ifdef DEFINE_CONNECTED_METHODS
 
-bool ForwardOpen(EIPConnection *c)
+eip_bool ForwardOpen(EIPConnection *c)
 {
     size_t      request_size = CM_Forward_Open_size ();
     MR_Request  *request;
@@ -83,7 +80,7 @@ bool ForwardOpen(EIPConnection *c)
     return true;
 }
 
-bool ForwardClose(EIPConnection *c)
+eip_bool ForwardClose(EIPConnection *c)
 {
     size_t      request_size = CM_Forward_Close_size ();
     MR_Request  *request;
@@ -144,7 +141,7 @@ bool ForwardClose(EIPConnection *c)
     return true;
 }
 
-bool ReadConnected(EIPConnection *c, size_t count, const ParsedTag *tag[])
+eip_bool ReadConnected(EIPConnection *c, size_t count, const ParsedTag *tag[])
 {
     size_t  i, msg_size[40], requests_size = 0, multi_size, 
             single_response_size;
@@ -318,7 +315,7 @@ int main (int argc, const char *argv[])
     const char      *arg;
     size_t          i;
     CN_REAL         writeval;
-    bool            write = false;
+    eip_bool        write = false;
     size_t          test_runs = 0;
 #ifndef _WIN32    
     struct timeval  now;
@@ -425,7 +422,7 @@ int main (int argc, const char *argv[])
                 end = now.tv_sec + now.tv_usec/1000000.0;
 #endif
                 duration = (double)(end - start);
-                printf("%d test runs, %g seconds -> %lf ms / tag\n",
+                printf("%d test runs, %g seconds -> %f ms / tag\n",
                        test_runs,
                        duration,
                        duration / test_runs * 1000.0);

@@ -2,7 +2,7 @@
  *
  * ether_ip
  *
- * EtherNet/IP routines for Win32, Unix and vxWorks.
+ * EtherNet/IP routines for Win32, Unix, vxWorks, and RTEMS.
  *
  * EtherNet/IP started as "ControlNet over Ethernet" (www.controlnet.org),
  * now defined as ODVA's "EtherNet/IP"   (www.odva.org)
@@ -33,9 +33,9 @@ static const CN_UINT __endian_test = 0x0001;
  * so why bother?
  */
 #if 0
-#define INLINE  __inline
+#define EIP_INLINE  __inline
 #else
-#define INLINE  /* */
+#define EIP_INLINE  /* */
 #endif
 
 /* Pack binary data in ControlNet format (little endian)
@@ -53,20 +53,20 @@ static const CN_UINT __endian_test = 0x0001;
  * more than one byte from the stack -> one pack_XXX per data type XXX.
  * The unpack seems to work because all var-args are pointer-sized.
  */
-INLINE CN_USINT *pack_USINT(CN_USINT *buffer, CN_USINT val)
+EIP_INLINE CN_USINT *pack_USINT(CN_USINT *buffer, CN_USINT val)
 {
     *buffer++ = val;
     return buffer;
 }
 
-INLINE CN_USINT *pack_UINT(CN_USINT *buffer, CN_UINT val)
+EIP_INLINE CN_USINT *pack_UINT(CN_USINT *buffer, CN_UINT val)
 {
     *buffer++ =  val & 0x00FF;
     *buffer++ = (val & 0xFF00) >> 8;
     return buffer;
 }
 
-INLINE CN_USINT *pack_UDINT(CN_USINT *buffer, CN_UDINT val)
+EIP_INLINE CN_USINT *pack_UDINT(CN_USINT *buffer, CN_UDINT val)
 {
     *buffer++ =  val & 0x000000FF;
     *buffer++ = (val & 0x0000FF00) >> 8;
@@ -75,7 +75,7 @@ INLINE CN_USINT *pack_UDINT(CN_USINT *buffer, CN_UDINT val)
     return buffer;
 }
 
-INLINE CN_USINT *pack_REAL(CN_USINT *buffer, CN_REAL val)
+EIP_INLINE CN_USINT *pack_REAL(CN_USINT *buffer, CN_REAL val)
 {
     const CN_USINT *p;
     
@@ -98,14 +98,14 @@ INLINE CN_USINT *pack_REAL(CN_USINT *buffer, CN_REAL val)
     return buffer;
 }
 
-INLINE const CN_USINT *unpack_UINT(const CN_USINT *buffer, CN_UINT *val)
+EIP_INLINE const CN_USINT *unpack_UINT(const CN_USINT *buffer, CN_UINT *val)
 {
     *val =  buffer[0]
          | (buffer[1]<<8);
     return buffer + 2;
 }
 
-INLINE const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
+EIP_INLINE const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
 {
     *val =  buffer[0]
          | (buffer[1]<< 8)
@@ -114,7 +114,7 @@ INLINE const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
     return buffer + 4;
 }
 
-INLINE const CN_USINT *unpack_REAL(const CN_USINT *buffer, CN_REAL *val)
+EIP_INLINE const CN_USINT *unpack_REAL(const CN_USINT *buffer, CN_REAL *val)
 {
     CN_USINT *p;
     if (is_little_endian)
@@ -192,7 +192,7 @@ static const CN_USINT *unpack(const CN_USINT *buffer, const char *format, ...)
 }
 
 int EIP_verbosity = 10;
-bool EIP_use_mem_string_file=0;
+eip_bool EIP_use_mem_string_file=0;
 
 /* printf with EIP_verbosity check */
 void EIP_printf(int level, const char *format, ...)
@@ -304,7 +304,7 @@ static CN_USINT *make_CIA_path(CN_USINT *path,
 /* A tad like the original strdup (not available for vxWorks),
  * but frees the original string if occupied
  * -> has to be 0-initialized */
-bool EIP_strdup(char **ptr, const char *text, size_t len)
+eip_bool EIP_strdup(char **ptr, const char *text, size_t len)
 {
     if (*ptr)
         free(*ptr);
@@ -375,7 +375,7 @@ ParsedTag *EIP_parse_tag(const char *tag)
 
 void EIP_copy_ParsedTag(char *buffer, const ParsedTag *tag)
 {
-    bool did_first = false;
+    eip_bool did_first = false;
     size_t len;
     
     while (tag)
@@ -748,7 +748,7 @@ const CN_USINT *EIP_dump_raw_MR_Response(const CN_USINT *response,
     return data + data_len;
 }
 
-static bool is_raw_MRResponse_ok(const CN_USINT *response,
+static eip_bool is_raw_MRResponse_ok(const CN_USINT *response,
                                   size_t response_size)
 {
     CN_USINT general_status = response[2]; /* needn't unpack USINT */
@@ -769,7 +769,7 @@ static bool is_raw_MRResponse_ok(const CN_USINT *response,
  * into time-per-tick value
  * and number of ticks (see Spec 4 p. 30,31)
  */
-static bool calc_tick_time(size_t millisec, CN_USINT *tick_time, CN_USINT *ticks)
+static eip_bool calc_tick_time(size_t millisec, CN_USINT *tick_time, CN_USINT *ticks)
 {
     if (millisec > 8355840)
         return false;
@@ -989,7 +989,7 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
     EIP_printf(0, "\n");
 }
 
-bool get_CIP_double(const CN_USINT *raw_type_and_data,
+eip_bool get_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double *result)
 {
     CN_UINT        type;
@@ -1028,7 +1028,7 @@ bool get_CIP_double(const CN_USINT *raw_type_and_data,
     return false;
 }
 
-bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
+eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT *result)
 {
     CN_UINT        type;
@@ -1063,7 +1063,7 @@ bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
     return false;
 }
 
-bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
+eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
                   size_t element, CN_DINT *result)
 {
     CN_UINT        type;
@@ -1100,7 +1100,7 @@ bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
 
 /* Fill buffer with up to 'size' characters (incl. ending '\0').
  * Return true for success */
-bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
+eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
                     char *buffer, size_t size)
 {
     CN_UINT        type, subtype, len, no_idea_what_this_is;
@@ -1130,7 +1130,7 @@ bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
     return true;
 }
 
-bool put_CIP_double(const CN_USINT *raw_type_and_data,
+eip_bool put_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double value)
 {
     CN_UINT   type;
@@ -1161,7 +1161,7 @@ bool put_CIP_double(const CN_USINT *raw_type_and_data,
     return false;
 }
 
-bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
+eip_bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT value)
 {
     CN_UINT   type;
@@ -1192,7 +1192,7 @@ bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
     return false;
 }
 
-bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
+eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
                   size_t element, CN_DINT value)
 {
     CN_UINT   type;
@@ -1298,7 +1298,7 @@ void dump_CIP_WriteRequest (const CN_USINT *request)
 }
 
 /* Test CIP_WriteData response: If not OK, report error */
-bool check_CIP_WriteData_Response (const CN_USINT *response,
+eip_bool check_CIP_WriteData_Response (const CN_USINT *response,
                                    size_t response_size)
 {
     CN_USINT service = response[0];
@@ -1341,7 +1341,7 @@ size_t CIP_MultiRequest_size (size_t count, size_t requests_size)
  * Has to be followed by calls to CIP_MultiRequest_item
  * for completion.
  */
-bool prepare_CIP_MultiRequest (CN_USINT *request, size_t count)
+eip_bool prepare_CIP_MultiRequest (CN_USINT *request, size_t count)
 {
     CN_USINT *buf;
     size_t i;
@@ -1415,7 +1415,7 @@ size_t CIP_MultiResponse_size (size_t count, size_t responses_size)
 }
 
 /* Check if response is valid for a S_CIP_MultiRequest */
-bool check_CIP_MultiRequest_Response (const CN_USINT *response,
+eip_bool check_CIP_MultiRequest_Response (const CN_USINT *response,
                                           size_t response_size)
 {
     CN_USINT service        = response[0];
@@ -1519,23 +1519,16 @@ void EIP_dump_connection (const EIPConnection *c)
 }
 
 /* set socket to non-blocking */
-static void set_nonblock (SOCKET s, bool nonblock)
+static void set_nonblock (SOCKET s, eip_bool nonblock)
 {
     int yesno = nonblock;
-#ifdef _WIN32
-    ioctlsocket (s, FIONBIO, &yesno);
-#else
-#ifdef vxWorks
-    ioctl (s, FIONBIO, yesno);
-#else
-    fcntl (s, FNDELAY, yesno);
-#endif
-#endif
+    socket_ioctl(s, FIONBIO, &yesno);
 }
 
 #ifndef vxWorks
 /* vxWorks defines these convenient calls,
- * Unix and WIN32 don't
+ * Unix, RTEMS, and WIN32 don't.  NOTE: base/src/RTEMS/base/rtems_util.c
+ * does define connectWithTimeout but this one should work too.
  *
  * Return codea ala vxWorks: OK == 0, ERROR == -1
  */
@@ -1547,7 +1540,7 @@ static int connectWithTimeout (SOCKET s, const struct sockaddr *addr,
     int error;
     
     set_nonblock (s, true);
-    if (connect (s, addr, addr_size) == SOCKET_ERROR)
+    if (connect (s, addr, addr_size) < 0)
     {
         error = SOCKERRNO;
         if (error == SOCK_EWOULDBLOCK || error == SOCK_EINPROGRESS)
@@ -1567,6 +1560,10 @@ static int connectWithTimeout (SOCKET s, const struct sockaddr *addr,
     return 0;
 }
 
+/* 
+ * NOTE: base/src/libCom/osi/os/<arch>/osdSock.c defines hostToIPAddr which
+ * could be used by EIP_init_and_connect instead.
+ */
 static unsigned long hostGetByName (const char *ip_addr)
 {
     struct hostent *hostent;
@@ -1583,7 +1580,7 @@ static unsigned long hostGetByName (const char *ip_addr)
  * Init. fields,
  * connect to target
  */
-static bool EIP_init_and_connect (EIPConnection *c,
+static eip_bool EIP_init_and_connect (EIPConnection *c,
                                   const char *ip_addr, unsigned short port,
                                   unsigned short slot,
                                   size_t millisec_timeout)
@@ -1591,6 +1588,9 @@ static bool EIP_init_and_connect (EIPConnection *c,
     struct sockaddr_in addr;
     struct timeval timeout;
     unsigned long *addr_p;
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+    int flag = true;
+#endif
                 
     memset (c, 0, sizeof (EIPConnection));
     c->transfer_buffer_limit = EIP_BUFFER_LIMIT;
@@ -1610,7 +1610,7 @@ static bool EIP_init_and_connect (EIPConnection *c,
     addr_p =(unsigned long *) &addr.sin_addr.s_addr;
 #endif
     *addr_p = inet_addr (ip_addr);
-    if (*addr_p == INADDR_NONE)
+    if (*addr_p == -1)
     {   /* ... or DNS */
         *addr_p = hostGetByName ((char *)ip_addr);
         if (*addr_p == -1)
@@ -1621,15 +1621,24 @@ static bool EIP_init_and_connect (EIPConnection *c,
         }
     }
 
-    /* Create socket */
-    c->sock = socket (AF_INET, SOCK_STREAM, 0);
+    /* Create socket and set it to no-delay */
+    c->sock = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (c->sock == INVALID_SOCKET)
     {
         EIP_printf (2, "EIP cannot create socket\n");
         c->sock = 0;
         return false;
     }
-
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+    if (setsockopt (c->sock, IPPROTO_TCP, TCP_NODELAY,
+                    (char *) &flag, sizeof ( flag )) < 0)
+    {
+        EIP_printf (2, "EIP cannot set socket option to TCP_NODELAY\n");
+        socket_close (c->sock);
+        c->sock = 0;
+        return false;
+    }
+#endif
     if (connectWithTimeout (c->sock, (struct sockaddr *)&addr,
                             sizeof (addr), &timeout) != 0)
     {
@@ -1656,7 +1665,7 @@ static void EIP_disconnect (EIPConnection *c)
 /* Assert that *buffer can hold "requested" bytes.
  * A bit like realloc, but only grows and keeps old buffer
  * if no more space */
-bool EIP_reserve_buffer (void **buffer, size_t *size, size_t requested)
+eip_bool EIP_reserve_buffer (void **buffer, size_t *size, size_t requested)
 {
     void *old_buffer;
     int  old_size;
@@ -1682,11 +1691,11 @@ bool EIP_reserve_buffer (void **buffer, size_t *size, size_t requested)
     return true;
 }
 
-bool EIP_send_connection_buffer(EIPConnection *c)
+eip_bool EIP_send_connection_buffer(EIPConnection *c)
 {
     CN_UINT length;
     int     len;
-    bool    ok;
+    eip_bool ok;
     
     unpack_UINT(c->buffer+2, &length);
     len = sizeof_EncapsulationHeader + length;
@@ -1698,11 +1707,11 @@ bool EIP_send_connection_buffer(EIPConnection *c)
     return ok;
 }
 
-bool EIP_read_connection_buffer(EIPConnection *c)
+eip_bool EIP_read_connection_buffer(EIPConnection *c)
 {
     int got = 0;
-    bool checked = false;
-    bool ok = true;
+    eip_bool checked = false;
+    eip_bool ok = true;
     int part, needed=0;
     fd_set fds;
     struct timeval timeout;
@@ -1722,7 +1731,7 @@ bool EIP_read_connection_buffer(EIPConnection *c)
         }
         
         part = recv(c->sock, ((char *)c->buffer + got), c->size - got, 0);
-        if (part == SOCKET_ERROR  || part == 0)
+        if (part <= 0)
         {
             ok = false;
             break;
@@ -1894,12 +1903,12 @@ static const CN_USINT *unpack_EncapsulationHeader(const CN_USINT *buf,
 /* Encapsulation Command "ListServices".
  * Check if CIP is supported.
  */
-static bool EIP_list_services(EIPConnection *c)
+static eip_bool EIP_list_services(EIPConnection *c)
 {
     const CN_USINT *buf;
     ListServicesReply reply;
     int i;
-    bool ok = true;
+    eip_bool ok = true;
 
     EIP_printf(10, "EIP sending ListServices encapsulation command\n");
     if (make_EncapsulationHeader(c, EC_ListServices,
@@ -1973,7 +1982,7 @@ static bool EIP_list_services(EIPConnection *c)
 }
 
 /* Encapsulation Command "Register Session" */
-static bool EIP_register_session(EIPConnection *c)
+static eip_bool EIP_register_session(EIPConnection *c)
 {
     CN_USINT *sbuf;
     RegisterSessionData data;
@@ -2014,7 +2023,7 @@ static bool EIP_register_session(EIPConnection *c)
 }
 
 /* Encapsulation Command "UnRegister Session" */
-static bool EIP_unregister_session(EIPConnection *c)
+static eip_bool EIP_unregister_session(EIPConnection *c)
 {
     EIP_printf(9, "EIP sending UnRegisterSession encapsulation command,"
                " session ID 0x%08X\n", c->session);
@@ -2163,7 +2172,7 @@ void *EIP_Get_Attribute_Single(EIPConnection *c,
     return attrib;
 }
 
-static bool EIP_check_interface(EIPConnection *c)
+static eip_bool EIP_check_interface(EIPConnection *c)
 {
     EIPIdentityInfo  *info = &c->info;
     void *data;
@@ -2204,7 +2213,7 @@ static bool EIP_check_interface(EIPConnection *c)
     return true;
 }
 
-bool EIP_startup(EIPConnection *c,
+eip_bool EIP_startup(EIPConnection *c,
                  const char *ip_addr, unsigned short port,
                  int slot,
                  size_t millisec_timeout)
@@ -2376,7 +2385,7 @@ static size_t CM_Forward_Open_size ()
  *
  * Depends on CM_Forward_Open_Request having the correct size!
  */
-static bool make_CM_Forward_Open (MR_Request *request, EIPConnectionParameters *params)
+static eip_bool make_CM_Forward_Open (MR_Request *request, EIPConnectionParameters *params)
 {
     CM_Forward_Open_Request *open_data;
     size_t pp;
@@ -2535,7 +2544,7 @@ static size_t CM_Forward_Close_size ()
  *
  * Depends on CM_Forward_Open_Request having the correct size!
  */
-static bool make_CM_Forward_Close (MR_Request *request, const EIPConnectionParameters *params)
+static eip_bool make_CM_Forward_Close (MR_Request *request, const EIPConnectionParameters *params)
 {
     CM_Forward_Close_Request *close_data;
     size_t pp;
@@ -2635,7 +2644,7 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
 /* Write a single tag in a single CIP_ReadData request,
  * report sizes of CIP_WriteData request/response
  */
-bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
+eip_bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
                    CIP_Type type, size_t elements, CN_USINT *data,
                    size_t *request_size,
                    size_t *response_size)

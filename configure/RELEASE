@@ -1,0 +1,12 @@
+#RELEASE Location of external products
+# Run "gnumake clean uninstall install" in the application
+# top directory each time this file is changed.
+
+#If using macro substitutions, point MSI at the binary:
+#MSI=<path>extensions/bin/$(EPICS_HOST_ARCH)/msi
+
+# EPICS_BASE usually appears last so other apps can override stuff:
+EPICS_BASE=/home/ade/epics/supTop/base/R3.14.1_RH8
+ETHER_IP=/home/ade/epics/supTop/share/R3.14.1_RH8/ether_ip/current
+TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
+

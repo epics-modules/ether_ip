@@ -2,7 +2,7 @@
  *
  * ether_ip
  *
- * EtherNet/IP routines for Win32, Unix and vxWorks.
+ * EtherNet/IP routines for Win32, Unix, vxWorks, and RTEMS.
  *
  * EtherNet/IP started as "ControlNet over Ethernet" (www.controlnet.org),
  * now defined as ODVA's "EtherNet/IP"   (www.odva.org)
@@ -13,6 +13,14 @@
  * kasemir@lanl.gov
  */
 
+#ifndef NO_EPICS
+#include"epicsVersion.h"
+#endif
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#include "osdSock.h"
+#else
+/* begin 3.13 settings */
+
 /* sys-independ. socket stuff, basically stolen from osiSock.h  */
 #ifdef _WIN32
 #include <winsock2.h>
@@ -20,6 +28,7 @@
 
 #define SOCKERRNO       WSAGetLastError()                   
 #define socket_close(S) closesocket(S)
+#define socket_ioctl(A,B,C) ioctlsocket(A,B,C)
 typedef u_long FAR osiSockIoctl_t;    
 #define SOCK_EWOULDBLOCK WSAEWOULDBLOCK
 #define SOCK_EINPROGRESS WSAEINPROGRESS 
@@ -43,6 +52,7 @@ typedef u_long FAR osiSockIoctl_t;
 #include <inetLib.h>
 #include <ioLib.h>
 #include <hostLib.h>
+#include <selectLib.h>
 #include <ctype.h>
 #include <tickLib.h>
 typedef int               SOCKET;
@@ -50,6 +60,7 @@ typedef int               SOCKET;
 #define SOCKET_ERROR      (-1)
 #define SOCKERRNO         errno
 #define socket_close(S)   close(S)
+#define socket_ioctl(A,B,C) ioctl(A,B,(int)C)
 #define SOCK_EWOULDBLOCK  EWOULDBLOCK                 
 #define SOCK_EINPROGRESS  EINPROGRESS
 /* end of vxWorks settings */
@@ -72,19 +83,22 @@ typedef int               SOCKET;
 #define SOCKET_ERROR      (-1)
 #define SOCKERRNO         errno
 #define socket_close(S)   close(S)
+#define socket_ioctl(A,B,C) ioctl(A,B,C)
 #define SOCK_EWOULDBLOCK  EWOULDBLOCK                 
 #define SOCK_EINPROGRESS  EINPROGRESS
 
 #ifdef SOLARIS
-#include <sys/file.h>
+#include <sys/filio.h>
 #define INADDR_NONE (-1)
 #endif
 
 /* end of Unix settings */
 #endif
 #endif
+/* end 3.13 settings */
+#endif
 
-typedef int bool;
+typedef int eip_bool;
 #define true  1
 #define false 0
 
@@ -104,7 +118,7 @@ extern int EIP_verbosity;
 /* Should output go onto console
  * or into mem_string_file ?
  */
-extern bool EIP_use_mem_string_file;
+extern eip_bool EIP_use_mem_string_file;
 
 /* print if EIP_verbosity >= level */
 void EIP_printf(int level, const char *format, ...);
@@ -425,18 +439,18 @@ CN_USINT *make_CIP_WriteData(CN_USINT *buf, const ParsedTag *tag,
                              CN_USINT *raw_data);
 void dump_CIP_WriteRequest(const CN_USINT *request);
 /* Test CIP_WriteData response: If not OK, report error */
-bool check_CIP_WriteData_Response(const CN_USINT *response,
+eip_bool check_CIP_WriteData_Response(const CN_USINT *response,
                                   size_t response_size);
 
 size_t CIP_MultiRequest_size(size_t count, size_t requests_size);
 size_t CIP_MultiResponse_size(size_t count, size_t responses_size);
-bool prepare_CIP_MultiRequest(CN_USINT *request, size_t count);
+eip_bool prepare_CIP_MultiRequest(CN_USINT *request, size_t count);
 
 CN_USINT *CIP_MultiRequest_item(CN_USINT *request,
                                 size_t request_no,
                                 size_t single_request_size);
 
-bool check_CIP_MultiRequest_Response(const CN_USINT *response,
+eip_bool check_CIP_MultiRequest_Response(const CN_USINT *response,
                                      size_t response_size);
 void dump_CIP_MultiRequest_Response_Error(const CN_USINT *response,
                                           size_t response_size);
@@ -447,21 +461,21 @@ const CN_USINT *get_CIP_MultiRequest_Response(const CN_USINT *response,
 
 /* dump CIP data, type and data are in raw format */
 void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements);
-bool get_CIP_double(const CN_USINT *raw_type_and_data,
+eip_bool get_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double *result);
-bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
+eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT *result);
-bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
+eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
                   size_t element, CN_DINT *result);
 /* Fill buffer with up to 'size' characters (incl. ending '\0').
  * Return true for success */
-bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
+eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
                     char *buffer, size_t size);
-bool put_CIP_double(const CN_USINT *raw_type_and_data,
+eip_bool put_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double value);
-bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
+eip_bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT value);
-bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
+eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
                   size_t element, CN_DINT value);
 
 
@@ -631,18 +645,18 @@ void EIP_dump_connection(const EIPConnection *c);
 /* Assert that *buffer can hold "requested" bytes.
  * A bit like realloc, but only grows and keeps old buffer
  * if no more space */
-bool EIP_reserve_buffer(void **buffer, size_t *size, size_t requested);
+eip_bool EIP_reserve_buffer(void **buffer, size_t *size, size_t requested);
 
-bool EIP_send_connection_buffer(EIPConnection *c);
+eip_bool EIP_send_connection_buffer(EIPConnection *c);
 
-bool EIP_read_connection_buffer(EIPConnection *c);
+eip_bool EIP_read_connection_buffer(EIPConnection *c);
 
 /* A tad like the original strdup (not available for vxWorks),
  * but frees the original string if occupied
  * -> has to be 0-initialized */
-bool EIP_strdup(char **ptr, const char *text, size_t len);
+eip_bool EIP_strdup(char **ptr, const char *text, size_t len);
 
-bool EIP_startup(EIPConnection *c,
+eip_bool EIP_startup(EIPConnection *c,
                  const char *ip_addr, unsigned short port,
                  int slot,
                  size_t millisec_timeout);
@@ -658,7 +672,7 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
                              size_t *data_size,
                              size_t *request_size, size_t *response_size);
 
-bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
+eip_bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
                    CIP_Type type, size_t elements, CN_USINT *data,
                    size_t *request_size,
                    size_t *response_size);
