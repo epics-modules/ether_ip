@@ -13,9 +13,9 @@
 #include <stddef.h>
 #include <time.h>
 #include "ether_ip.c"
-#ifdef _WIN32
-#include "Win32Timer.h"
-#endif
+//#ifdef _WIN32
+//#include "Win32Timer.h"
+//#endif
 
 
 #ifdef DEFINE_CONNECTED_METHODS

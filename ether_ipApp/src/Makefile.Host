@@ -1,9 +1,8 @@
-# Makefile.Host
+# Makefile.Host -*- makefile -*-
 TOP = ../../..
 include $(TOP)/config/CONFIG_APP
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
-
 
 DBDINSTALL += ether_ip.dbd
 
@@ -14,6 +13,10 @@ DBDINSTALL += ether_ip.dbd
 ca_DIR  = $(EPICS_BASE_LIB)
 Db_DIR  = $(EPICS_BASE_LIB)
 Com_DIR = $(EPICS_BASE_LIB)
+
+# On WIN32, have to add socket library
+# to build the test program
+SYS_PROD_LIBS_WIN32 = wsock32
 
 PROD += ether_ip_test
 
