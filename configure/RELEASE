@@ -6,7 +6,7 @@
 #MSI=<path>extensions/bin/$(EPICS_HOST_ARCH)/msi
 
 # EPICS_BASE usually appears last so other apps can override stuff:
-ADE=/home/ade
-EPICS_BASE=$(ADE)/epics/supTop/base/R3.14.4
-ETHER_IP=$(ADE)/epics/supTop/share/R3.14.4/ether_ip/devel
-MSI=$(ADE)/epics/supTop/extensions/R3.14.4/bin/$(EPICS_HOST_ARCH)/msi
+ADE=/ade
+EPICS_BASE=$(ADE)/epics/supTop/base/R3.14.6
+ETHER_IP=$(ADE)/epics/supTop/share/R3.14.6/ether_ip/Development
+MSI=$(ADE)/epics/supTop/extensions/R3.14.6/bin/$(EPICS_HOST_ARCH)/msi
