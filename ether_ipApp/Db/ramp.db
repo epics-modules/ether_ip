@@ -1,0 +1,7 @@
+record(calc, "ramp") {
+     field (SCAN, "1 second")
+     field(CALC,"A>=B?0:A+1")
+     field(INPA,"ramp.VAL")
+     field(INPB,"10")
+     field(HOPR,"10")
+}

@@ -15,15 +15,26 @@ include $(TOP)/config/CONFIG_APP
 
 #----------------------------------------------------
 # Add databases, templates, substitutions like this
-DB += dbExample1.db dbExample2.db
+
+DB += ai.db
+DB += alh.db
+DB += ana.db
+DB += ao.db
+DB += bi.db
+DB += bin.db
+DB += bo.db
+DB += mbbi.db
+DB += mbbo.db
+DB += ramp.db
+DB += stat.db 
 
 #----------------------------------------------------
 # Declare template files which do not show up in DB
-USES_TEMPLATE += dbExample2.template
+#USES_TEMPLATE += dbExample2.template
 
 #----------------------------------------------------
 # The following line is for local dbd expansion
-#DBDEXPAND = ether_ipInclude.dbd
+#DBDEXPAND = ether_ip_Include.dbd
 
 include $(TOP)/config/RULES.Db
 #----------------------------------------

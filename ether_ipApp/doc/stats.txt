@@ -1,0 +1,354 @@
+-*- outline -*-
+
+This is mostly a log of email messages that I sent out
+while testing the protocol and developling the driver....
+
+* Test 1
+========
+
+On same hub:
+- PC (100baseT)
+- ControlLogix PLC, 1756-ENET interface (10baseT)
+  "System Overhead Time Slice" set to 10%
+
+- For the measurements indicated with (SW),
+  the PLC and the PC were connected to a switch.
+
+  LastScanTime: 140...200
+
+Read values, single tag:
+REAL     : 90.909091 values/sec, 11.000000 msec/value
+REAL     :136.986301 values/sec, 7.300000 msec/value (SW)
+          140.845070 values/sec, 7.100000 msec/value (Connected)
+
+BOOL     : -same-
+DINT     : -same-
+PV       : -same-
+PVs[2]   : -same-
+PVs[5]   : -same-
+PVs[8]   : 58.823529 values/sec, 17.000000 msec/value
+PVs[10]  : 45.454545 values/sec, 22.000000 msec/value
+PVs[20]  : 45.454545 values/sec, 22.000000 msec/value
+PVs[30]  : 37.037037 values/sec, 27.000000 msec/value
+PVs[40]  : 30.303030 values/sec, 33.000000 msec/value
+	   33.333333 values/sec, 30.000000 msec/value (SW)
+           33.333333 values/sec, 30.000000 msec/value (Connected)
+
+BITS[352]: 90.909091 values/sec, 11.000000 msec/value
+BITS[512]: 83.333333 values/sec, 12.000000 msec/value
+
+PV is user-defined type:
+  REAL .VAL   (C float)
+  DINT .STAT  (32 bit)
+  DINT .TIME
+
+PVs[#] is similar, but each entry is an array of # elements:
+  REAL .VAL[#]
+  DINT .STAT[#]
+  DINT .TIME[#]
+
+-> PVs[40] combines 120 numbers
+
+BITS[3]: BOOL[#], e.g. 512 booleans packed as 64 bytes
+
+
+When going "online" with RSLogix5000 at the same time,
+the        90.909091 values/sec, 11.000000 msec/value
+turn into  83.333333 values/sec, 12.000000 msec/value
+
+There is hardly any load on PC, the hub shows up to 3%
+-> this must be the limitation of the PLC/ENET for doing
+   communications.
+
+Indeed: change "System Overhead Time Slice" set to 50%
+
+  LastScanTime: 140...200
+
+REAL     : 142.857143 values/sec,  7.000000 msec/value
+PVs[40]  :  35.714286 values/sec, 28.000000 msec/value
+BITS[352]: 100.000000 values/sec, 10.000000 msec/value
+
+
+
+* Test 2
+========
+
+Hello:
+
+I have some updates on the Ethernet connection to ControlLogix.
+I won't explore the protocol further but start developement
+of an EPICS driver now.
+This leads to suggestions and questions on how to organize the data
+in the PLC for better communication with an EPICS IOC.
+
+The protocol
+------------------
+
+The name has changed: ControlNet-over-Ethernet has become EtherNet/IP.
+
+Tim McAdams, Technology Transfer and Services, Rockwell Automation
+confirmed that
+"EtherNet/IP is THE Ethernet protocol that the ControlLogix does and
+ will support.  RSLinx uses EtherNet/IP to communicate with ControlLogix,
+ but also supports an older proprietary Ethernet protocol to communicate
+ with PLC5 and SLC5/05 even though they also now support EtherNet/IP."
+
+So using EtherNet/IP is not some hack into the PLC
+but it's officially OK to do so.
+
+It's also confirmed by McAdams that ControlLogix does
+not, yet, support other parts of the protocol that
+would sent scheduled updates or updates on change.
+ControlLogix might support this in the future,
+the other PLCs won't. All it does now is "unconnected"
+and "Class 3 connected" messaging.
+
+I found a way to use the "Class 3 connected"
+method in EtherNet/IP.
+For non-Ethernet ControlNet, this reserves bandwidth
+and guaranties delivery (like TCP does anyway).
+For EtherNet/IP, it basically informs the PLC what to expect
+and the header for following packages is a few bytes smaller.
+But one can run into timeout problems this way,
+and the effort seems not to be worth it:
+
+Read single REAL value:
+original :  90.909091 values/sec, 11.000000 msec/value
+switched:  136.986301 values/sec,  7.300000 msec/value
+"Class 3": 140.845070 values/sec,  7.100000 msec/value
+(changed the office. PC and PLC used to be on a hub,
+now they are connected to a switch which gives slightly better results)
+
+So the following tests are done "unconnected" again.
+Not to be confused:
+It's still keeping the same socket open and registering
+the session only once, so the rates shown are for data transfer only,
+without initial connection/registration overhead.
+
+Test Results
+------------
+
+--  There is a tradeoff between fast and nice-to-use. --
+
+For the SNS PLCs I assume 150 analogs and 350 binary channels.
+While older PLCs used "N7:10"
+which gives no clue about the meaning of the value,
+ControlLogix uses tags (<= 40 char), arrays, user-defined structures.
+
+We still have to document the meaning of "TSenWatIn",
+but I think this is nicer to use for
+"Temperature Sensor, Water at Inlet" than N7:10.
+It might also help to avoid errors:
+Misspelling it as TSensWatInn" gives an "invalid tag",
+using N7:11 would run fine but yield garbage.
+
+1) Single transfer, readable tag
+--------------------------------
+
+Over EtherNet/IP I can read simple tags like:
+   "TempSensor1_Value"
+as well as drill down structure/array tags:
+   "Sensors.Temperature[2].value"
+
+This makes for readable code,
+the tags could conform to some naming convention.
+
+Reading a single REAL value like this takes 7 ms.
+The same for a single BOOL value.
+
+Reading the ~350 binary values for the SNS water skid
+would take almost 3 secs.
+Each single one arrives within 7ms, but the overall
+time might be too slow.
+
+2) Multi-request transfer, readable tags
+----------------------------------------
+Multiple read requests can be sent in one package.
+The package size for the request is limited to ~510 bytes,
+so is the response package size.
+When the tag names are long, fewer will fit a request.
+If the result contains arrays/structures, fewer will fit
+into the response.
+-> about 30 4-char REAL tags,
+   15 tags of the form "analog_10Hz.V21"
+
+When reading the individual elements of a structure
+like this, the per-value speed is increased over the
+previous example.
+
+structure analog_10Hz { REAL V1, REAL V2, ...., REAL V29 }
+Read as { analog_10Hz.V0, ..., analog_10Hz.V14 }
+(cannot read more than 15 items at once):
+ 47.62 runs/sec,  21.00 msec/run ->  714.29 values/sec,   1.40 msec/value
+
+The overall latency is increased:
+The single value took 7ms.
+When requested as part of a multi-request,
+we have to wait for all the values (21ms).
+
+The 150 analogs could be read in ~0.21sec.
+Good enough?
+
+3) Arrays
+---------
+Arrays are still limited (size of response packet),
+but in an array the values are packet more tightly
+-> more values than in a multi-request.
+
+Transmitting a single tag that is a REAL[30]:
+106.38 runs/sec,   9.40 msec/run -> 3191.49 values/sec,   0.31 msec/value
+
+Better: the 150 analogs, transfered as 5 REAL[30] arrays,
+would take 0.047secs
+
+They could be organized tag-wise like this:
+     analog_10Hz = REAL[30]  : array of analogs to be scanned @ 10Hz
+     ...
+But the meaning of analog_10Hz[2] is unknown,
+we'd be back to the N7:10 addressing.
+
+Do we have to do this, pick speed over readability for analogs?
+
+For Binary arrays, the bits are actually packed:
+Array of BOOL[352] = 44 bytes, treated as 11 DINT:
+130.43 runs/sec,   7.67 msec/run ->45913.04 values/sec,   0.02 msec/value
+
+MUCH BETTER: All the binaries for an SNS PLC can be transmitted
+             in ~8msec!
+Again, the meaning of the individual bits has to be documented,
+but I think we have no other choice in this case.
+
+4) Structures
+-------------
+A structure can be transfered element-by-element.
+-> case 1 or 2. Neat but not fast.
+
+Structures can also be read as a whole:
+Structure "analog_10Hz" with 30 REAL elements,
+read as whole tag "analog_10Hz" (all 30 items):
+ 75.76 runs/sec,  13.20 msec/run -> 2272.73 values/sec,   0.44 msec/value
+
+This provides
++ better performance than reading the individual structure elements
++ the PLC code looks nice because the elements can have
+  meaningful names, unlike array elements
+--- the structure is not exposed:
+    The result is raw data.
+    Over EtherNet/IP I cannot see that e.g. the third element
+    in the structure is a "REAL" called "FacilityWaterTemperature".
+
+I asked my Rockwell contact for some help about this,
+but is seems that a structure transfer would again
+mean that we have to document the structure content
+in a detailed manner, so overall it's similar to the array case.
+
+------------------------------------------------------------------
+
+So my conclusion for now is that I'll support
+a) Access to individual REALs and BOOLs.
+   Requests will be combined as much as possible.
+   Structure elements can be accessed like this,
+   but it also increases the tag length
+   -> fewer combined requests
+
+   This is hopefully good enough for most analogs
+
+b) Access to arrays
+   The array will be read as a whole.
+   We have to document the meaning of each array element.
+
+   This is necessary for most binaries
+   and provides a tremendous jump in speed.
+
+Reading structures as a whole will not be supported.
+
+
+* Test 3
+========
+
+Read 20 BOOL tags, one-by-one in multi request
+
+SentUnconnected:
+33.33 runs/sec,  30.00 msec/run ->  666.67 values/sec,   1.50 msec/value
+
+Connected:
+34.09 runs/sec,  29.33 msec/run ->  681.82 values/sec,   1.47 msec/value
+
+
+Again: Not worth the effort of possible timeouts
+when there is no activity within the times
+specified in Forward_Open?!
+
+* Test 4
+========
+
+First test with driver running on an IOC under EPICS.
+
+-> dbnr
+0130 ai
+0001 ao
+0354 bi
+0005 bo
+0001 calc
+0002 mbbi
+0002 mbbiDirect
+0001 mbbo
+0001 mbboDirect
+
+Most important:
+
+352 BI records, reading the bits of a BOOL[352].
+Driver scans at 10Hz, records receive I/O Intr.
+
+7 AI records for displaying driver statistics
+about the PLC and the BI records.
+
+120 AI records, reading 3 x REAL[40].
+Driver scans at 1 Hz, records scan at 1 Hz.
+
+Histogram of BOOL[352] transfer:
+Transfer time  hits
+------------------
+0.006  40
+0.007  13617
+0.008  17542
+0.009  5762
+0.01  3101
+0.011  2522
+0.012  1922
+0.013  1233
+0.014  602
+0.015  141
+0.016  38
+0.017  14
+0.018  9
+0.019  3
+0.02  1
+
+I increased the vxWorks tick counter to get better statistics:
+sysClkRateSet 1000    (default is 60).
+
+After running for 1h, 15 min, the histogram of the BOOL[352] transfers
+shows that most transactions take 8ms, matching the previous protocol tests.
+Sometimes, though, it takes up to 20ms to get the BOOL array into the IOC.
+Why? General network traffic? Also:
+I've seen before that the PLC doesn't suffer under communication.
+Its time to run over the ladder logix stays the same. I guess this is
+because it has a dedicated communication time slice.
+So if the IOC asks for a value and the PLC is not ready to respond
+since the communication time is over, the transfer is handled in the
+next time slice.
+
+As for the analog values:
+They are transferred as three REAL[30] arrays.
+Each array arrives after about 9ms.
+The total transfer time for the three REAL[30] is:
+min	16 ms
+max	29 ms		
+usual  18 ms		
+
+(Note that most of the time it's 18ms, not 3x9ms.
+Two of those REAL[30] requests are actually combined in the driver
+because they fit the 500byte buffer limit.)
+
+

@@ -1,5 +1,0 @@
-file dbExample2.template {
-{ USER="wright", NO="1", SCAN="1 second" }
-{ USER="wright", NO="2", SCAN="2 second" }
-{ USER="wright", NO="3", SCAN="5 second" }
-}

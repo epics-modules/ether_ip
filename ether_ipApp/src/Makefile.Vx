@@ -4,17 +4,20 @@ include $(TOP)/config/CONFIG_APP
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 
-SRCS.c += ../xxxRecord.c
-SRCS.c += ../devXxxSoft.c
+SRCS.c += ../dl_list.c
+SRCS.c += ../ether_ip.c
+SRCS.c += ../drvEtherIP.c
+SRCS.c += ../devEtherIP.c
 
-LIBOBJS += xxxRecord.o
-LIBOBJS += devXxxSoft.o
-LIBOBJS += sncExample.o
+LIBOBJS += dl_list.o
+LIBOBJS += ether_ip.o
+LIBOBJS += drvEtherIP.o
+LIBOBJS += devEtherIP.o
 
 include ../baseLIBOBJS
 
-LIBNAME = exampleLib
-INSTALLS += iocCore seq
+LIBNAME = ether_ipLib
+INSTALLS += iocCore
 
 #Note that the command line that builds the
 #library $(LIBNAME) may be HUGE (>3kB)

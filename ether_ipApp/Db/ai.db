@@ -1,7 +1,8 @@
-record(ai, "$(user):aiExample")
+record(ai, "$(user):ai_REAL")
 {
-	field(DESC, "Analog input")
-	field(INP, "$(user):calcExample.VAL  NPP NMS")
+	field(SCAN, ".1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 REAL")
 	field(EGUF, "10")
 	field(EGU, "Counts")
 	field(HOPR, "10")
@@ -15,18 +16,16 @@ record(ai, "$(user):aiExample")
 	field(LSV, "MINOR")
 	field(LLSV, "MAJOR")
 }
-record(calc, "$(user):calcExample")
+
+record(ai, "$(user):ai_DINT")
 {
-	field(DESC, "Counter")
-	field(SCAN,"1 second")
-	field(FLNK, "$(user):aiExample")
-	field(CALC, "(A<B)?(A+C):D")
-	field(INPA, "$(user):calcExample.VAL  NPP NMS")
-	field(INPB, "9")
-	field(INPC, "1")
-	field(INPD, "0")
+	field(SCAN, "I/O Intr")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 DINT S .05")
+	field(EGUF, "10")
 	field(EGU, "Counts")
 	field(HOPR, "10")
+	field(LOPR, "0")
 	field(HIHI, "8")
 	field(HIGH, "6")
 	field(LOW, "4")
@@ -36,11 +35,16 @@ record(calc, "$(user):calcExample")
 	field(LSV, "MINOR")
 	field(LLSV, "MAJOR")
 }
-record(xxx, "$(user):xxxExample")
+
+record(ai, "$(user):ai_USER")
 {
-	field(DESC, "xxx record")
+	field(SCAN, "1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 USER.REAL")
+	field(EGUF, "10")
 	field(EGU, "Counts")
 	field(HOPR, "10")
+	field(LOPR, "0")
 	field(HIHI, "8")
 	field(HIGH, "6")
 	field(LOW, "4")
@@ -50,3 +54,10 @@ record(xxx, "$(user):xxxExample")
 	field(LSV, "MINOR")
 	field(LLSV, "MAJOR")
 }
+
+
+
+
+
+
+

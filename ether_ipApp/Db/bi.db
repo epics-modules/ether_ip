@@ -1,0 +1,23 @@
+
+record(bi, "$(user):BOOL")
+{
+	field(SCAN, ".5 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 BOOL")
+	field(ZNAM, "False")
+	field(ONAM, "True")
+	field(ZSV,  "NO_ALARM")
+	field(OSV,  "MAJOR")
+}
+
+record(bi, "$(user):bi_REAL")
+{
+	field(SCAN, ".5 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 REAL")
+	field(ZNAM, "False")
+	field(ONAM, "True")
+	field(ZSV,  "NO_ALARM")
+	field(OSV,  "MAJOR")
+}
+
