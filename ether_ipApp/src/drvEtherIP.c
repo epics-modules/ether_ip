@@ -377,12 +377,13 @@ static bool complete_PLC_ScanList_TagInfos(PLC *plc)
 
 static void invalidate_PLC_tags(PLC *plc)
 {
-    ScanList *list;
-    TagInfo  *info;
+    ScanList    *list;
+    TagInfo     *info;
+    TagCallback *cb;
     
-    for (list=DLL_first(ScanList,&plc->scanlists);
+    for (list=DLL_first(ScanList, &plc->scanlists);
          list;
-         list=DLL_next(ScanList,list))
+         list=DLL_next(ScanList, list))
     {
         for (info = DLL_first(TagInfo, &list->taginfos);
              info;
@@ -391,6 +392,11 @@ static void invalidate_PLC_tags(PLC *plc)
             if (semTake(info->data_lock, EIP_SEM_TIMEOUT) == OK)
             {
                 info->valid_data_size = 0;
+                /* Call all registered callbacks for this tag
+                 * so that records can show INVALID */
+                for (cb = DLL_first(TagCallback, &info->callbacks);
+                     cb; cb=DLL_next(TagCallback, cb))
+                    (*cb->callback) (cb->arg);
                 semGive(info->data_lock);
             }
         }
@@ -625,7 +631,8 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                 data = check_CIP_ReadData_Response(
                     single_response, single_response_size, &data_size);
                 if (info->do_write)
-                {   /* Possible: Read request ... network delay ... response.
+                {   /* Possible: Read request ... network delay ... response
+                     * and record requested write during the delay.
                      * Ignore the read, next scan will write */
                     EIP_printf(8, "EIP '%s': Device support requested write "
                                "in middle of read cycle.\n", info->string_tag);
@@ -654,9 +661,10 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                         info->valid_data_size = 0;
                 }
             }
-            /* Call all registered callbacks for this tag */
-            for (cb = DLL_first(TagCallback,&info->callbacks);
-                 cb; cb=DLL_next(TagCallback,cb))
+            /* Call all registered callbacks for this tag
+             * so that records can show new value */
+            for (cb = DLL_first(TagCallback, &info->callbacks);
+                 cb; cb=DLL_next(TagCallback, cb))
                 (*cb->callback) (cb->arg);
             semGive(info->data_lock);
             ++i;
@@ -709,7 +717,7 @@ static void PLC_scan_task(PLC *plc)
                 list->max_scan_ticks = list->last_scan_ticks;
             if (list->last_scan_ticks < list->min_scan_ticks)
                 list->min_scan_ticks = list->last_scan_ticks;
-            if (transfer_ok) /* reschedule exactly */
+            if (transfer_ok) /* re-schedule exactly */
                 list->scheduled_ticktime = start_ticks+list->period_ticks;
             else
             {   /* delay: ignore extra due to error/timeout */

@@ -146,7 +146,8 @@ static bool lock_data(const dbCommon *rec)
         pvt->tag->elements <= pvt->element)
     {
         semGive(pvt->tag->data_lock);
-        if (rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
+        if (rec->tpro &&
+            rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
             printf("devEtherIP lock_data (%s): no data\n", rec->name);
         return false;
     }
@@ -268,14 +269,14 @@ static bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
 
 /* Callback, registered with drvEtherIP, for input records.
  * Used _IF_ scan="I/O Event":
- * Driver has new value, process record
+ * Driver has new value (or no value because of error), process record
  */
 static void scan_callback(void *arg)
 {
     dbCommon      *rec = (dbCommon *) arg;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     if (rec->tpro)
-        printf("EIP scan_callback ('%s')\n", rec->name);
+        printf("EIP scan_callback('%s')\n", rec->name);
     scanIoRequest(pvt->ioscanpvt);
 }
 
@@ -284,8 +285,11 @@ static void scan_callback(void *arg)
  *
  * 1) pact set -> this is the "finshed the write" callback
  * 2) pact not set -> this is the "new value" callback
- * 2a) PLC's value != record's idea of the current value
- * 2b) record is UDF, so this is the first time we get a value
+ *    Tag value is either different from current record value
+ *    or there is no current record value:
+ * 2a) disconnected; process record to set WRITE/INVALID
+ * 2b) PLC's value != record's idea of the current value
+ * 2c) record is UDF, so this is the first time we get a value
  *     from the PLC after a reboot
  * Causing process if necessary to update the record.
  * That process()/scanOnce() call should NOT cause the record to write
@@ -311,6 +315,9 @@ static void check_ao_callback(void *arg)
     dbScanLock((dbCommon *)rec);
     if (rec->pact)
     {
+        if (rec->tpro)
+            printf("EIP check_ao_callback('%s'), pact=%d\n",
+                   rec->name, rec->pact);
         (*rset->process) ((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
@@ -318,13 +325,18 @@ static void check_ao_callback(void *arg)
     /* Check if record's (R)VAL is current */
     if (!check_data((dbCommon *)rec))
     {
+        if (rec->tpro)
+            printf("EIP check_ao_callback('%s'), no data\n", rec->name);
+        (*rset->process) ((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
     if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
     {
+        if (rec->tpro)
+            printf("EIP check_ao_callback('%s') w/ real data\n", rec->name);
         if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
-            (rec->udf || rec->val != dbl))
+            (rec->udf || rec->sevr == INVALID_ALARM || rec->val != dbl))
         {
             if (rec->tpro)
                 printf("'%s': got %g from driver\n", rec->name, dbl);
@@ -347,8 +359,10 @@ static void check_ao_callback(void *arg)
     }
     else
     {
+        if (rec->tpro)
+            printf("EIP check_ao_callback('%s') w/ int. data\n", rec->name);
         if (get_CIP_DINT(pvt->tag->data, pvt->element, &dint) &&
-            (rec->udf || rec->rval != dint))
+            (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != dint))
         {
             if (rec->tpro)
                 printf("AO '%s': got %ld from driver\n",
@@ -386,7 +400,8 @@ static void check_ao_callback(void *arg)
                         rec->udf = false;
                 }
                 if (rec->tpro)
-                    printf("--> val = %g\n", rec->val);
+                    printf("'%s': updated record's value to %g\n",
+                           rec->name, rec->val);
             }
             process = true;
         }
@@ -417,11 +432,12 @@ static void check_bo_callback(void *arg)
     /* Check if record's (R)VAL is current */
     if (!check_data((dbCommon *) rec))
     {
+        (*rset->process) ((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
     if (get_bits((dbCommon *)rec, 1, &rval) &&
-        (rec->udf || rec->rval != rval))
+        (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
             printf("'%s': got %lu from driver\n", rec->name, rval);
@@ -477,11 +493,12 @@ static void check_mbbo_callback(void *arg)
     /* Check if record's (R)VAL is current */
     if (!check_data ((dbCommon *) rec))
     {
+        (*rset->process) ((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
     if (get_bits ((dbCommon *)rec, rec->nobt, &rval) &&
-        (rec->udf || rec->rval != rval))
+        (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
             printf("'%s': got %lu from driver\n", rec->name, rval);
@@ -545,11 +562,12 @@ static void check_mbbo_direct_callback(void *arg)
     /* Check if record's (R)VAL is current */
     if (!check_data((dbCommon *) rec))
     {
+        (*rset->process) ((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
     if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
-        (rec->udf || rec->rval != rval))
+        (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
             printf("'%s': got %lu from driver\n",

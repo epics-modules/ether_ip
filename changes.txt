@@ -1,5 +1,29 @@
 -*- outline -*-
 
+* 2002, 09/24 V1.8
+Better handling of disconnects and re-connects for output
+records.
+
+Input records are usually scanned. They change when
+the value of the PLC tag changes, they turn READ/INVALID
+when the tag isn't found on the PLC or when the connection
+to the PLC goes down.
+
+For output records, this was meant to be similar:
+Most of the time, the driver _reads_ the tags used in output records.
+Only when the output record is processed, the driver _writes_ the tag
+(in fact the whole array when the tag is part of an array).
+Whenever the driver notices a difference between the tag's value
+read from the PLC and the output record, it updates the record and
+processes it.
+What the driver didn't do: Update output records when the PLC
+disconnects. Before, one would have to process the output record
+(example: Enter new value on screen) and only then would the output
+record change to INVALID/WRITE.
+
+Now output records get reprocessed not only for value discrepancies
+but also for missing values (disconnect).
+
 * 2002, 08/15 V1.7
 When you omit the call to 
      drvEtherIP_define_PLC  <plc>, <IP>, <slot>
