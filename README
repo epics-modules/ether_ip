@@ -91,10 +91,10 @@ ether_ip/
    Modify iocBoot/iocether_ip for your IOC:
 6.1.  cd   iocBoot/iocether_ip and
 6.2.  edit the Makefile.
-        Set e.g. ARCH = mv2100
+        Set e.g. ARCH = ppc603
 6.3.  create a new version of the cdCommands file by typing:
-        gmake clean
-        gmake
+        make clean
+        make
 6.4.  If you want to watch the test load  on your ioc,
       set the startup "startup script" boot parameter on your ioc to
        /cs/epics/ADE/R3.13.3/support/ether_ip/<RELEASE> \
