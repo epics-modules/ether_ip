@@ -901,7 +901,6 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
                         const DBLINK *link, size_t bits)
 {
     DevicePrivate *pvt = calloc (sizeof (DevicePrivate), 1);
-
     if (! pvt)
     {
         errlogPrintf("devEtherIP (%s): cannot allocate DPVT\n", rec->name);
@@ -995,6 +994,7 @@ static long ai_read(aiRecord *rec)
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 0);
+
     if (status)
     {
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
@@ -1073,8 +1073,8 @@ static long ai_read(aiRecord *rec)
         }
         else
             ok = false;
+        semGive (pvt->tag->data_lock);
     }
-    semGive (pvt->tag->data_lock);
     
     if (ok)
         rec->udf = FALSE;

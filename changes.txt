@@ -1,8 +1,31 @@
 -*- outline -*-
 
+* 2002, 08/15 V1.7
+When you omit the call to 
+     drvEtherIP_define_PLC  <plc>, <IP>, <slot>
+the driver (actually device support) reports
+"unknown PLC xxx".
+This is an indication of a severe error in
+either the EPICS database or vxWorks startup script:
+All PLCs that you intend to use must be defined,
+the driver cannot guess to what PLC you intend to talk.
+
+Before V1.7, the driver used to run into follow-up errors
+that suspended scan tasks which included analog input records
+which tried to access that unknown PLC.
+
+From V1.7 on, those AI records will just show
+INVALID/READ severity and status but no longer
+suspend the scan task.
+
+Note: Omitting the call drvEtherIP_define_PLC
+is still highly discouraged.
+The fix is just a little nicer than the previous
+behavior.
+
 * 2002, 06/26 V1.6
 This part is not new but just a description
-of current behaviour of AI, AO records:
+of current behavior of AI, AO records:
 When attached to REAL (float) tags,
 they read & write the (floating point) VAL fields.
 For INT, DINT, ... tags they use the RVAL fields.
