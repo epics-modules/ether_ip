@@ -708,9 +708,7 @@ static void PLC_scan_task(PLC *plc)
     eip_bool          transfer_ok, reset_next_schedule;
     
     quantum = epicsThreadSleepQuantum();
-    timeout = (double)plc->connection.millisec_timeout / 1000.0;
-    if (timeout < EIP_MIN_CONN_TIMEOUT)
-        timeout = EIP_MIN_CONN_TIMEOUT;    
+    timeout = (double)ETHERIP_TIMEOUT/1000.0;
   scan_loop: /* --------- The Scan Loop for one PLC -------- */
     if (epicsMutexLock(plc->lock) != epicsMutexLockOK)
     {

@@ -7,6 +7,10 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2005, 01/28  V2.9
+Driver's delay in disconnecting/reconnecting could be almost
+zero in some cases. Now fixed to ~5 secs.
+
 * 2004, 10/06  V2.8
 The "-w" flag of ether_ip_test didn't pack the REAL value,
 so it didn't work on all CPU types.
