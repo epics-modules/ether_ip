@@ -9,13 +9,33 @@
 
 cd appbin
 ld < iocCore
-ld < seq
-ld < exampleLib
+ld < ether_ipLib
+# Initialize EtherIP driver, define PLCs
+# -------------------------------------
+drvEtherIP_init
+hostAdd "snsioc1", "128.165.160.146"
+drvEtherIP_define_PLC "plc1", "snsioc1"
 
-cd startup
-dbLoadDatabase("../../dbd/exampleApp.dbd")
-dbLoadRecords("../../db/dbExample1.db","user=wright")
-dbLoadRecords("../../db/dbExample2.db")
+EIP_verbosity=4
+
+cd top
+dbLoadDatabase("./dbd/ether_ip_test.dbd")
+dbLoadRecords("./db/ramp.db")
+dbLoadRecords("./db/stat.db","user=kay,testtag=BOOLs")
+dbLoadRecords("./db/ai.db","user=kay")
+dbLoadRecords("./db/ana.db","user=kay")
+dbLoadRecords("./db/bi.db","user=kay")
+dbLoadRecords("./db/bin.db","user=kay")
+dbLoadRecords("./db/mbbi.db","user=kay")
+dbLoadRecords("./db/ao.db","user=kay")
+dbLoadRecords("./db/bo.db","user=kay")
+dbLoadRecords("./db/mbbo.db","user=kay")
+
+# Time syncronization:
+# beowolf: 128.165.160.128
+putenv("EPICS_TS_NTP_INET=128.165.160.128")
+# Default master port: 18233
+TSconfigure (1, 10, 0, 18299, 0, 0, 0)
 
 iocInit
-seq &snctest
+
