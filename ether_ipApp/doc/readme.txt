@@ -5,7 +5,7 @@ EtherNet/IP, originally called "ControlNet over Ethernet"
 as defined in the ControlNet Spec, Errata 2, is the protocol
 used by Allen-Bradley ControlLogix PLCs.
 
-This software is both a commandline test tool for Win32/Unix
+This software is both a command-line test tool for Win32/Unix
 and a driver/device for EPICS IOCs.
 
 * Compilation
@@ -134,7 +134,7 @@ record.
 The driver still tries to read the tag from the PLC in case it is
 changed from another source (another IOC, PanelView, ...). But the
 driver cannot extract an update rate from the SCAN field, so the "S"
-scan flag has to be used as described in the the INP/OUT link section.
+scan flag has to be used as described in the INP/OUT link section.
 
 *** SCAN I/O Intr
 Input records can be configured to use
@@ -251,7 +251,7 @@ notices that it's already time to process the list again. Since all
 delays are specified in vxWorks ticks, defaulting to 60 ticks per
 second, this scheduling is rather coarse. With all the other task
 scheduling going on and ethernet delays, PLC_TASK_SLOW will increment
-quite often without a noticable impact on the data (no timeouts, no
+quite often without a noticeable impact on the data (no time-outs, no
 old data).
 
 * ao, Analog Output Record
@@ -326,7 +326,7 @@ except that the addressed bit is the first bit.
 When using array elements, the same bit-addressing applies. As a
 result, the "B <blit>" flag should be used for non-BOOL arrays.
 
-Note: In the current implementation, the mbbiX records can read accross array
+Note: In the current implementation, the mbbiX records can read across array
 elements of DINT arrays. This record reads element 4, bit 31 and
 element 5, bit 1:
 	field(INP, "@$(PLC) DINTs[4] B 31")
@@ -347,9 +347,8 @@ modifies an entry, the driver will write the array (0..N) in the next
 cycle since it is marked as changed.
 
 As a result, it is advisable to keep "read" and "write" arrays
-seperate, because otherwise elements meant for "read" will be written
+separate, because otherwise elements meant for "read" will be written
 whenever one or more other elements are changed by output records.
-
 
 * Debugging
 On the IOC vxWorks console (or a telnet connection to the IOC), the
