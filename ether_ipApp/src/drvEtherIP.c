@@ -300,7 +300,7 @@ static void free_PLC (PLC *plc)
  * Returns OK if any TagInfo in the scanlists could be filled,
  * so we believe that scanning this PLC makes some sense.
  */
-static bool complete_PLC_ScanList_TagInfos (PLC *plc)
+static bool complete_PLC_ScanList_TagInfos(PLC *plc)
 {
     ScanList       *list;
     TagInfo        *info;
@@ -316,11 +316,11 @@ static bool complete_PLC_ScanList_TagInfos (PLC *plc)
         {
             if (info->cip_r_request_size || info->cip_r_response_size)
                 continue;           /* don't look twice */
-            data = EIP_read_tag (&plc->connection,
-                                 info->tag, info->elements,
-                                 NULL /* data_size */,
-                                 &info->cip_r_request_size,
-                                 &info->cip_r_response_size);
+            data = EIP_read_tag(&plc->connection,
+                                info->tag, info->elements,
+                                NULL /* data_size */,
+                                &info->cip_r_request_size,
+                                &info->cip_r_response_size);
             if (data)
             {
                 any_ok = true;
@@ -521,21 +521,24 @@ static bool process_ScanList (EIPConnection *c, ScanList *scanlist)
             }
             ++i; /* increment here, not in for() -> skip empty tags */
         } /* for i=0..count */
-        transfer_ticktime = tickGet ();
-        if (!EIP_send_connection_buffer (c))
+        transfer_ticktime = tickGet();
+        if (!EIP_send_connection_buffer(c))
             return false;
         /* read & disassemble response */
-        if (!EIP_read_connection_buffer (c))
+        if (!EIP_read_connection_buffer(c))
         {
-            EIP_printf (2, "EIP process_ScanList: No response\n");
+            EIP_printf(2, "EIP process_ScanList: No response\n");
             return false;
         }
-        transfer_ticktime = tickGet () - transfer_ticktime;
-
-        response = EIP_unpack_RRData (c->buffer, &rr_data);
-        if (! check_CIP_MultiRequest_Response (response))
+        transfer_ticktime = tickGet() - transfer_ticktime;
+        
+        response = EIP_unpack_RRData(c->buffer, &rr_data);
+        if (! check_CIP_MultiRequest_Response(response))
         {
-            EIP_printf (2, "EIP process_ScanList: Error in response\n");
+            EIP_printf(2, "EIP process_ScanList: Error in response\n");
+            if (EIP_verbosity >= 2)
+                dump_CIP_MultiRequest_Response_Error(response,
+                                                     rr_data.data_length);
             return false;
         }
         for (info=info_position, i=0; i<count; info=DLL_next(TagInfo, info))
@@ -544,8 +547,8 @@ static bool process_ScanList (EIPConnection *c, ScanList *scanlist)
                 continue;
             info->transfer_ticktime = transfer_ticktime;
             single_response =
-                get_CIP_MultiRequest_Response (response, rr_data.data_length,
-                                               i, &single_response_size);
+                get_CIP_MultiRequest_Response(response, rr_data.data_length,
+                                              i, &single_response_size);
             if (! single_response)
                 return false;
             if (info->is_writing)

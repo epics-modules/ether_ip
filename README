@@ -19,6 +19,12 @@ What you have to do is
 
 The directory structure and Makefiles were created by 
 makeBaseApp.pl from EPICS R3.13.3 base.
+Most important:
+Choose (or override the base config) for the target architecture
+in config/CONFIG.
+
+In iocBoot/iocether_ip/Makefile, select the ARCH for the test IOC
+(if you want to use that test setup).
 
 * I. ether_ip directory structure:
 ether_ip/

@@ -16,7 +16,7 @@ drvEtherIP_init
 hostAdd "snsioc1", "128.165.160.146"
 drvEtherIP_define_PLC "plc1", "snsioc1"
 
-EIP_verbosity=1
+EIP_verbosity=10
 
 cd top
 dbLoadDatabase("./dbd/ether_ip_test.dbd")

@@ -260,8 +260,8 @@ static size_t CIA_path_size(CN_Classes cls, CN_USINT instance, CN_USINT attr)
 
 /* Fill path buffer with path, return following location */
 static CN_USINT *make_CIA_path(CN_USINT *path,
-                                CN_Classes cls, CN_USINT instance,
-                                CN_USINT attr)
+                               CN_Classes cls, CN_USINT instance,
+                               CN_USINT attr)
 {
     *path++ = 0x20;
     *path++ = cls;
@@ -1216,6 +1216,42 @@ bool check_CIP_MultiRequest_Response (const CN_USINT *response)
     return service == (S_CIP_MultiRequest|0x80)  &&  general_status == 0;
 }
 
+void dump_CIP_MultiRequest_Response_Error(const CN_USINT *response,
+                                          size_t response_size)
+{
+    CN_USINT service        = response[0];
+    CN_USINT general_status = response[2];
+    CN_USINT count, i;
+    const CN_USINT *reply;
+    size_t reply_size;
+    
+    if (service != (S_CIP_MultiRequest|0x80))
+    {
+        EIP_printf(0, "CIP_MultiRequest reply: invalid service 0x%02X\n",
+                   service);
+        return;
+    }
+    EIP_printf(0, "CIP_MultiRequest reply: general status 0x%02X (%s)\n",
+               general_status,
+               CN_error_text(general_status));
+    count = response[4];
+    EIP_printf(0, "   %d subreplies:\n", count);
+    for (i=0; i<count; ++i)
+    {
+        reply = get_CIP_MultiRequest_Response (response,
+                                               response_size,
+                                               i,
+                                               &reply_size);
+        if (! reply)
+            EIP_printf(0, "   %d) empty\n", i);
+        else
+            EIP_printf(0, "   %d) service 0x%02X (%s), status 0x%02X (%s)\n",
+                       i,
+                       reply[0], service_name(reply[0]),
+                       reply[2], CN_error_text(reply[2]));
+    }
+}
+    
 /* Pick a single reply out of the muliple reply */
 const CN_USINT *get_CIP_MultiRequest_Response (const CN_USINT *response,
                                                size_t response_size,
@@ -2251,13 +2287,13 @@ static bool make_CM_Forward_Close (MR_Request *request, const EIPConnectionParam
  * report data & data_length
  * as well as sizes of CIP_ReadData request/response
  */
-const CN_USINT *EIP_read_tag (EIPConnection *c,
-                              const ParsedTag *tag, size_t elements,
-                              size_t *data_size,
-                              size_t *request_size, size_t *response_size)
+const CN_USINT *EIP_read_tag(EIPConnection *c,
+                             const ParsedTag *tag, size_t elements,
+                             size_t *data_size,
+                             size_t *request_size, size_t *response_size)
 {
-    size_t      msg_size = CIP_ReadData_size (tag);
-    size_t      send_size = CM_Unconnected_Send_size (msg_size);
+    size_t      msg_size = CIP_ReadData_size(tag);
+    size_t      send_size = CM_Unconnected_Send_size(msg_size);
     CN_USINT    *send_request, *msg_request;
     const CN_USINT *response, *data;
     EncapsulationRRData rr_data;
@@ -2268,46 +2304,46 @@ const CN_USINT *EIP_read_tag (EIPConnection *c,
      */
     if (request_size)
         *request_size = msg_size;
-    send_request = EIP_make_SendRRData (c, send_size);
+    send_request = EIP_make_SendRRData(c, send_size);
     if (! send_request)
         return 0;
-    msg_request = make_CM_Unconnected_Send (send_request, msg_size);
+    msg_request = make_CM_Unconnected_Send(send_request, msg_size);
     if (! msg_request)
         return 0;
-    if (! make_CIP_ReadData (msg_request, tag, elements))
+    if (! make_CIP_ReadData(msg_request, tag, elements))
         return 0;
     if (EIP_verbosity >= 9)
     {
-        EIP_printf (10, "EIP read tag ");
-        EIP_dump_ParsedTag (tag);
+        EIP_printf(10, "EIP read tag ");
+        EIP_dump_ParsedTag(tag);
         if (EIP_verbosity >= 10)
-            dump_raw_CIP_ReadDataRequest (msg_request);
+            dump_raw_CIP_ReadDataRequest(msg_request);
     }
-    if (! EIP_send_connection_buffer (c))
+    if (! EIP_send_connection_buffer(c))
     {
-        EIP_printf (1, "EIP_read_tag: send failed\n");
+        EIP_printf(1, "EIP_read_tag: send failed\n");
         return 0;
     }
-    if (! EIP_read_connection_buffer (c))
+    if (! EIP_read_connection_buffer(c))
     {
-        EIP_printf (1, "EIP_read_tag: No response\n");
+        EIP_printf(1, "EIP_read_tag: No response\n");
         return 0;
     }
 
-    response = EIP_unpack_RRData ((CN_USINT *)c->buffer, &rr_data);
+    response = EIP_unpack_RRData((CN_USINT *)c->buffer, &rr_data);
     if (EIP_verbosity >= 10)
-        dump_raw_MR_Response (response, rr_data.data_length);
-    data = check_CIP_ReadData_Response (response, rr_data.data_length,
-                                        data_size);
+        dump_raw_MR_Response(response, rr_data.data_length);
+    data = check_CIP_ReadData_Response(response, rr_data.data_length,
+                                       data_size);
     if (response_size)
         *response_size = rr_data.data_length;
 
     if (! data)
     {
-        if (EIP_verbosity >= 2)
+        if (EIP_verbosity >= 1)
         {
-            EIP_printf (2, "EIP_read_tag: Failed tag: ");
-            EIP_dump_ParsedTag (tag);
+            EIP_printf(1, "EIP_read_tag: Failed tag: ");
+            EIP_dump_ParsedTag(tag);
         }
         return 0;
     }
@@ -2318,56 +2354,56 @@ const CN_USINT *EIP_read_tag (EIPConnection *c,
 /* Write a single tag in a single CIP_ReadData request,
  * report sizes of CIP_WriteData request/response
  */
-bool EIP_write_tag (EIPConnection *c, const ParsedTag *tag,
-                    CIP_Type type, size_t elements, CN_USINT *data,
-                    size_t *request_size,
-                    size_t *response_size)
+bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
+                   CIP_Type type, size_t elements, CN_USINT *data,
+                   size_t *request_size,
+                   size_t *response_size)
 {
-    size_t      data_size = CIP_Type_size (type) * elements;
-    size_t      msg_size  = CIP_WriteData_size (tag, data_size);
-    size_t      send_size = CM_Unconnected_Send_size (msg_size);
+    size_t      data_size = CIP_Type_size(type) * elements;
+    size_t      msg_size  = CIP_WriteData_size(tag, data_size);
+    size_t      send_size = CM_Unconnected_Send_size(msg_size);
     CN_USINT    *send_request, *msg_request;
     const CN_USINT *response;
     EncapsulationRRData rr_data;
 
     if (request_size)
         *request_size = msg_size;
-    send_request = EIP_make_SendRRData (c, send_size);
+    send_request = EIP_make_SendRRData(c, send_size);
     if (! send_request)
         return 0;
-    msg_request = make_CM_Unconnected_Send (send_request, msg_size);
+    msg_request = make_CM_Unconnected_Send(send_request, msg_size);
     if (! msg_request)
         return 0;
-    if (! make_CIP_WriteData (msg_request, tag, type, elements, data))
+    if (! make_CIP_WriteData(msg_request, tag, type, elements, data))
         return 0;
     if (EIP_verbosity >= 9)
     {
-        EIP_printf (10, "EIP write tag ");
-        EIP_dump_ParsedTag (tag);
+        EIP_printf(10, "EIP write tag ");
+        EIP_dump_ParsedTag(tag);
         if (EIP_verbosity >= 10)
-            dump_raw_MR_Request (msg_request);
+            dump_raw_MR_Request(msg_request);
     }
-    if (! EIP_send_connection_buffer (c))
+    if (! EIP_send_connection_buffer(c))
     {
-        EIP_printf (1, "EIP_write_tag: send failed\n");
+        EIP_printf(1, "EIP_write_tag: send failed\n");
         return 0;
     }
-    if (! EIP_read_connection_buffer (c))
+    if (! EIP_read_connection_buffer(c))
     {
-        EIP_printf (1, "EIP_write_tag: No response\n");
+        EIP_printf(1, "EIP_write_tag: No response\n");
         return 0;
     }
 
-    response = EIP_unpack_RRData ((CN_USINT *)c->buffer, &rr_data);
+    response = EIP_unpack_RRData((CN_USINT *)c->buffer, &rr_data);
     if (EIP_verbosity >= 10)
-        dump_raw_MR_Response (response, rr_data.data_length);
+        dump_raw_MR_Response(response, rr_data.data_length);
 
-    if (!check_CIP_WriteData_Response (response, rr_data.data_length))
+    if (!check_CIP_WriteData_Response(response, rr_data.data_length))
     {
-        if (EIP_verbosity >= 2)
+        if (EIP_verbosity >= 1)
         {
-            EIP_printf (2, "EIP_write_tag: Failed tag: ");
-            EIP_dump_ParsedTag (tag);
+            EIP_printf(1, "EIP_write_tag: Failed tag: ");
+            EIP_dump_ParsedTag(tag);
         }
         return 0;
     }

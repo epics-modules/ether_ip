@@ -364,6 +364,8 @@ CN_USINT *CIP_MultiRequest_item (CN_USINT *request,
 
 
 bool check_CIP_MultiRequest_Response (const CN_USINT *response);
+void dump_CIP_MultiRequest_Response_Error(const CN_USINT *response,
+                                          size_t response_size);
 const CN_USINT *get_CIP_MultiRequest_Response (const CN_USINT *response,
                                                size_t response_size,
                                                size_t reply_no,
