@@ -33,3 +33,4 @@ example_registerRecordDeviceDriver(pdbbase)
 dbLoadRecords("../../db/test.db",    "PLC=plc1,IOC=test")
 
 iocInit()
+

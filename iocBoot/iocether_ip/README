@@ -1,10 +1,12 @@
-To run the example application on Linux,
-check the startup file st.cmd.host
-to check that the IP of the PLC is correct
-and that the loaded database has any resemblance
-of what's on the PLC.
-Then do something like this:
+A bit confusing with all the different versions.
 
-export LD_LIBRARY_PATH=../../lib/linux-x86:$LD_LIBRARY_PATH;
+Linux Host, R3.14.4 base:
  ../../bin/linux-x86/example st.cmd.host
+
+You might need to set this:
+export LD_LIBRARY_PATH=../../lib/linux-x86:$LD_LIBRARY_PATH;
+
+st.cmd.3_14 is meant for a vxWorks IOC under R3.14
+
+st.cmd is meant for vxWorks IOCs under 3.13.7 
 
