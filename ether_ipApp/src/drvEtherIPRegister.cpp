@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include "iocsh.h"
+#include "epicsExport.h"
 #include "drvEtherIP.h"
 
 #ifdef __cplusplus
@@ -96,10 +97,6 @@ static void drvEtherIP_read_tagCall(const iocshArgBuf * args) {
 }
 
 void drvEtherIP_Register() {
-	static int firstTime = 1;
-	if  (!firstTime)
-	    return;
-	firstTime = 0;
 	iocshRegister(&drvEtherIP_default_rateDef, drvEtherIP_default_rateCall);
 	iocshRegister(&EIP_verbosityDef        , EIP_verbosityCall);
 	iocshRegister(&EIP_use_mem_string_fileDef, EIP_use_mem_string_fileCall);
@@ -115,10 +112,5 @@ void drvEtherIP_Register() {
 #ifdef __cplusplus
 }
 #endif	/* __cplusplus */
-class drvEtherIP_CommonInit {
-    public:
-    drvEtherIP_CommonInit() {
-	drvEtherIP_Register();
-    }
-};
-static drvEtherIP_CommonInit drvEtherIP_CommonInitObj;
+
+epicsExportRegistrar(drvEtherIP_Register);

@@ -423,7 +423,7 @@ int main (int argc, const char *argv[])
 #endif
                 duration = (double)(end - start);
                 printf("%d test runs, %g seconds -> %f ms / tag\n",
-                       test_runs,
+                       (unsigned)test_runs,
                        duration,
                        duration / test_runs * 1000.0);
             }

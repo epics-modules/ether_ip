@@ -7,6 +7,13 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2004, 8/27  V2.7
+Changes from Stephanie Allison:
+Replaced the registration via a static class instance's
+constructor with a DBD file registrar() entry.
+Removed some compiler warnings from usage of "size_t"
+in printf formats.
+
 * 2004, 8/3  V2.6
 The SNS was using a patched versions of 2.5 that included
 error messages for the case that the clock jumps:

@@ -96,11 +96,11 @@ static void dump_TagInfo(const TagInfo *info, int level)
                (unsigned int)info->scanlist);
         EIP_copy_ParsedTag(buffer, info->tag);
         printf("  compiled tag        : '%s'\n", buffer);
-        printf("  elements            : %d\n", info->elements);
-        printf("  cip_r_request_size  : %d\n", info->cip_r_request_size);
-        printf("  cip_r_response_size : %d\n", info->cip_r_response_size);
-        printf("  cip_w_request_size  : %d\n", info->cip_w_request_size);
-        printf("  cip_w_response_size : %d\n", info->cip_w_response_size);
+        printf("  elements            : %u\n", (unsigned)info->elements);
+        printf("  cip_r_request_size  : %u\n", (unsigned)info->cip_r_request_size);
+        printf("  cip_r_response_size : %u\n", (unsigned)info->cip_r_response_size);
+        printf("  cip_w_request_size  : %u\n", (unsigned)info->cip_w_request_size);
+        printf("  cip_w_response_size : %u\n", (unsigned)info->cip_w_response_size);
         printf("  data_lock ID        : 0x%X\n",
                (unsigned int) info->data_lock);
     }
@@ -108,8 +108,8 @@ static void dump_TagInfo(const TagInfo *info, int level)
     {
         if (level > 3)
         {
-            printf("  data_size (buffer)  : %d\n",  info->data_size);
-            printf("  valid_data_size     : %d\n",  info->valid_data_size);
+            printf("  data_size (buffer)  : %u\n",  (unsigned)info->data_size);
+            printf("  valid_data_size     : %u\n",  (unsigned)info->valid_data_size);
             printf("  do_write            : %s\n",
                    (info->do_write ? "yes" : "no"));
             printf("  is_writing          : %s\n",
@@ -196,8 +196,8 @@ static void dump_ScanList(const ScanList *list, int level)
     printf("  Last scan     : %s\n", tsString);
     if (level > 4)
     {
-        printf("  Errors        : %u\n", list->list_errors);
-        printf("  Schedule Errs : %u\n", list->sched_errors);
+        printf("  Errors        : %u\n", (unsigned)list->list_errors);
+        printf("  Schedule Errs : %u\n", (unsigned)list->sched_errors);
         epicsTimeToStrftime(tsString, sizeof(tsString),
                             "%Y/%m/%d %H:%M:%S.%04f", &list->scheduled_time);
         printf("  Next scan     : %s\n", tsString);
@@ -957,8 +957,8 @@ long drvEtherIP_report(int level)
             printf("  Interface serial      : 0x%X\n",
                    (unsigned)ident->serial_number);
             
-            printf("  scan thread slow count: %u\n", plc->slow_scans);
-            printf("  connection errors     : %u\n", plc->plc_errors);
+            printf("  scan thread slow count: %u\n", (unsigned)plc->slow_scans);
+            printf("  connection errors     : %u\n", (unsigned)plc->plc_errors);
         }
         if (level > 2)
         {

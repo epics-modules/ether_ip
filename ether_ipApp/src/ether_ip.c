@@ -390,7 +390,8 @@ void EIP_copy_ParsedTag(char *buffer, const ParsedTag *tag)
                 buffer += len;
                 break;
             case te_element:
-                buffer += sprintf(buffer, "[%d]", tag->value.element);
+                buffer += sprintf(buffer, "[%u]",
+                                  (unsigned int)tag->value.element);
                 break;
         }
         tag = tag->next;
@@ -1532,10 +1533,10 @@ void EIP_dump_connection (const EIPConnection *c)
 {
     printf ("EIPConnection:\n");
     printf ("    SOCKET          : %d\n", c->sock);
-    printf ("    buffer_limit    : %d\n", c->transfer_buffer_limit);
-    printf ("    millisec_timeout: %d\n", c->millisec_timeout);
+    printf ("    buffer_limit    : %u\n", (unsigned int)c->transfer_buffer_limit);
+    printf ("    millisec_timeout: %u\n", (unsigned int)c->millisec_timeout);
     printf ("    CN_UDINT session: 0x%08lX\n", c->session);
-    printf ("    buffer size     : %d\n", c->size);
+    printf ("    buffer size     : %u\n", (unsigned int)c->size);
     printf ("    buffer location : 0x%08lX\n", (unsigned long)c->buffer);
 }
 

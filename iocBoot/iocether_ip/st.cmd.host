@@ -1,16 +1,18 @@
 #! ../../bin/linux-x86/example
-# 3.14 example startup file for a Host (tried: linux-x86) -*- shell-script -*-
+# 3.14 example startup file for a Host  -*- shell-script -*-
+
+# Load dbd, register the drvEtherIP.. commands
+dbLoadDatabase("../../dbd/example.dbd")
+example_registerRecordDeviceDriver(pdbbase)
 
 # Initialize EtherIP driver, define PLCs
-# -------------------------------------
 drvEtherIP_init()
 
 # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
 # The driver/device uses the <name> to indentify the PLC.
 # 
 # <ip_addr> can be an IP address in dot-notation
-# or a name that the IOC knows about (defined via hostAdd,
-# see step 4).
+# or a name about which the IOC knows.
 # The IP address gets us to the ENET interface.
 # To get to the PLC itself, we need the slot that
 # it resides in. The first, left-most slot in the
@@ -18,8 +20,6 @@ drvEtherIP_init()
 drvEtherIP_define_PLC("plc1", "192.168.0.50", 0)
 EIP_verbosity(7)
 
-dbLoadDatabase("../../dbd/example.dbd")
-example_registerRecordDeviceDriver(pdbbase)
 #dbLoadRecords("db/ramp.db",    "IOC=snsioc4")
 #dbLoadRecords("db/eip_stat.db","PLC=plc1,IOC=test,TAG=REAL")
 #dbLoadRecords("db/ai.db",      "PLC=plc1,IOC=test")
