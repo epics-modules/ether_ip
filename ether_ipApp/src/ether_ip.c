@@ -328,18 +328,24 @@ static void append_tag(ParsedTag **tl, ParsedTag *node)
 }
 
 /* Turn tag string into ParsedTag-list */
+#undef DEBUG_PARSE
 ParsedTag *EIP_parse_tag(const char *tag)
 {
     ParsedTag *tl = 0;  /* Tag list, initially empty */
     ParsedTag *node;
     size_t len;
 
+#ifdef DEBUG_PARSE
+    printf("Parsing '%s'\n", tag);
+#endif
     while (tag)
     {
         len = strcspn(tag, ".[");
+#ifdef DEBUG_PARSE
+        printf("- Sub-tag of len %d\n", (int)len);
+#endif
         if (len <= 0)
             break;
-
         node = calloc(sizeof(ParsedTag), 1);
         if (! node)
             return 0;
@@ -347,7 +353,9 @@ ParsedTag *EIP_parse_tag(const char *tag)
         if (! EIP_strdup(&node->value.name, tag, len))
             return 0;
         append_tag(&tl, node);
-
+#ifdef DEBUG_PARSE
+    printf("  '%s'\n", node->value.name);
+#endif
         switch (tag[len])
         {
         case '\0':
@@ -363,10 +371,15 @@ ParsedTag *EIP_parse_tag(const char *tag)
             node->value.element = atol(tag+len+1);
             append_tag(&tl, node);
             tag = strchr(tag+len+1, ']');
-            if (tag)
-                ++tag;
-            else
+            if (!tag) /* Bad, no closing ']' */
                 return 0;
+            ++tag;
+            if (*tag == '.') /* Handle '.' in xxxx[3].subelement */
+                ++tag;
+#ifdef DEBUG_PARSE
+            printf("  array element %d, left: '%s'\n",
+                   (int)node->value.element, tag);
+#endif
             break;
         }
     }

@@ -1,118 +1,59 @@
 (*********************************************
 
   Import-Export
-  Version   := RSLogix 5000-8.02.00.00
-  Owner     := Kay, LANL
-  Exported  := Tue Oct 29 15:57:28 2002
+  Version   := RSLogix 5000 v12.02
+  Owner     := kasemir, ORNL
+  Exported  := Wed Oct 06 11:00:39 2004
 **********************************************)
-IE_VER := 1.1;
+IE_VER := 2.3;
 
 CONTROLLER EtherIP_Test (ProcessorType := 1756-L1,
-                         Major := 8,
+                         Major := 12,
                          TimeSlice := 10,
-                         CommPath := TCP-1\128.165.160.146\Backplane\0,
+                         CommPath := AB_DF1-1\1,
                          RedundancyEnabled := 0,
                          KeepTestEditsOnSwitchOver := 0,
-                         DataTablePadPercentage := 50)
+                         DataTablePadPercentage := 50,
+                         SecurityCode := 0,
+                         SFCExecutionControl := CurrentActive,
+                         SFCRestartPosition := MostRecent,
+                         SFCLastScan := DontScan)
+		DATATYPE Nested (FamilyType := NoFamily)
+			BOOL BOOLs[32];
+			REAL REALs[2];
+			TestStruct STRUCTS[5] (Radix := Float);
+		END_DATATYPE
+
+		DATATYPE TestStruct (FamilyType := NoFamily)
+			INT INT;
+			REAL REAL;
+			DINT DINT;
+			SINT ZZZZZZZZZZTestStruct3 (Hidden := 1);
+			BIT BOOL ZZZZZZZZZZTestStruct3 : 0;
+		END_DATATYPE
+
 	MODULE Local (Parent := Local,
 	              CatalogNumber := 1756-L1,
-	              Major := 8,
+	              Major := 12,
 	              Minor := 1,
 	              PortLabel := RxBACKPLANE,
 	              ChassisSize := 7,
 	              Slot := 0,
 	              Mode := 2#0000_0000_0000_0001,
-	              CompatibleModule := 2#0000_0000_0000_0000_0000_0000_0000_0000,
+	              CompatibleModule := 0,
 	              KeyMask := 2#0000_0000_0001_1111)
 	END_MODULE
 
-	MODULE $NoName (Parent := Local,
-	            CatalogNumber := 1756-IB32,
-	            Major := 2,
-	            Minor := 1,
-	            PortLabel := RxBACKPLANE,
-	            Slot := 4,
-	            CommMethod := 536870913,
-	            ConfigMethod := 8388609,
-	            Mode := 2#0000_0000_0000_0000,
-	            CompatibleModule := 2#0000_0000_0000_0000_0000_0000_1000_0000,
-	            KeyMask := 2#0000_0000_0001_1111)
-			ConfigData  := [28,16,1,0,0,0,1,1,1,1,1,1,1,1,-1,-1];
-			CONNECTION StandardInput (Rate := 5000,
-			                          EventID := 0)
-					InputData  := [0,0];
-					InputForceData := [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-			END_CONNECTION
-
-	END_MODULE
-
-	MODULE $NoName (Parent := Local,
-	            CatalogNumber := 1756-IF8,
-	            Major := 1,
-	            Minor := 1,
-	            PortLabel := RxBACKPLANE,
-	            Slot := 1,
-	            CommMethod := 536870913,
-	            ConfigMethod := 8388609,
-	            Mode := 2#0000_0000_0000_0000,
-	            CompatibleModule := 2#0000_0000_0000_0000_0000_0000_1000_0000,
-	            KeyMask := 2#0000_0000_0001_1111)
-			ConfigData  := [200,36,1,2,100,[0,0,0,0.0000000e+000,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001
-		,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001,0.0000000e+000,0.0000000e+000
-		],[0,0,0,0.0000000e+000,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001,-1.0000000e+001
-		,1.0000000e+001,-1.0000000e+001,1.0000000e+001,0.0000000e+000,0.0000000e+000],[0,0,0,0.0000000e+000
-		,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001
-		,-1.0000000e+001,1.0000000e+001,0.0000000e+000,0.0000000e+000],[0,0,0,0.0000000e+000,-1.0000000e+001
-		,1.0000000e+001,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001,-1.0000000e+001
-		,1.0000000e+001,0.0000000e+000,0.0000000e+000]];
-			CONNECTION FloatDifferential (Rate := 100000,
-			                              EventID := 0)
-					InputData  := [15,-32768,37,37,37,37,1.0250000e+001,1.0250000e+001,1.0250000e+001,1.0250000e+001,19891];
-					InputForceData := [15,0,0,-128,37,37,37,37,0,0,36,65,0,0,36,65,0,0,36,65,0,0,36,65,23,78,36,65,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-		,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-			END_CONNECTION
-
-	END_MODULE
-
 	MODULE ENET (Parent := Local,
-	             CatalogNumber := 1756-ENET/A,
-	             Major := 1,
+	             CatalogNumber := 1756-ENET/B,
+	             Major := 2,
 	             Minor := 1,
 	             PortLabel := RxBACKPLANE,
-	             Slot := 3,
-	             NodeAddress := <Unspecified>,
+	             Slot := 1,
+	             NodeAddress := 172.31.72.94,
 	             Mode := 2#0000_0000_0000_0000,
-	             CompatibleModule := 2#0000_0000_0000_0000_0000_0000_1000_0000,
-	             KeyMask := 2#0000_0000_0001_1111)
-	END_MODULE
-
-	MODULE $NoName (Parent := Local,
-	            CatalogNumber := 1756-OF4,
-	            Major := 1,
-	            Minor := 1,
-	            PortLabel := RxBACKPLANE,
-	            Slot := 2,
-	            CommMethod := 536870913,
-	            ConfigMethod := 8388609,
-	            Mode := 2#0000_0000_0000_0000,
-	            CompatibleModule := 2#0000_0000_0000_0000_0000_0000_1000_0000,
-	            KeyMask := 2#0000_0000_0001_1111)
-			ConfigData  := [184,36,1,0,0,[0,0,0.0000000e+000,0.0000000e+000,0.0000000e+000,-1.0000000e+001,1.0000000e+001
-		,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001,0.0000000e+000],[0,0,0.0000000e+000
-		,0.0000000e+000,0.0000000e+000,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001
-		,-1.0000000e+001,1.0000000e+001,0.0000000e+000],[0,0,0.0000000e+000,0.0000000e+000,0.0000000e+000
-		,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001
-		,0.0000000e+000],[0,0,0.0000000e+000,0.0000000e+000,0.0000000e+000,-1.0000000e+001,1.0000000e+001
-		,-1.0000000e+001,1.0000000e+001,-1.0000000e+001,1.0000000e+001,0.0000000e+000]];
-			CONNECTION Float (Rate := 12000,
-			                  EventID := 0)
-					InputData  := [0,0,0,1,0,0,0.0000000e+000,1.0000000e+001,5.0000000e+000,0.0000000e+000,26550];
-					InputForceData := [0,0,0,0,0,1,0,0,0,0,0,0,0,0,32,65,0,0,0,0,0,0,0,0,-124,104,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-		,0,0,0,0,0,0,0,0,0,0];
-					OutputData  := [0.0000000e+000,1.5000000e+001,0.0000000e+000,0.0000000e+000];
-					OutputForceData := [0,0,0,0,0,0,112,65,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-			END_CONNECTION
-
+	             CompatibleModule := 0,
+	             KeyMask := 2#0000_0000_0000_0000)
 	END_MODULE
 
 	TAG
@@ -134,39 +75,44 @@ CONTROLLER EtherIP_Test (ProcessorType := 1756-L1,
 		DINT : DINT (RADIX := Decimal) := 0;
 		DINTS : DINT[40] (RADIX := Decimal) := [1,2,15,4,5,6,7,8,9,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 		INTs : INT[40] (RADIX := Decimal) := [0,0,-32768,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-		REAL : REAL (RADIX := Float) := 0.0000000e+000;
-		REALs : REAL[40] (RADIX := Float) := [1.0000000e+000,2.0000000e+000,5.0000000e+001,4.0000000e+000,5.0000000e+000,6.0000000e+000
-				,7.0000000e+000,8.0000000e+000,9.0000000e+000,1.0000000e+001,0.0000000e+000,0.0000000e+000
-				,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000
-				,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000
-				,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000
-				,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000,0.0000000e+000
-				,0.0000000e+000,0.0000000e+000,0.0000000e+000,3.9000000e+001];
+		NESTED : Nested  := [[2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0,2#0
+				,2#0,2#0,2#0,2#0,2#0],[0.00000000e+000,0.00000000e+000],[[0,0.00000000e+000,0,0],[0,4.20000000e+001,0,0
+				],[0,0.00000000e+000,0,0],[0,0.00000000e+000,0,0],[0,0.00000000e+000,0,0]]];
+		REAL : REAL (RADIX := Float) := 3.14000010e+000;
+		REALs : REAL[40] (RADIX := Float) := [1.00000000e+000,2.00000000e+000,5.00000000e+001,4.00000000e+000,5.00000000e+000,6.00000000e+000
+				,7.00000000e+000,8.00000000e+000,9.00000000e+000,1.00000000e+001,0.00000000e+000,0.00000000e+000
+				,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000
+				,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000
+				,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000
+				,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000,0.00000000e+000
+				,0.00000000e+000,0.00000000e+000,0.00000000e+000,3.90000000e+001];
 		STRING : STRING  := [3,'Hi!$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00$00'
 				];
 	END_TAG
 
-		PROGRAM MainProgram (MAIN := MainRoutine)
+		PROGRAM MainProgram (MAIN := MainRoutine,
+		                     MODE := 0,
+		                     DisableFlag := 0)
 				TAG
-					timer_1 : TIMER  := [357322,200,0];
-					timer_2 : TIMER  := [-1073384393,200,109];
+					timer_1 : TIMER  := [216121,200,0];
+					timer_2 : TIMER  := [215921,200,0];
 				END_TAG
 
 				ROUTINE MainRoutine 
 						RC: "Two timers, running mutually exclusive";
 						N: XIO(timer_2.TT)TON(timer_1,?,?);
 						N: XIO(timer_1.TT)TON(timer_2,?,?);
-						RC: "Turn output_3 on/ff depending on first timer";
-						N: XIO(timer_1.TT)MOV(0,Local:2:O.Ch2Data);
-						N: XIC(timer_1.TT)MOV(5,Local:2:O.Ch2Data);
 				END_ROUTINE
 
 		END_PROGRAM
 
-		TASK MainTask (TYPE := CONTINUOUS,
-		               WATCHDOG := 500.000,
-		               PRIORITY := 10,
-		               RATE := 10.000)
+		TASK MainTask (Type := CONTINUOUS,
+		               Watchdog := 500.000,
+		               Priority := 10,
+		               Rate := 10.000,
+		               EnableTimeout := No,
+		               DisableUpdateOutputs := No,
+		               InhibitTask := No)
 				MainProgram;
 		END_TASK
 
@@ -175,16 +121,11 @@ CONFIG ASCII(XONXOFFEnable := 0,
 	             EchoMode := 0,
 	             TerminationChars := -243,
 	             AppendChars := 2573,
-	             NumberOfAppendChars := 2,
 	             BufferSize := 82) END_CONFIG
 
-CONFIG ControllerDevice(Vendor := 1,
-	                                   Type := 14,
-	                                   ProductCode := 3,
-	                                   ProductRev := 5128,
-	                                   SerialNumber := 503759) END_CONFIG
+CONFIG ControllerDevice END_CONFIG
 
-CONFIG CST(SystemTimeMasterID := 16#0000) END_CONFIG
+CONFIG CST(SystemTimeMasterID := 0) END_CONFIG
 
 CONFIG DF1(DuplicateDetection := 1,
 	           ErrorDetection := BCC Error,
@@ -198,10 +139,10 @@ CONFIG DF1(DuplicateDetection := 1,
 	           ReplyMessageWait := 5,
 	           PollingMode := 1,
 	           MasterMessageTransmit := 0,
-	           NormalPollNodeFile := NA,
+	           NormalPollNodeFile := <NA>,
 	           NormalPollGroupSize := 0,
-	           PriorityPollNodeFile := NA,
-	           ActiveStationFile := NA,
+	           PriorityPollNodeFile := <NA>,
+	           ActiveStationFile := <NA>,
 	           SlavePollTimeout := 3000,
 	           EOTSuppression := 0,
 	           MaxStationAddress := 31,

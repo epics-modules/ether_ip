@@ -1,4 +1,4 @@
-#! ../../bin/linux-x86/example
+#! ../../bin/darwin-ppc/example
 # 3.14 example startup file for a Host  -*- shell-script -*-
 
 # Load dbd, register the drvEtherIP.. commands
@@ -17,10 +17,10 @@ drvEtherIP_init()
 # To get to the PLC itself, we need the slot that
 # it resides in. The first, left-most slot in the
 # ControlLogix crate is slot 0.
-drvEtherIP_define_PLC("plc1", "192.168.0.50", 0)
+drvEtherIP_define_PLC("plc1", "172.31.72.94", 0)
 EIP_verbosity(7)
 
-#dbLoadRecords("db/ramp.db",    "IOC=snsioc4")
+#dbLoadRecords("db/ramp.db",    "IOC=test")
 #dbLoadRecords("db/eip_stat.db","PLC=plc1,IOC=test,TAG=REAL")
 #dbLoadRecords("db/ai.db",      "PLC=plc1,IOC=test")
 #dbLoadRecords("db/ana.db",     "PLC=plc1,IOC=test")
@@ -30,7 +30,7 @@ EIP_verbosity(7)
 #dbLoadRecords("db/ao.db",      "PLC=plc1,IOC=test")
 #dbLoadRecords("db/bo.db",      "PLC=plc1,IOC=test")
 #dbLoadRecords("db/mbbo.db",    "PLC=plc1,IOC=test")
-dbLoadRecords("../../db/test.db",    "PLC=plc1,IOC=test")
+dbLoadRecords("../../db/test.db", "PLC=plc1,IOC=test")
 
 iocInit()
 

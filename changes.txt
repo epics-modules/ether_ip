@@ -7,6 +7,28 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2004, 10/06  V2.8
+The "-w" flag of ether_ip_test didn't pack the REAL value,
+so it didn't work on all CPU types.
+
+Tag parsing changes. Take this setup:
+  Nested NESTED;
+  DATATYPE Nested
+     BOOL BOOLs[32];
+     REAL REALs[2];
+     TestStruct STRUCTS[5]
+  DATATYPE TestStruct
+     INT INT;
+     REAL REAL;
+     DINT DINT;
+     BIT BOOL;
+(RSLogix actually adds some pads that are omitted in here)
+
+This one worked: 'NESTED.REALs[1]'
+Access to this one failed: 'NESTED.STRUCTs[1].REAL',
+since in general sub-elements of arrays weren't handled.
+This has been fixed.
+
 * 2004, 8/27  V2.7
 Changes from Stephanie Allison:
 Replaced the registration via a static class instance's

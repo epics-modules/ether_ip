@@ -306,7 +306,7 @@ void usage(const char *progname)
 int main (int argc, const char *argv[])
 {
     EIPConnection   c;
-    const char      *ip = "192.168.0.50";
+    const char      *ip = "172.31.72.94";
     unsigned short  port = 0xAF12;
     int             slot = 0;
     size_t          timeout_ms  = 5000;
@@ -385,22 +385,24 @@ int main (int argc, const char *argv[])
            tag = EIP_parse_tag(argv[i]);
         }
     }
-    
+    if (tag && EIP_verbosity >= 3)
+    {
+        char buffer[EIP_MAX_TAG_LENGTH];
+        EIP_copy_ParsedTag(buffer, tag);
+        EIP_printf(3, "Tag '%s'\n", buffer);
+    }
     if (! EIP_startup(&c, ip, port, slot, timeout_ms))
         return 0;
-
     if (tag)
     {
         const CN_USINT *data = 0;
         size_t data_len;
-        if (EIP_verbosity >= 3)
-        {
-            char buffer[EIP_MAX_TAG_LENGTH];
-            EIP_copy_ParsedTag(buffer, tag);
-            EIP_printf(3, "Tag '%s'\n", buffer);
-        }
         if (write)
-            EIP_write_tag(&c, tag, T_CIP_REAL, 1,(CN_USINT*) &writeval, 0, 0);
+        {
+            CN_REAL real_buffer;
+            pack_REAL((CN_USINT *)&real_buffer, writeval);         
+            EIP_write_tag(&c, tag, T_CIP_REAL, 1,(CN_USINT*) &real_buffer, 0, 0);
+        }
         else
         {
             if (test_runs > 0)

@@ -1,32 +1,55 @@
-# -*- shell-script -*-
-
-# All these expect a PLC
-# which has tags where the name matches the type:
-# REAL "REAL";
-# BOOL "BOOL";
-# REAL "REALs[40]";
-# ....
+# EPICS Database file                    -*- shell-script -*-
+# The following record types are tested in here:
+#
+# ai, ao
+# bi, bo
+# mbbi
+# mbbiDirect
+# stringin
+# waveform
+# mbbo
+# mbboDirect
+#
+# ... in combination with these tags on the PLC,
+# where the tag names match their types,
+# using a very strange rule for upper-or lowercase 's': 
+# 
+# REAL   REAL, REALs[40]
+# BOOL   BOOL, BOOLs[352]
+# REAL   REALs[40]
+# DINT   DINTS[40]
+# INT    INTs[40]
+# BOOL   NESTED.BOOLs[32]
+# REAL   NESTED.REALs[2]
+# INT    NESTED.STRUCTS[5].INT
+# REAL   NESTED.STRUCTS[5].REAL
+# DINT   NESTED.STRUCTS[5].DINT
+# BOOL   NESTED.STRUCTS[5].BOOL
+# STRING STRING
+# MainProgram.timer_1.TT
+# 
+# Record/tag combinations that are not listed
+# in here might not work or give unexpected results.
 
 # -------------------------------------------------
-# Analog records
+# ai
 # -------------------------------------------------
-
 # Read a single REAL tag called "REAL"
 record(ai, "$(IOC):aiREAL")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) REAL")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) REAL")
+    field(PREC, "3")
 }
-
 # Read a single tag from an array called "REALs"
-record(ai, "$(IOC):aiREALs4")
+record(ai, "$(IOC):aiREALs2")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) REALs[4]")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) REALs[2]")
+    field(PREC, "3")
 }
-
 # Similar, just different array elements.
 # NOTE: As a result, the driver will 
 #       read the array from elements 0 to 5.
@@ -40,11 +63,11 @@ record(ai, "$(IOC):aiREALs4")
 # -> the driver scans 6 elements from the tag "REALs"
 record(ai, "$(IOC):aiREALs5")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) REALs[5]")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) REALs[5]")
+    field(PREC, "3")
 }
-
 # Read a single tag from an array called "REALs",
 # but really only the single element ("E" flag)!
 # The driver does not combine this one
@@ -59,46 +82,54 @@ record(ai, "$(IOC):aiREALs5")
 # -> the driver scans "REALs[39]" as a single element.
 record(ai, "$(IOC):aiREALs39")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) REALs[39] E")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) REALs[39] E")
+    field(PREC, "3")
 }
-
-# As before, but connected to a DINT array element
-record(ai, "$(IOC):aiDINTs0")
+# As before, but connected to a DINT
+record(ai, "$(IOC):aiDINT")
 {
-	field(SCAN, ".1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) DINTs[0]")
+    field(SCAN, ".1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) DINT")
 }
 record(ai, "$(IOC):aiDINTs1")
 {
-	field(SCAN, ".1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) DINTs[1]")
+    field(SCAN, ".1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) DINTs[1]")
 }
 record(ai, "$(IOC):aiDINTs2")
 {
-	field(SCAN, ".1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) DINTs[2]")
+    field(SCAN, ".1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) DINTs[2]")
 }
 record(ai, "$(IOC):aiDINTs3")
 {
-	field(SCAN, ".1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) DINTs[3]")
+    field(SCAN, ".1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) DINTs[3]")
 }
-
 # As before, but connected to an INT array element
+record(ai, "$(IOC):aiINTs2")
+{
+    field(SCAN, ".1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) INTs[2]")
+}
 record(ai, "$(IOC):aiINTs3")
 {
-	field(SCAN, ".1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) INTs[3]")
+    field(SCAN, ".1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) INTs[3]")
 }
 
-# Output record, write to REAL array element.
+# -------------------------------------------------
+# ao
+# -------------------------------------------------
+# Output record, write to REAL tag.
 # Record is "Passive", will only process when
 # a) changed via operator display/ChannelAccess:
 #    -> value is written to PLC
@@ -109,101 +140,83 @@ record(ai, "$(IOC):aiINTs3")
 #           needs some scan period at which
 #           it monitors the PLC for changes
 #           of the tag. Here we pick 1 second.
+record(ao, "$(IOC):aoREAL")
+{
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) REAL S 1")
+    field(PREC, "3")
+}
 record(ao, "$(IOC):aoREALs2")
 {
-	field(SCAN, "Passive")
-	field(DTYP, "EtherIP")
-	field(OUT, "@$(PLC) REALs[2] S 1")
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) REALs[2] S 1")
+    field(PREC, "3")
 }
-
-# Dito, but DINT array element
+# Dito, but DINT
+record(ao, "$(IOC):aoDINT")
+{
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) DINT S 1")
+}
 record(ao, "$(IOC):aoDINTs2")
 {
-	field(SCAN, "Passive")
-	field(DTYP, "EtherIP")
-	field(OUT, "@$(PLC) DINTs[2] S 1")
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) DINTs[2] S 1")
+}
+record(ao, "$(IOC):aoINTs3")
+{
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) INTs[3] S 1")
 }
 
 # -------------------------------------------------
-# Binary records
+# bi records
 # -------------------------------------------------
-
-# These binary records are connected to
-# a) individual tags
-# b) elements of a BOOL array
-
 # Binary input, connected to a BOOL tag
 record(bi, "$(IOC):biBOOL")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) BOOL")
-	field(ZNAM, "False")
-	field(ONAM, "True")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) BOOL")
+    field(ZNAM, "False")
+    field(ONAM, "True")
 }
-
 # Binary input, connected to a DINT
 # -> reads bit 0 of DINT value
 record(bi, "$(IOC):biDINT")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) DINT")
-	field(ZNAM, "False")
-	field(ONAM, "True")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) DINT")
+    field(ZNAM, "False")
+    field(ONAM, "True")
 }
-
-# Binary input, connected to a BOOL array element
+# .. reads bit 3 of DINT value
+record(bi, "$(IOC):biDINT_3")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) DINT B 3")
+    field(ZNAM, "False")
+    field(ONAM, "True")
+}
+# BOOL array element
 record(bi, "$(IOC):biBOOLs5")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) BOOLs[5]")
-	field(ZNAM, "False")
-	field(ONAM, "True")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) BOOLs[5]")
+    field(ZNAM, "False")
+    field(ONAM, "True")
 }
-
-# MBBI, connected to a BOOL array elements,
-# decodes 2 bits
-record(mbbi, "$(IOC):mbbiBOOLs300")
-{
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) BOOLs[300]")
-	field(NOBT, "2")
-	field(ZRVL, "0")
-	field(ONVL, "1")
-	field(TWVL, "2")
-	field(THVL, "3")
-	field(ZRST, "Zero-Zero")
-	field(ONST, "Zero- One")
-	field(TWST, "One -Zero")
-	field(THST, "One - One")
-}
-
-# MBBO, connected to a BOOL array elements,
-# writes 2 bits
-record(mbbo, "$(IOC):mbboBOOLs300")
-{
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(OUT, "@$(PLC) BOOLs[300]")
-	field(NOBT, "2")
-	field(ZRVL, "0")
-	field(ONVL, "1")
-	field(TWVL, "2")
-	field(THVL, "3")
-	field(ZRST, "Zero-Zero")
-	field(ONST, "Zero- One")
-	field(TWST, "One -Zero")
-	field(THST, "One - One")
-}
-
-    
 # !! Note !!
 # The following binary records are NOT connected
 # to BOOL arrays.
-
 # Binary input, connected to a DINT element
 # The bi expects a BOOL array, not a DINT array.
 # This will *NOT* read array element #40 but bit #40
@@ -218,7 +231,7 @@ record(mbbo, "$(IOC):mbboBOOLs300")
 #   PLC_name   : 'plc1'
 #   string_tag : 'DINTs'
 #   element    : 1          <- element 1, not 40!
-#   mask       : 0x100      <- mask selects but 8
+#   mask       : 0x100      <- mask selects bit 8
 #
 # Hint: TPRO causes logging when the record is processed,
 # in this case every second, so you can't read the output
@@ -226,7 +239,7 @@ record(mbbo, "$(IOC):mbboBOOLs300")
 # -> use channel access (edm, caput, ...) to set it to "1",
 #    wait 3 seconds, then set it to "0" again,
 #    and then inspect the messsages you got.
-record(bi, "$(IOC):biDINTs40")
+record(bi, "$(IOC):biDINTs40_error")
 {
 	field(SCAN, "1 second")
 	field(DTYP, "EtherIP")
@@ -234,8 +247,6 @@ record(bi, "$(IOC):biDINTs40")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 }
-
-# Alternative:
 # Use the "B <bit>" flag to
 # override the default behaviour will explicit
 # bit addressing:
@@ -250,12 +261,94 @@ record(bi, "$(IOC):biDINTs40")
 #   mask       : 0x20     <- mask selects bit 5
 record(bi, "$(IOC):biDINTs8_5")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(INP, "@$(PLC) DINTs[8] B 5")
-	field(ZNAM, "False")
-	field(ONAM, "True")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) DINTs[8] B 5")
+    field(ZNAM, "False")
+    field(ONAM, "True")
 }
+
+# -------------------------------------------------
+# bo records
+# -------------------------------------------------
+record(bo, "$(IOC):boBOOL")
+{
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) BOOL S 1")
+    field(ZNAM, "False")
+    field(ONAM, "True")
+}
+record(bo, "$(IOC):boBOOLs5")
+{
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) BOOLs[5] S 1")
+    field(ZNAM, "False")
+    field(ONAM, "True")
+}
+record(bo, "$(IOC):boINTs3_2")
+{
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) INTs[3] B 2 S 1")
+    field(ZNAM, "False")
+    field(ONAM, "True")
+}
+
+# -------------------------------------------------
+# mbbi records
+# -------------------------------------------------
+# BOOL array elements, decodes 2 bits
+record(mbbi, "$(IOC):mbbiBOOLs300")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) BOOLs[300]")
+    field(NOBT, "2")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(ZRST, "Zero-Zero")
+    field(ONST, "Zero- One")
+    field(TWST, "One -Zero")
+    field(THST, "One - One")
+}
+record(mbbi, "$(IOC):mbbiDINTs2_3")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) DINTs[2] B 3")
+    field(NOBT, "2")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(ZRST, "Zero-Zero")
+    field(ONST, "Zero- One")
+    field(TWST, "One -Zero")
+    field(THST, "One - One")
+}
+
+# -------------------------------------------------
+# mbbo records
+# -------------------------------------------------
+# BOOL array elements, writes 2 bits
+# Used SCAN to set period, no "S" flag needed in OUT
+# (but possibly not the ideal configuration)
+record(mbbo, "$(IOC):mbboBOOLs300")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) BOOLs[300]")
+    field(NOBT, "2")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(ZRST, "Zero-Zero")
+    field(ONST, "Zero- One")
+    field(TWST, "One -Zero")
+    field(THST, "One - One")
+}    
 
 # B flag again: write to DINT array element #4, bit31.
 # Note: This mbbo writes to 2 bits, so it crosses
@@ -264,36 +357,35 @@ record(bi, "$(IOC):biDINTs8_5")
 #       you might not want to depend on this feature.
 record(mbbo, "$(IOC):mbboDINTs4_31")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(OUT, "@$(PLC) DINTs[4] B 31")
-	field(NOBT, "2")
-	field(ZRVL, "0")
-	field(ONVL, "1")
-	field(TWVL, "2")
-	field(THVL, "3")
-	field(ZRST, "Zero-Zero")
-	field(ONST, "Zero- One")
-	field(TWST, "One -Zero")
-	field(THST, "One - One")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) DINTs[4] B 31")
+    field(NOBT, "2")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(ZRST, "Zero-Zero")
+    field(ONST, "Zero- One")
+    field(TWST, "One -Zero")
+    field(THST, "One - One")
 }
-
 # Like mbboDINTs4_31, but targetting INT
 # which has only 16 bits.
 record(mbbo, "$(IOC):mbboINTs2_14")
 {
-	field(SCAN, "1 second")
-	field(DTYP, "EtherIP")
-	field(OUT, "@$(PLC) INTs[2] B 14")
-	field(NOBT, "2")
-	field(ZRVL, "0")
-	field(ONVL, "1")
-	field(TWVL, "2")
-	field(THVL, "3")
-	field(ZRST, "Zero-Zero")
-	field(ONST, "Zero- One")
-	field(TWST, "One -Zero")
-	field(THST, "One - One")
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) INTs[2] B 14")
+    field(NOBT, "2")
+    field(ZRVL, "0")
+    field(ONVL, "1")
+    field(TWVL, "2")
+    field(THVL, "3")
+    field(ZRST, "Zero-Zero")
+    field(ONST, "Zero- One")
+    field(TWST, "One -Zero")
+    field(THST, "One - One")
 }
 
 # INT, bit addressing.
