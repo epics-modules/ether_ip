@@ -1,6 +1,10 @@
 -*- outline -*- (use emacs to see this in outline-mode)
 
 * Intro
+The sources for this driver are CVS-controlled:
+CVS root: sofa.ic.ornl.gov:/cs/epics/cvsroot  
+Module:   support/linac/ether_ip
+
 The current release is 0-4.
 In the following examples, replace <RELEASE> by 0-4.
 
