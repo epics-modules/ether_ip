@@ -10,105 +10,39 @@
 
 #ifndef ETHERIP_MAYOR
 
+#include "R314Compat.h"
 #include "ether_ip.h"
 #include "dl_list.h"
-#include "epicsVersion.h"
 
 #define ETHERIP_MAYOR 2
-#define ETHERIP_MINOR 3
+#define ETHERIP_MINOR 4
+
+/* For timing */
+#define EIP_MIN_TIMEOUT         0.1  /* second */
+#define EIP_MIN_CONN_TIMEOUT    1.0  /* second */
 
 /* TCP port */
 #define ETHERIP_PORT 0xAF12
 
 /* TCP timeout in millisec for connection and readback */
 #define ETHERIP_TIMEOUT 5000
-
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
-
-#include "epicsMutex.h"
-#include "epicsEvent.h"
-#include "epicsThread.h"
-#include "epicsTime.h"
-
-/* For timing */
-#define EIP_TIME_CONVERSION     1.0  /* sec/sec */
-#define EIP_MIN_DELAY           0.02 /* second */
-#define EIP_MIN_TIMEOUT         0.1  /* second */
-#define EIP_MIN_CONN_TIMEOUT    1.0  /* second */
-#define EIP_SHORT_TIMEOUT       1.0  /* second */
-#define EIP_MEDIUM_TIMEOUT      2.0  /* second */
-#define EIP_LONG_TIMEOUT        5.0  /* second */
-#define EIP_TIME_GET(A)         epicsTimeGetCurrent(&(A))
-#define EIP_TIME_DIFF(A,B)      epicsTimeDiffInSeconds(&(A),&(B))
-#define EIP_TIME_ADD(A,B)       epicsTimeAddSeconds(&(A),(B))
-
-/* For event and mutex */
-#define EIP_SEMOPTS                    epicsEventFull
-#define epicsMutexLockWithTimeout(A,B) epicsMutexLock(A)
- 
-#else /* begin 3.13 settings */
-
-#include <taskLib.h>
-#include "devLib.h"
-#define  S_db_noMemory          S_dev_noMemory
- 
-/* For timing */
-#define EIP_TIME_CONVERSION     sysClkRateGet()         /* tick/sec */
-#define EIP_MIN_DELAY           0                       /* ticks */
-#define EIP_MIN_TIMEOUT         10                      /* ticks */
-#define EIP_MIN_CONN_TIMEOUT    100                     /* ticks */
-#define EIP_SHORT_TIMEOUT       EIP_TIME_CONVERSION     /* ticks in 1 sec */
-#define EIP_MEDIUM_TIMEOUT      (2*EIP_TIME_CONVERSION) /* ticks in 2 sec */
-#define EIP_LONG_TIMEOUT        (5*EIP_TIME_CONVERSION) /* ticks in 5 sec */
-#define epicsTimeStamp          ULONG               /* all times in ticks */
-#define EIP_TIME_GET(A)         (A=tickGet())    /* current time in ticks */
-#define EIP_TIME_DIFF(A,B)      ((double)(A)-(double)(B))  /* time diff   */
-#define EIP_TIME_ADD(A,B)       (A+=(ULONG)(B))            /* time add    */
-
-/* For event and mutex */ 
-#define epicsMutexId            SEM_ID
-#define epicsMutexLockStatus    int
-#define epicsMutexLockOK        OK
-#define epicsEventId            SEM_ID
-#define epicsEventWaitStatus    int
-#define epicsEventWaitOK        OK
-/* semaphore options (mutex) */
-#define EIP_SEMOPTS (SEM_Q_PRIORITY | SEM_DELETE_SAFE | SEM_INVERSION_SAFE)
-#define epicsMutexCreate()             semMCreate(EIP_SEMOPTS)
-#define epicsMutexDestroy              semDelete
-#define epicsMutexUnlock               semGive
-#define epicsMutexLock(A)              semTake(A,WAIT_FOREVER)
-#define epicsMutexLockWithTimeout(A,B) semTake(A,B)
-#define epicsMutexTryLock(A)           semTake(A,NO_WAIT)
-#define epicsEventCreate               semMCreate
-#define epicsEventDestroy              semDelete
-#define epicsEventWaitWithTimeout      semTake
-#define epicsEventSignal               semGive
- 
-/* For threads */
-#define epicsThreadSleep(A)     taskDelay((int)A)
-#define epicsThreadId           int
- 
-/* Parameters for scan task, one per PLC.
- * These values are similar to the Allen Bradley ones
- * taken from EPICS/base/include/task_param.h.
- */
-#ifndef ARCH_STACK_FACTOR
-#  if CPU_FAMILY == MC680X0 
-#    define ARCH_STACK_FACTOR 1
-#  else
-#    define ARCH_STACK_FACTOR 2
-#  endif
-#endif
-#define EIPSCAN_PRI   65
-#define EIPSCAN_OPT   VX_FP_TASK | VX_STDIO
-#define EIPSCAN_STACK (5096*ARCH_STACK_FACTOR)
- 
-#endif /* end 3.13 settings */
  
 typedef struct __TagInfo  TagInfo;  /* forwards */
 typedef struct __ScanList ScanList;
 typedef struct __PLC      PLC;
+
+/* THE singleton main structure for this driver
+ * Note that each PLC entry has it's own lock
+ * for the scanlists & statistics.
+ * Each PLC's scan task uses that per-PLC lock,
+ * calls to loop/add/list PLCs also use this
+ * more global lock.
+ */
+typedef struct
+{
+    DL_List      PLCs; /* List of PLC structs */
+    epicsMutexId lock;
+} DrvEtherIP_Private;
 
 /* PLCInfo:
  * Per-PLC information
@@ -129,7 +63,7 @@ struct __PLC
     size_t        plc_errors;   /* # of communication errors              */
     size_t        slow_scans;   /* Count: scan task is getting late       */
     EIPConnection connection;
-    DL_List /*ScanList*/ scanlists;
+    DL_List       scanlists;    /* List of struct ScanList */ 
     epicsThreadId scan_task_id;
 };
 
@@ -139,25 +73,24 @@ struct __PLC
  */
 struct __ScanList
 {
-    DLL_Node node;
-    PLC      *plc;                    /* PLC this Scanlist belongs to */
-    eip_bool enabled;
-    double   period;                  /* scan period [secs]  */
-    double   period_time;             /* corresponding converted delay */
-    size_t   list_errors;             /* # of communication errors */
-    epicsTimeStamp    scan_time;      /* last run time */
-    epicsTimeStamp    scheduled_time; /* next run time */
-    double   min_scan_time;           /* statistics: scan time */
-    double   max_scan_time;           /* minimum, maximum, */
-    double   last_scan_time;          /* and most recent scan */
-    DL_List /*TagInfo*/ taginfos;
+    DLL_Node       node;
+    PLC            *plc;            /* PLC to which this Scanlist belongs */
+    eip_bool       enabled;
+    double         period;          /* scan period [secs]  */
+    size_t         list_errors;     /* # of communication errors */
+    epicsTimeStamp scan_time;       /* stamp of last run time */
+    epicsTimeStamp scheduled_time;  /* stamp for next run time */
+    double         min_scan_time;   /* statistics: scan time in seconds */
+    double         max_scan_time;   /* minimum, maximum, */
+    double         last_scan_time;  /* and most recent scan */
+    DL_List        taginfos;        /* List of struct TagInfo */
 };
 
 typedef void (*EIPCallback) (void *arg);
 typedef struct
 {
     DLL_Node node;
-    EIPCallback callback;       /* called for each value */
+    EIPCallback callback; /* called for each value */
     void       *arg;
 }   TagCallback;
 
@@ -188,7 +121,7 @@ struct __TagInfo
     size_t     cip_r_response_size;/* byte-size of read response */
     size_t     cip_w_request_size; /* byte-size of write request */
     size_t     cip_w_response_size;/* byte-size of write response */
-    epicsEventId data_lock;        /* see "locking" in drvEtherIP.c */
+    epicsMutexId data_lock;        /* see "locking" in drvEtherIP.c */
     size_t     data_size;          /* total size of data buffer */
     size_t     valid_data_size;    /* used portion of data, 0 for "invalid" */
     eip_bool   do_write;           /* set by device, reset by driver */
@@ -200,7 +133,7 @@ struct __TagInfo
 
 #ifdef __cplusplus
 extern "C" {
-#endif /* __cplusplus */
+#endif
 
 extern double drvEtherIP_default_rate;
 
@@ -240,13 +173,13 @@ int drvEtherIP_read_tag(const char *ip_addr,
                         int elements,
                         int timeout);
 
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#ifdef HAVE_314_API
 void drvEtherIP_Register();
 #endif
   
 #ifdef __cplusplus
 }
-#endif /* __cplusplus */
+#endif
 
 #endif
 

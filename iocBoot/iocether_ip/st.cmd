@@ -1,5 +1,5 @@
 # -*- shell-script -*-
-# Example vxWorks startup file
+# Example vxWorks startup file before R3.14
 
 < cdCommands
 

@@ -65,9 +65,27 @@ record(ai, "$(IOC):aiREALs39")
 }
 
 # As before, but connected to a DINT array element
+record(ai, "$(IOC):aiDINTs0")
+{
+	field(SCAN, ".1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) DINTs[0]")
+}
+record(ai, "$(IOC):aiDINTs1")
+{
+	field(SCAN, ".1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) DINTs[1]")
+}
+record(ai, "$(IOC):aiDINTs2")
+{
+	field(SCAN, ".1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) DINTs[2]")
+}
 record(ai, "$(IOC):aiDINTs3")
 {
-	field(SCAN, "1 second")
+	field(SCAN, ".1 second")
 	field(DTYP, "EtherIP")
 	field(INP, "@$(PLC) DINTs[3]")
 }
@@ -75,7 +93,7 @@ record(ai, "$(IOC):aiDINTs3")
 # As before, but connected to an INT array element
 record(ai, "$(IOC):aiINTs3")
 {
-	field(SCAN, "1 second")
+	field(SCAN, ".1 second")
 	field(DTYP, "EtherIP")
 	field(INP, "@$(PLC) INTs[3]")
 }

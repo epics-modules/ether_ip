@@ -19,31 +19,10 @@
  * allowing to capture the problem.
  */
 
-#ifndef NO_EPICS
-#include"epicsVersion.h"
-#endif
+#include "R314Compat.h"
 #include"mem_string_file.h"
 
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
-#include"epicsMutex.h"
 epicsMutexId msfLock = 0;
-#else
-
-#ifdef vxWorks
-#include<semLib.h>
-SEM_ID msfLock = 0;
-#define epicsMutexCreate()    semMCreate(SEM_Q_PRIORITY | SEM_DELETE_SAFE | SEM_INVERSION_SAFE)
-#define epicsMutexLock(A)     semTake(A,WAIT_FOREVER)
-#define epicsMutexUnlock(A)   semGive(A)
-#else
-int msfLock = 0;
-#define epicsMutexCreate()    0
-#define epicsMutexLock(A)     msfLock=1
-#define epicsMutexUnlock(A)   msfLock=0
-#endif
-
-#endif
-
 size_t msfInitialBufferSize = 2*1024*1024;
 
 /* Ring buffer: start in memory, 1st byte beyond buffer, size */
@@ -69,7 +48,6 @@ static bool msfInit()
         fprintf(stderr, "MSF: Cannot allocate buffer\n");
         return false;
     }
-    
     msfBufferSize = msfInitialBufferSize;
     msfBufferEnd = msfBuffer + msfBufferSize;
     msfHead = msfTail = msfBuffer;

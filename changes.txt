@@ -7,6 +7,39 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2004, 3/2 V2.4
+Review of the R3.14 changes.
+
+Using R3.14 epicsThreadPriorityHigh for the driver thread.
+Before, the driver ran below the database, meaning that
+the database could be forced to wait for the driver.
+
+Replaced epicsEvent... calls with epicsMutex...:
+EpicsMutex is based (for vxWorks) on the semM-type,
+providing inversion safety etc.
+Unfortunately, epicsMutex doesn't implement any
+lock-with-timeout, so whenever we used to run into
+a timeout, we're now hung.
+One such instance was between the driver thread
+and the database: Callbacks from the driver into
+device support triggered processing of records.
+A deadlock resulted when a record, being processed,
+wanted to access the driver tag data, while at the
+same time the driver had that tag locked and wanted
+to process the record, hanging in dbLock.
+The symptom:
+   "tag <tagname>: no lock"
+messages, then after a timeout things went on
+and the record was temporarily INVALID.
+For some reason this only happened under vxWorks,
+I'be never seen it under Linux with same EPICS database.
+
+Looks like that's resolved.
+
+In case another hangup occurs, try:
+     epicsMutexShowAll 1, 10
+which lists all locked mutexes and the threads
+waiting for them.
 
 * 2004, 02/11 V2.3 
 (CVS Release Tag --> ether_ip-2-3)

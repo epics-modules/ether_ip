@@ -8,11 +8,13 @@
  * kasemir@lanl.gov
  */
 
+/* System */
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <limits.h>
 #include <string.h>
+/* Base */
 #include <alarm.h>
 #include <cvtTable.h>
 #include <dbDefs.h>
@@ -20,6 +22,7 @@
 #include <recGbl.h>
 #include <recSup.h>
 #include <devSup.h>
+#include <devLib.h>
 #include <link.h>
 #include <dbScan.h>
 #include <menuConvert.h>
@@ -34,14 +37,12 @@
 #include <boRecord.h>
 #include <mbboRecord.h>
 #include <mbboDirectRecord.h>
+/* Local */
 #include "drvEtherIP.h"
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
-#include "epicsExport.h"
-#endif
 
-/* #define CATCH_MISSED_WRITE */
-#ifdef CATCH_MISSED_WRITE
-#include"mem_string_file.h"
+#ifdef HAVE_314_API
+/* Base */
+#include "epicsExport.h"
 #endif
 
 /* Flags that pick special values instead of the tag's "value" */
@@ -113,7 +114,6 @@ typedef struct
 static void dump_DevicePrivate(const dbCommon *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-
     if (!pvt)
     {
         printf("   Device Private = 0\n");
@@ -134,17 +134,13 @@ static void dump_DevicePrivate(const dbCommon *rec)
 static eip_bool lock_data(const dbCommon *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    if (!pvt ||
-        !pvt->plc ||
-        !pvt->tag ||
-        !pvt->tag->scanlist)
+    if (!(pvt && pvt->plc && pvt->tag && pvt->tag->scanlist))
     {
         if (rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
             printf("devEtherIP lock_data (%s): no tag\n", rec->name);
         return false;
     }
-    if (epicsEventWaitWithTimeout(pvt->tag->data_lock, EIP_MEDIUM_TIMEOUT) !=
-        epicsEventWaitOK)
+    if (epicsMutexLock(pvt->tag->data_lock) != epicsMutexLockOK)
     {
         if (rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
             printf("devEtherIP lock_data (%s): no lock\n", rec->name);
@@ -153,7 +149,7 @@ static eip_bool lock_data(const dbCommon *rec)
     if (pvt->tag->valid_data_size <= 0  ||
         pvt->tag->elements <= pvt->element)
     {
-        epicsEventSignal(pvt->tag->data_lock);
+        epicsMutexUnlock(pvt->tag->data_lock);
         if (rec->tpro &&
             rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
             printf("devEtherIP lock_data (%s): no data\n", rec->name);
@@ -451,14 +447,6 @@ static void check_bo_callback(void *arg)
             printf("'%s': got %lu from driver\n", rec->name, rval);
         if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
-#ifdef CATCH_MISSED_WRITE
-            printf("'%s': Caught an ignored write, stopping the log\n",
-                   rec->name);
-            msfPrintf("'%s': Caught an ignored write, stopping the log\n"
-                      "Record's value: %lu, tag's value: %lu\n",
-                      rec->name, rec->rval, rval);
-            EIP_verbosity = 1;
-#endif
             if (rec->tpro)
                 printf("'%s': will re-write record's value %u\n",
                        rec->name, (unsigned int)rec->val);
@@ -699,7 +687,7 @@ static long analyze_link(dbCommon *rec,
                      strlen (link->value.instio.string)))
     {
         errlogPrintf("devEtherIP (%s): Cannot copy link\n", rec->name);
-        return S_db_noMemory;
+        return S_dev_noMemory;
     }
     /* Find PLC */
     p = find_token(pvt->link_text, &end);
@@ -712,7 +700,7 @@ static long analyze_link(dbCommon *rec,
     if (! EIP_strdup(&pvt->PLC_name, p, end-p))
     {
         errlogPrintf("devEtherIP (%s): Cannot copy PLC\n", rec->name);
-        return S_db_noMemory;
+        return S_dev_noMemory;
     }
 
     /* Find Tag */
@@ -727,7 +715,7 @@ static long analyze_link(dbCommon *rec,
     if (! EIP_strdup(&pvt->string_tag, p, tag_len))
     {
         errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
-        return S_db_noMemory;
+        return S_dev_noMemory;
     }
     
     /* Check for more flags */
@@ -949,7 +937,7 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
     if (! pvt)
     {
         errlogPrintf("devEtherIP (%s): cannot allocate DPVT\n", rec->name);
-        return S_db_noMemory;
+        return S_dev_noMemory;
     }
     if (link->type != INST_IO)
     {
@@ -1053,21 +1041,17 @@ static long ai_read(aiRecord *rec)
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
-
     if (status)
     {
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
         return status;
     }
-
-    ok = lock_data((dbCommon *)rec);
-    if (ok)
+    if ((ok = lock_data((dbCommon *)rec)))
     {
         /* Most common case: ai reads a tag from PLC */
         if (pvt->special < SPCO_PLC_ERRORS)
         {   
-            if (pvt->tag->valid_data_size > 0 &&
-                pvt->tag->elements > pvt->element)
+            if (pvt->tag->valid_data_size>0 && pvt->tag->elements>pvt->element)
             {
                 if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
                 {
@@ -1077,70 +1061,47 @@ static long ai_read(aiRecord *rec)
                 }
                 else
                 {
-                    ok = get_CIP_DINT(pvt->tag->data,
-                                      pvt->element, &rval);
+                    ok = get_CIP_DINT(pvt->tag->data, pvt->element, &rval);
                     rec->rval = rval;
                 }
             }
             else
                 ok = false;
         }
-        /* special cases: ai reads driver stats */
-        else if (pvt->special & SPCO_PLC_ERRORS)
-        {
-            rec->val = (double) pvt->plc->plc_errors;
-            status = 2;
-        }
-        else if (pvt->special & SPCO_PLC_TASK_SLOW)
-        {
-            rec->val = (double) pvt->plc->slow_scans;
-            status = 2;
-        }
-        else if (pvt->special & SPCO_LIST_ERRORS)
-        {
-            rec->val = (double) pvt->tag->scanlist->list_errors;
-            status = 2;
-        }   
-        else if ((pvt->special & SPCO_LIST_TICKS) ||
-                 (pvt->special & SPCO_LIST_TIME))
-        {
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
-            rec->val = (double) pvt->tag->scanlist->scan_time.secPastEpoch;
-#else
-            rec->val = (double) pvt->tag->scanlist->scan_time;
-#endif
-            status = 2;
-        }
-        else if (pvt->special & SPCO_LIST_SCAN_TIME)
-        {
-            rec->val = pvt->tag->scanlist->last_scan_time / EIP_TIME_CONVERSION;
-            status = 2;
-        }
-        else if (pvt->special & SPCO_LIST_MIN_SCAN_TIME)
-        {
-            rec->val = pvt->tag->scanlist->min_scan_time / EIP_TIME_CONVERSION;
-            status = 2;
-        }
-        else if (pvt->special & SPCO_LIST_MAX_SCAN_TIME)
-        {
-            rec->val = pvt->tag->scanlist->max_scan_time / EIP_TIME_CONVERSION;
-            status = 2;
-        }
-        else if (pvt->special & SPCO_TAG_TRANSFER_TIME)
-        {
-            rec->val = pvt->tag->transfer_time / EIP_TIME_CONVERSION;
-            status = 2;
-        }
         else
-            ok = false;
-        epicsEventSignal (pvt->tag->data_lock);
+        {
+            /* special cases: ai reads driver stats */
+            status = 2;
+            if (pvt->special & SPCO_PLC_ERRORS)
+                rec->val = (double) pvt->plc->plc_errors;
+            else if (pvt->special & SPCO_PLC_TASK_SLOW)
+                rec->val = (double) pvt->plc->slow_scans;
+            else if (pvt->special & SPCO_LIST_ERRORS)
+                rec->val = (double) pvt->tag->scanlist->list_errors;
+            else if ((pvt->special & SPCO_LIST_TICKS) ||
+                     (pvt->special & SPCO_LIST_TIME))
+#ifdef HAVE_314_API
+                rec->val = (double) pvt->tag->scanlist->scan_time.secPastEpoch;
+#else
+                rec->val = (double) pvt->tag->scanlist->scan_time;
+#endif
+            else if (pvt->special & SPCO_LIST_SCAN_TIME)
+                rec->val = pvt->tag->scanlist->last_scan_time;
+            else if (pvt->special & SPCO_LIST_MIN_SCAN_TIME)
+                rec->val = pvt->tag->scanlist->min_scan_time;
+            else if (pvt->special & SPCO_LIST_MAX_SCAN_TIME)
+                rec->val = pvt->tag->scanlist->max_scan_time;
+            else if (pvt->special & SPCO_TAG_TRANSFER_TIME)
+                rec->val = pvt->tag->transfer_time;
+            else
+                ok = false;
+        }
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
-    
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-    
     return status;
 }
 
@@ -1161,16 +1122,14 @@ static long bi_read(biRecord *rec)
     if (lock_data((dbCommon *)rec))
     {
         ok = get_bits((dbCommon *)rec, 1, &rec->rval);
-        epicsEventSignal(pvt->tag->data_lock);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
-        ok = false;
-    
+        ok = false;    
     if (ok)
         rec->udf = FALSE;
     else
-        recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
-    
+        recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);    
     return 0;
 }
 
@@ -1189,20 +1148,17 @@ static long mbbi_read (mbbiRecord *rec)
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
         return status;
     }
-
-    if (lock_data ((dbCommon *)rec))
+    if (lock_data((dbCommon *)rec))
     {
-        ok = get_bits ((dbCommon *)rec, rec->nobt, &rec->rval);
-        epicsEventSignal (pvt->tag->data_lock);
+        ok = get_bits((dbCommon *)rec, rec->nobt, &rec->rval);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
         ok = false;
-    
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
-    
     return 0;
 }
 
@@ -1213,28 +1169,25 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
     eip_bool ok;
 
     if (rec->tpro)
-        dump_DevicePrivate ((dbCommon *)rec);
-    status = check_link ((dbCommon *)rec, scan_callback,
-                         &rec->inp, 1, rec->nobt);
+        dump_DevicePrivate((dbCommon *)rec);
+    status = check_link((dbCommon *)rec, scan_callback,
+                        &rec->inp, 1, rec->nobt);
     if (status)
     {
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
         return status;
     }
-
-    if (lock_data ((dbCommon *)rec))
+    if (lock_data((dbCommon *)rec))
     {
-        ok = get_bits ((dbCommon *)rec, rec->nobt, &rec->rval);
-        epicsEventSignal (pvt->tag->data_lock);
+        ok = get_bits((dbCommon *)rec, rec->nobt, &rec->rval);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
         ok = false;
-    
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
-    
     return 0;
 }
 
@@ -1255,16 +1208,14 @@ static long si_read(stringinRecord *rec)
     if (lock_data((dbCommon *)rec))
     {
         ok = get_CIP_STRING(pvt->tag->data, &rec->val[0], MAX_STRING_SIZE);
-        epicsEventSignal (pvt->tag->data_lock);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
-        ok = false;
-    
+        ok = false;    
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-    
     return status;
 }
 
@@ -1289,23 +1240,17 @@ static long wf_read(waveformRecord *rec)
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
         return status;
     }
-
-    ok = lock_data((dbCommon *)rec);
-    if (ok)
+    if ((ok = lock_data((dbCommon *)rec)))
     {
-        if (pvt->tag->valid_data_size > 0 &&
-            pvt->tag->elements >= rec->nelm)
+        if (pvt->tag->valid_data_size > 0 &&  pvt->tag->elements >= rec->nelm)
         {
             if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
             {
                 if (rec->ftvl == menuFtypeDOUBLE)
                 {
                     dbl = (double *)rec->bptr;
-                    for (i=0; ok && i<rec->nelm; ++i)
-                    {
+                    for (i=0; ok && i<rec->nelm; ++i, ++dbl)
                         ok = get_CIP_double(pvt->tag->data, i, dbl);
-                        ++dbl;
-                    }
                     if (ok)
                         rec->nord = rec->nelm;
                 }
@@ -1319,15 +1264,11 @@ static long wf_read(waveformRecord *rec)
             }
             else if (get_CIP_typecode(pvt->tag->data) == T_CIP_SINT)
             {
-                if (rec->ftvl == menuFtypeCHAR ||
-                    rec->ftvl == menuFtypeUCHAR)
+                if (rec->ftvl == menuFtypeCHAR || rec->ftvl == menuFtypeUCHAR)
                 {
                     c = (char *)rec->bptr;
-                    for (i=0; ok && i<rec->nelm; ++i)
-                    {
+                    for (i=0; ok && i<rec->nelm; ++i, ++c)
                         ok = get_CIP_USINT(pvt->tag->data, i, (CN_USINT*)c);
-                        ++c;
-                    }
                     if (ok)
                         rec->nord = rec->nelm;
                 }
@@ -1340,15 +1281,12 @@ static long wf_read(waveformRecord *rec)
                 }
             }
             else
-            {   /* CIP data is something other than REAL */
+            {   /* CIP data is something other than REAL and SINT */
                 if (rec->ftvl == menuFtypeLONG)
                 {
                     dint = (long *)rec->bptr;
-                    for (i=0; ok && i<rec->nelm; ++i)
-                    {
+                    for (i=0; ok && i<rec->nelm; ++i, ++dint)
                         ok = get_CIP_DINT(pvt->tag->data, i, dint);
-                        ++dint;
-                    }
                     if (ok)
                         rec->nord = rec->nelm;
                 }
@@ -1357,8 +1295,7 @@ static long wf_read(waveformRecord *rec)
                     s = (char *)rec->bptr;
                     for (i=0; ok && i<rec->nelm; ++i)
                     {
-                        ok = get_CIP_DINT(pvt->tag->data, i,
-                                          &dint_val);
+                        ok = get_CIP_DINT(pvt->tag->data, i, &dint_val);
                         *(s++) = dint_val;
                     }
                     if (ok)
@@ -1373,12 +1310,10 @@ static long wf_read(waveformRecord *rec)
                 }
             }
         }
-        epicsEventSignal (pvt->tag->data_lock);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
-    
     if (!ok)
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-    
     return status;
 }
 
@@ -1406,8 +1341,7 @@ static long ao_write(aoRecord *rec)
         return status;
     }
     if (lock_data((dbCommon *)rec))
-    {
-        /* Check if record's (R)VAL is current */
+    {   /* Check if record's (R)VAL is current */
         if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
         {
             if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
@@ -1439,16 +1373,14 @@ static long ao_write(aoRecord *rec)
                 rec->pact=TRUE;
             }
         }
-        epicsEventSignal(pvt->tag->data_lock);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
         ok = false;
-
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-    
     return 0;
 }
 
@@ -1490,15 +1422,14 @@ static long bo_write(boRecord *rec)
                 rec->pact=TRUE;
             }
         }
-        epicsEventSignal(pvt->tag->data_lock);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
         ok = false;
     if (ok)
         rec->udf = FALSE;
     else
-        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-    
+        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);    
     return 0;
 }
 
@@ -1538,16 +1469,14 @@ static long mbbo_write (mbboRecord *rec)
                 pvt->tag->do_write = true;
             rec->pact=TRUE;
         }
-        epicsEventSignal(pvt->tag->data_lock);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
-        ok = false;
-    
+        ok = false;    
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-    
     return 0;
 }
 
@@ -1574,11 +1503,9 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
         return status;
     }
-
     if (lock_data((dbCommon *)rec))
     {
-        if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
-            rec->rval != rval)
+        if (get_bits((dbCommon *)rec, rec->nobt, &rval)  &&  rec->rval != rval)
         {
             if (rec->tpro)
                 printf("'%s': write %lu\n", rec->name, rec->rval);
@@ -1589,16 +1516,14 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
                 pvt->tag->do_write = true;
             rec->pact=TRUE;
         }
-        epicsEventSignal(pvt->tag->data_lock);
+        epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
         ok = false;
-    
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-    
     return 0;
 }
 
@@ -1722,7 +1647,7 @@ DSET devMbboDirectEtherIP =
     NULL
 };
 
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#ifdef HAVE_314_API
 epicsExportAddress(dset,devAiEtherIP);
 epicsExportAddress(dset,devBiEtherIP);
 epicsExportAddress(dset,devMbbiEtherIP);

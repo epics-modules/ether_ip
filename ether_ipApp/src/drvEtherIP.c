@@ -8,31 +8,23 @@
  * kasemir@lanl.gov
  */
 
+/* System */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "drvSup.h"
+/* Base */
+#include <drvSup.h>
+/* Local */
 #include "drvEtherIP.h"
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#ifdef HAVE_314_API
+/* Base */
 #include "epicsExport.h"
 #endif
 
 double drvEtherIP_default_rate = 0.0;
 
-/* THE structure for this driver
- * Note that each PLC entry has it's own lock
- * for the scanlists & statistics.
- * Each PLC's scan task uses that per-PLC lock,
- * calls to loop/add/list PLCs also use this
- * more global lock.
- */
-static struct
-{
-    DL_List /*PLC*/ PLCs;
-    epicsMutexId    lock;
-}   drvEtherIP_private =
-{ {NULL, NULL}, 0 };
+DrvEtherIP_Private drvEtherIP_private = { {NULL, NULL}, 0 };
 
 /* Locking:
  *
@@ -43,22 +35,22 @@ static struct
  * b) Data:       driver and device read/write tag's data
  *                and change the update flag
  *
- * Locks:
+ * The following 3 locks are used between threads.
+ * To avoid deadlocks, they have to be taken in the listed order
+ * by any code that uses more than one of the locks.
  *
  * 1) drvEtherIP_private.lock is for PLCs
- *    Everything that accesses >1 PLC takes this lock
+ *    Everything that accesses >1 PLC takes this lock.
  *
  * 2) PLC.lock is per-PLC
  *    All structural changes to a PLC take this lock
  *    Currently PLCs are added, never removed,
- *    so the global lock is not affected by this
+ *    so the global lock is not affected by this.
  *    PLC.lock is for all data structures for this PLC:
  *    scanlists, tags, callbacks.
  *
  *    PLC_scan_task needs access to connection & scanlists,
  *    so it takes lock for each run down the scanlist.
- *    (actually might update lame_count when not locked,
- *     but not fatal since PLC is never deleted)
  *
  * 3) TagInfo.data_lock is the Data lock.
  *    The scan task runs over the Tags in a scanlist three times:
@@ -94,12 +86,9 @@ static struct
 /* ------------------------------------------------------------
  * TagInfo
  * ------------------------------------------------------------ */
-
 static void dump_TagInfo(const TagInfo *info, int level)
 {
-    char buffer[EIP_MAX_TAG_LENGTH];
-    eip_bool have_sem;
-    
+    char buffer[EIP_MAX_TAG_LENGTH];    
     printf("*** Tag '%s' @ 0x%X:\n", info->string_tag, (unsigned int)info);
     if (level > 3)
     {
@@ -115,35 +104,28 @@ static void dump_TagInfo(const TagInfo *info, int level)
         printf("  data_lock ID        : 0x%X\n",
                (unsigned int) info->data_lock);
     }
-    have_sem = epicsEventWaitWithTimeout(info->data_lock, EIP_SHORT_TIMEOUT) ==
-               epicsEventWaitOK;
-    if (! have_sem)
+    if (epicsMutexLock(info->data_lock) == epicsMutexLockOK)
+    {
+        if (level > 3)
+        {
+            printf("  data_size (buffer)  : %d\n",  info->data_size);
+            printf("  valid_data_size     : %d\n",  info->valid_data_size);
+            printf("  do_write            : %s\n",
+                   (info->do_write ? "yes" : "no"));
+            printf("  is_writing          : %s\n",
+                   (info->is_writing ? "yes" : "no"));
+            EIP_printf(0, "  data                : ");
+        }
+        if (info->valid_data_size > 0)
+            dump_raw_CIP_data(info->data, info->elements);
+        else
+            printf("-no data-\n");
+        epicsMutexUnlock(info->data_lock);
+    }
+    else
         printf("  (CANNOT GET DATA LOCK!)\n");
     if (level > 3)
-    {
-        printf("  data_size (buffer)  : %d\n",  info->data_size);
-        printf("  valid_data_size     : %d\n",  info->valid_data_size);
-        printf("  do_write            : %s\n",
-               (info->do_write ? "yes" : "no"));
-        printf("  is_writing          : %s\n",
-               (info->is_writing ? "yes" : "no"));
-        EIP_printf(0, "  data                : ");
-    }
-    if (info->valid_data_size > 0)
-        dump_raw_CIP_data(info->data, info->elements);
-    else
-        printf("-no data-\n");
-    if (have_sem)
-        epicsEventSignal(info->data_lock);
-    if (level > 3)
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
-        printf("  transfer time       : %g secs\n",
-               info->transfer_time);
-#else
-        printf("  transfer time       : %d ticks (%g secs)\n",
-               (int)info->transfer_time,
-               (double)info->transfer_time/EIP_TIME_CONVERSION);
-#endif
+        printf("  transfer time       : %g secs\n", info->transfer_time);
 }
 
 static TagInfo *new_TagInfo(const char *string_tag, size_t elements)
@@ -161,7 +143,7 @@ static TagInfo *new_TagInfo(const char *string_tag, size_t elements)
         return 0;
     }
     info->elements = elements;
-    info->data_lock = epicsEventCreate(EIP_SEMOPTS);
+    info->data_lock = epicsMutexCreate();
     if (! info->data_lock)
     {
         EIP_printf(0, "new_TagInfo (%s): Cannot create data lock\n",
@@ -180,7 +162,7 @@ static void free_TagInfo(TagInfo *info)
     free(info->string_tag);
     if (info->data_size > 0)
         free(info->data);
-    epicsEventDestroy(info->data_lock);
+    epicsMutexDestroy(info->data_lock);
     free (info);
 }
 #endif
@@ -193,12 +175,19 @@ static void free_TagInfo(TagInfo *info)
  * The caller has to do that!
  */
 
+#ifndef HAVE_314_API
+void epicsTimeToStrftime(char *txt, size_t len, const char *fmt,
+                         const epicsTimeStamp *stamp)
+{
+    /* TODO: Would be nice to show time/date? */
+    sprintf(txt, "%f secs", (double)(*stamp));
+}
+#endif
+
 static void dump_ScanList(const ScanList *list, int level)
 {
     const TagInfo *info;
-
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
-    char 	  tsString[50];
+    char      tsString[50];
     printf("Scanlist          %g secs @ 0x%X:\n",
            list->period, (unsigned int)list);
     printf("  Status        : %s\n",
@@ -219,27 +208,6 @@ static void dump_ScanList(const ScanList *list, int level)
         printf("  Last scan time: %g secs\n",
                list->last_scan_time);
     }
-#else
-    printf("Scanlist          %g secs (%d ticks) @ 0x%X:\n",
-           list->period, (int)list->period_time, (unsigned int)list);
-    printf("  Status        : %s\n",
-           (list->enabled ? "enabled" : "DISABLED"));
-    printf("  Last scan     : %ld ticks\n", list->scan_time);
-    if (level > 4)
-    {
-        printf("  Errors        : %u\n", list->list_errors);
-        printf("  Next scan     : %ld ticks\n", list->scheduled_time);
-        printf("  Min. scan time: %d ticks (%g secs)\n",
-               (int)list->min_scan_time,
-               (double)list->min_scan_time/EIP_TIME_CONVERSION);
-        printf("  Max. scan time: %d ticks (%g secs)\n",
-               (int)list->max_scan_time,
-               (double)list->max_scan_time/EIP_TIME_CONVERSION);
-        printf("  Last scan time: %d ticks (%g secs)\n",
-               (int)list->last_scan_time,
-               (double)list->last_scan_time/EIP_TIME_CONVERSION);
-    }
-#endif
     if (level > 5)
     {
         for (info=DLL_first(TagInfo, &list->taginfos); info;
@@ -252,12 +220,11 @@ static void dump_ScanList(const ScanList *list, int level)
 static void reset_ScanList(ScanList *scanlist)
 {
     scanlist->enabled        = true;
-    scanlist->period_time    = scanlist->period * EIP_TIME_CONVERSION;
     scanlist->list_errors    = 0;
     memset(&scanlist->scheduled_time, 0, sizeof(epicsTimeStamp));
-    scanlist->min_scan_time  = LONG_MAX;
-    scanlist->max_scan_time  = 0;
-    scanlist->last_scan_time = 0;
+    scanlist->min_scan_time  = 0.0;
+    scanlist->max_scan_time  = 0.0;
+    scanlist->last_scan_time = 0.0;
 }
 
 static ScanList *new_ScanList(PLC *plc, double period)
@@ -372,51 +339,59 @@ static eip_bool complete_PLC_ScanList_TagInfos(PLC *plc)
     eip_bool       any_ok = false;
     size_t         type_and_data_len;
 
-    for (list=DLL_first(ScanList, &plc->scanlists); list;
+    for (list=DLL_first(ScanList, &plc->scanlists);  list;
          list=DLL_next(ScanList, list))
     {
-        for (info=DLL_first(TagInfo, &list->taginfos); info;
+        for (info=DLL_first(TagInfo, &list->taginfos);  info;
              info=DLL_next(TagInfo, info))
         {
-            if (info->cip_r_request_size || info->cip_r_response_size)
-                continue;           /* don't look twice */
-            data = EIP_read_tag(&plc->connection,
-                                info->tag, info->elements,
-                                NULL /* data_size */,
-                                &info->cip_r_request_size,
-                                &info->cip_r_response_size);
-            if (data)
+            if (epicsMutexLock(info->data_lock) != epicsMutexLockOK)
             {
-                any_ok = true;
-                /* Estimate write sizes from the request/response for read
-                 * because we don't want to issue a 'write' just for the
-                 * heck of it.
-                 * Nevertheless, the write sizes calculated in here
-                 * should be exact since we can determine the write
-                 * request package from the read request
-                 * (CIP service code, tag name, elements)
-                 * plus the raw data size.
-                 */
-                if (info->cip_r_response_size <= 4)
+                EIP_printf(1, "EIP complete_PLC_ScanList_TagInfos cannot lock %s\n",
+                           info->string_tag);
+                continue;
+            }
+            if (info->cip_r_request_size==0)
+            {   /* Need to get the read sizes */
+                data = EIP_read_tag(&plc->connection,
+                                    info->tag, info->elements,
+                                    NULL /* data_size */,
+                                    &info->cip_r_request_size,
+                                    &info->cip_r_response_size);
+                if (data)
                 {
-                    info->cip_w_request_size  = 0;
-                    info->cip_w_response_size = 0;
+                    any_ok = true;
+                    /* Estimate write sizes from the request/response for read
+                     * because we don't want to issue a 'write' just for the
+                     * heck of it.
+                     * Nevertheless, the write sizes calculated in here
+                     * should be exact since we can determine the write
+                     * request package from the read request
+                     * (CIP service code, tag name, elements)
+                     * plus the raw data size.
+                     */
+                    if (info->cip_r_response_size <= 4)
+                    {
+                        info->cip_w_request_size  = 0;
+                        info->cip_w_response_size = 0;
+                    }
+                    else
+                    {
+                        type_and_data_len = info->cip_r_response_size - 4;
+                        info->cip_w_request_size  = info->cip_r_request_size
+                            + type_and_data_len;
+                        info->cip_w_response_size = 4;
+                    }
                 }
                 else
                 {
-                    type_and_data_len = info->cip_r_response_size - 4;
-                    info->cip_w_request_size  = info->cip_r_request_size
-                                                + type_and_data_len;
-                    info->cip_w_response_size = 4;
+                    info->cip_r_request_size  = 0;
+                    info->cip_r_response_size = 0;
+                    info->cip_w_request_size  = 0;
+                    info->cip_w_response_size = 0;
                 }
             }
-            else
-            {
-                info->cip_r_request_size  = 0;
-                info->cip_r_response_size = 0;
-                info->cip_w_request_size  = 0;
-                info->cip_w_response_size = 0;
-            }
+            epicsMutexUnlock(info->data_lock);
         }
     }
     return any_ok;
@@ -428,24 +403,21 @@ static void invalidate_PLC_tags(PLC *plc)
     TagInfo     *info;
     TagCallback *cb;
     
-    for (list=DLL_first(ScanList, &plc->scanlists);
-         list;
+    for (list=DLL_first(ScanList, &plc->scanlists);  list;
          list=DLL_next(ScanList, list))
     {
-        for (info = DLL_first(TagInfo, &list->taginfos);
-             info;
+        for (info = DLL_first(TagInfo, &list->taginfos);  info;
              info = DLL_next(TagInfo, info))
         {
-            if (epicsEventWaitWithTimeout(info->data_lock,EIP_SHORT_TIMEOUT) ==
-                epicsEventWaitOK)
+            if (epicsMutexLock(info->data_lock) == epicsMutexLockOK)
             {
                 info->valid_data_size = 0;
+                epicsMutexUnlock(info->data_lock);
                 /* Call all registered callbacks for this tag
                  * so that records can show INVALID */
-                for (cb = DLL_first(TagCallback, &info->callbacks);
-                     cb; cb=DLL_next(TagCallback, cb))
+                for (cb = DLL_first(TagCallback, &info->callbacks);  cb;
+                     cb=DLL_next(TagCallback, cb))
                     (*cb->callback) (cb->arg);
-                epicsEventSignal(info->data_lock);
             }
         }
     }
@@ -495,12 +467,11 @@ static size_t determine_MultiRequest_count(size_t limit,
      * Skip entries with empty cip_*_request_size!
      */
     count = *requests_size = *responses_size = 0;
-    for (; info; info = DLL_next(TagInfo, info))
+    for (/**/; info; info = DLL_next(TagInfo, info))
     {
         if (info->cip_r_request_size <= 0)
             continue;
-        if (epicsEventWaitWithTimeout(info->data_lock, EIP_SHORT_TIMEOUT) !=
-            epicsEventWaitOK)
+        if (epicsMutexLock(info->data_lock) != epicsMutexLockOK)
         {
             EIP_printf(1, "EIP determine_MultiRequest_count cannot lock %s\n",
                        info->string_tag);
@@ -517,7 +488,7 @@ static size_t determine_MultiRequest_count(size_t limit,
             try_req  = *requests_size  + info->cip_r_request_size;
             try_resp = *responses_size + info->cip_r_response_size;
         }
-        epicsEventSignal(info->data_lock);
+        epicsMutexUnlock(info->data_lock);
         *multi_request_size  = CIP_MultiRequest_size (count+1, try_req);
         *multi_response_size = CIP_MultiResponse_size(count+1, try_resp);
         if (*multi_request_size  > limit ||
@@ -565,39 +536,32 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
          * 2) to handle the responses
          */
         info_position = info;
-        count = determine_MultiRequest_count(c->transfer_buffer_limit
-                                             - EIP_PROTOCOL_OVERHEAD,
-                                             info,
-                                             &requests_size,
-                                             &responses_size,
-                                             &multi_request_size,
-                                             &multi_response_size);
+        count = determine_MultiRequest_count(
+            c->transfer_buffer_limit - EIP_PROTOCOL_OVERHEAD,
+            info, &requests_size, &responses_size,
+            &multi_request_size, &multi_response_size);
         if (count == 0)
             return true;
         /* send <count> requests as one transfer */
         send_size = CM_Unconnected_Send_size(multi_request_size);
         EIP_printf(10, " ------------------- New Request ------------\n");
-        send_request = EIP_make_SendRRData(c, send_size);
-        if (!send_request)
+        if (!(send_request = EIP_make_SendRRData(c, send_size)))
             return false;
         multi_request = make_CM_Unconnected_Send(send_request,
                                                  multi_request_size, c->slot);
-        if (!multi_request  ||
-            !prepare_CIP_MultiRequest(multi_request, count))
+        if (!(multi_request && prepare_CIP_MultiRequest(multi_request, count)))
             return false;
         /* Add read/write requests to the multi requests */
-        for (i=0; i<count; info=DLL_next(TagInfo, info))
+        for (i=0;  i<count;  info=DLL_next(TagInfo, info))
         {
             if (info->cip_r_request_size <= 0)
                 continue;
             EIP_printf(10, "Request #%d (%s):\n", i, info->string_tag);
-            if (info->is_writing)
+            if (info->is_writing  &&  info->cip_w_request_size)
             {
                 request = CIP_MultiRequest_item(multi_request,
                                                 i, info->cip_w_request_size);
-                if (epicsEventWaitWithTimeout(info->data_lock,
-                                              EIP_SHORT_TIMEOUT) !=
-                    epicsEventWaitOK)
+                if (epicsMutexLock(info->data_lock) != epicsMutexLockOK)
                 {
                     EIP_printf(1, "EIP process_ScanList '%s': "
                                "no data lock (write)\n", info->string_tag);
@@ -609,7 +573,7 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                         (CIP_Type)get_CIP_typecode(info->data),
                         info->elements, info->data + CIP_Typecode_size);
                 info->do_write = false;
-                epicsEventSignal(info->data_lock);
+                epicsMutexUnlock(info->data_lock);
             }
             else
             {   /* reading, !is_writing */
@@ -622,7 +586,7 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                 return false;
             ++i; /* increment here, not in for() -> skip empty tags */
         } /* for i=0..count */
-        EIP_TIME_GET(start_time);
+        epicsTimeGetCurrent(&start_time);
         if (!EIP_send_connection_buffer(c))
             return false;
         /* read & disassemble response */
@@ -631,11 +595,10 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
             EIP_printf(2, "EIP process_ScanList: No response\n");
             return false;
         }
-        EIP_TIME_GET(end_time);
-        transfer_time = EIP_TIME_DIFF(end_time, start_time);
+        epicsTimeGetCurrent(&end_time);
+        transfer_time = epicsTimeDiffInSeconds(&end_time, &start_time);
         response = EIP_unpack_RRData(c->buffer, &rr_data);
-        if (! check_CIP_MultiRequest_Response(response,
-                                              rr_data.data_length))
+        if (! check_CIP_MultiRequest_Response(response, rr_data.data_length))
         {
             EIP_printf(2, "EIP process_ScanList: Error in response\n");
             for (info=info_position,i=0; i<count; info=DLL_next(TagInfo, info))
@@ -665,9 +628,7 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                 EIP_printf(10, "Response #%d (%s):\n", i, info->string_tag);
                 EIP_dump_raw_MR_Response(single_response, 0);
             }
-            if (epicsEventWaitWithTimeout(info->data_lock,
-                                          EIP_SHORT_TIMEOUT) !=
-                epicsEventWaitOK)
+            if (epicsMutexLock(info->data_lock) != epicsMutexLockOK)
             {
                 EIP_printf(1, "EIP process_ScanList '%s': "
                            "no data lock (receive)\n", info->string_tag);
@@ -707,8 +668,7 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                         {
                             elements = CIP_Type_size(get_CIP_typecode(data));
                             if (elements > 0)
-                            {
-                                /* response = UINT type, raw data */ 
+                            {   /* response = UINT type, raw data */ 
                                 elements = (data_size-2) / elements;
                                 EIP_printf(10, "Data (%d elements): \n",
                                            elements);
@@ -725,12 +685,12 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                         info->valid_data_size = 0;
                 }
             }
+            epicsMutexUnlock(info->data_lock);
             /* Call all registered callbacks for this tag
              * so that records can show new value */
             for (cb = DLL_first(TagCallback, &info->callbacks);
                  cb; cb=DLL_next(TagCallback, cb))
                 (*cb->callback) (cb->arg);
-            epicsEventSignal(info->data_lock);
             ++i;
         }
         /* "info" now on next unread TagInfo or 0 */
@@ -742,19 +702,17 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
 static void PLC_scan_task(PLC *plc)
 {
     ScanList *list;
-    epicsTimeStamp    next_schedule_time, start_time, end_time;
-    double            timeout_time, delay_time;
-    eip_bool          transfer_ok, reset_next_schedule_time;
+    epicsTimeStamp    next_schedule, start_time, end_time;
+    double            timeout, delay;
+    eip_bool          transfer_ok, reset_next_schedule;
     
-    timeout_time = EIP_TIME_CONVERSION *
-                   plc->connection.millisec_timeout / 1000;
-    if (timeout_time < EIP_MIN_CONN_TIMEOUT)
-        timeout_time = EIP_MIN_CONN_TIMEOUT;
-
-  scan_loop:
-    reset_next_schedule_time = true;
-    if (epicsMutexLock(plc->lock) !=
-        epicsMutexLockOK)
+    timeout = plc->connection.millisec_timeout / 1000;
+    if (timeout < EIP_MIN_CONN_TIMEOUT)
+        timeout = EIP_MIN_CONN_TIMEOUT;
+    
+  scan_loop: /* --------- The Scan Loop for one PLC -------- */
+    reset_next_schedule = true;
+    if (epicsMutexLock(plc->lock) != epicsMutexLockOK)
     {
         EIP_printf(1, "drvEtherIP scan task for PLC '%s'"
                    " cannot take plc->lock\n", plc->name);
@@ -763,77 +721,71 @@ static void PLC_scan_task(PLC *plc)
     if (!assert_PLC_connect(plc))
     {   /* don't rush since connection takes network bandwidth */
         epicsMutexUnlock(plc->lock);
-        EIP_printf(2, "drvEtherIP scan task waiting for PLC '%s'\n",
-                   plc->name);
-        delay_time = timeout_time;
-        epicsThreadSleep(delay_time);
+        EIP_printf(2, "drvEtherIP: PLC '%s' is disconnected\n", plc->name);
+        delay = timeout;
+        epicsThreadSleep(delay);
         goto scan_loop;
     }
-    for (list=DLL_first(ScanList,&plc->scanlists);
-         list;
-         list=DLL_next(ScanList,list))
+    for (list = DLL_first(ScanList,&plc->scanlists);
+         list;  list = DLL_next(ScanList,list))
     {
         if (! list->enabled)
             continue;
-        EIP_TIME_GET(start_time);
-        if (EIP_TIME_DIFF(start_time, list->scheduled_time) >= 0.0)
+        epicsTimeGetCurrent(&start_time);
+        if (epicsTimeLessThan(&list->scheduled_time, &start_time))
         {
             list->scan_time = start_time;
             transfer_ok = process_ScanList(&plc->connection, list);
-            EIP_TIME_GET(end_time);
-            list->last_scan_time = EIP_TIME_DIFF(end_time, start_time);
+            epicsTimeGetCurrent(&end_time);
+            list->last_scan_time = epicsTimeDiffInSeconds(&end_time,
+                                                          &start_time);
             /* update statistics */
             if (list->last_scan_time > list->max_scan_time)
                 list->max_scan_time = list->last_scan_time;
-            if (list->last_scan_time < list->min_scan_time)
+            if (list->last_scan_time < list->min_scan_time  ||
+                list->min_scan_time == 0.0)
                 list->min_scan_time = list->last_scan_time;
             if (transfer_ok) /* re-schedule exactly */
             {
                 list->scheduled_time = start_time;
-                EIP_TIME_ADD(list->scheduled_time, list->period_time);
+                epicsTimeAddSeconds(&list->scheduled_time, list->period);
             }
             else
             {   /* delay: ignore extra due to error/timeout */
                 list->scheduled_time = end_time;
-                EIP_TIME_ADD(list->scheduled_time, timeout_time);
+                epicsTimeAddSeconds(&list->scheduled_time, timeout);
                 ++list->list_errors;
                 ++plc->plc_errors;
                 disconnect_PLC(plc);
-                epicsMutexUnlock (plc->lock);
+                epicsMutexUnlock(plc->lock);
                 goto scan_loop;
             }
         }
         /* Update time for closest list */
-        if (reset_next_schedule_time ||
-            (EIP_TIME_DIFF(next_schedule_time, list->scheduled_time) > 0.0))
+        if (reset_next_schedule ||
+            epicsTimeLessThan(&list->scheduled_time, &next_schedule))
         {
-            reset_next_schedule_time = false;
-            next_schedule_time = list->scheduled_time;
+            reset_next_schedule = false;
+            next_schedule = list->scheduled_time;
         }
     }
     epicsMutexUnlock(plc->lock);
     /* fallback for empty/degenerate scan list */
-    if (reset_next_schedule_time == true)
-    {
-        /* Add memset to get rid of vxworks uninitialized... warning */
-        memset(&next_schedule_time, 0, sizeof(epicsTimeStamp));
-        delay_time = EIP_MIN_TIMEOUT;
-    }
+    if (reset_next_schedule)
+        delay = EIP_MIN_TIMEOUT;
     else
     {  
-        EIP_TIME_GET(start_time);
-        delay_time = EIP_TIME_DIFF(next_schedule_time, start_time);
+        epicsTimeGetCurrent(&start_time);
+        delay = epicsTimeDiffInSeconds(&next_schedule, &start_time);
     }    
     /* sleep until next turn */
-    if (delay_time > 0)
-        epicsThreadSleep(delay_time);
-    else if (delay_time < -EIP_MIN_DELAY) /* no time to spare, getting behind: */
+    if (delay > 0.0)
+        epicsThreadSleep(delay);
+    else if (delay <= 0.0) /* no time to spare, getting behind: */
     {
-      EIP_printf(8, "drvEtherIP scan task slow, delay time = %g\n",
-                 delay_time);
-      ++plc->slow_scans; /* hmm, "plc" not locked... */
+        EIP_printf(8, "drvEtherIP scan task slow, %g sec delay\n", delay);
+        ++plc->slow_scans; /* hmm, "plc" not locked... */
     }
-    
     goto scan_loop;
 }
 
@@ -841,8 +793,8 @@ static void PLC_scan_task(PLC *plc)
 static PLC *get_PLC(const char *name, eip_bool create)
 {
     PLC *plc;
-    for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
-         plc; plc=DLL_next(PLC,plc))
+    for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);  plc;
+         plc = DLL_next(PLC,plc))
     {
         if (strcmp(plc->name, name) == 0)
             return plc;
@@ -859,8 +811,8 @@ static PLC *get_PLC(const char *name, eip_bool create)
 static ScanList *get_PLC_ScanList(PLC *plc, double period, eip_bool create)
 {
     ScanList *list;
-    for (list=DLL_first(ScanList, &plc->scanlists); list;
-         list=DLL_next(ScanList, list))
+    for (list = DLL_first(ScanList, &plc->scanlists); list;
+         list = DLL_next(ScanList, list))
     {
         if (list->period == period)
             return list;
@@ -870,7 +822,6 @@ static ScanList *get_PLC_ScanList(PLC *plc, double period, eip_bool create)
     list = new_ScanList(plc, period);
     if (list)
         DLL_append(&plc->scanlists, list);
-    
     return list;
 }
 
@@ -882,9 +833,8 @@ static eip_bool find_PLC_tag(PLC *plc,
                              ScanList **list,
                              TagInfo **info)
 {
-     for (*list=DLL_first(ScanList,&plc->scanlists);
-         *list;
-         *list=DLL_next(ScanList,*list))
+    for (*list = DLL_first(ScanList,&plc->scanlists); *list;
+         *list = DLL_next(ScanList,*list))
     {
         *info = find_ScanList_Tag(*list, string_tag);
         if (*info)
@@ -908,7 +858,7 @@ void drvEtherIP_init ()
     if (! drvEtherIP_private.lock)
         EIP_printf (0, "drvEtherIP_init cannot create mutex!\n");
     DLL_init (&drvEtherIP_private.PLCs);
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#ifdef HAVE_314_API
     drvEtherIP_Register();
 #endif
 }
@@ -933,7 +883,7 @@ void drvEtherIP_help()
     printf("    drvEtherIP_report <level>\n");
     printf("    -  level = 0..10\n");
     printf("    drvEtherIP_dump\n");
-    printf("    -  dump all tags and values; short version of drvEtherIP_report\n");
+    printf("    -  dump all tags and values; short version of ..._report\n");
     printf("    drvEtherIP_reset_statistics\n");
     printf("    -  reset error counts and min/max scan times\n");
     printf("    drvEtherIP_restart\n");
@@ -966,13 +916,11 @@ long drvEtherIP_report(int level)
     if (level > 1)
         printf("  Mutex lock: 0x%X\n",
                (unsigned int) drvEtherIP_private.lock);
-    have_drvlock = epicsMutexLockWithTimeout(drvEtherIP_private.lock,
-                                             EIP_LONG_TIMEOUT) ==
-                   epicsMutexLockOK ;
+    have_drvlock = epicsMutexLock(drvEtherIP_private.lock) == epicsMutexLockOK;
     if (! have_drvlock)
         printf("   CANNOT GET DRIVER'S LOCK!\n");
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
-         plc; plc=DLL_next(PLC,plc))
+         plc;  plc = DLL_next(PLC,plc))
     {
         printf ("* PLC '%s', IP '%s'\n", plc->name, plc->ip_addr);
         if (level > 1)
@@ -991,19 +939,17 @@ long drvEtherIP_report(int level)
         if (level > 2)
         {
             printf("  Mutex lock            : 0x%X\n",
-                   (unsigned int) plc->lock);
+                   (unsigned int)plc->lock);
             printf("  scan task ID          : 0x%X (%s)\n",
                    (unsigned int) plc->scan_task_id,
                    (plc->scan_task_id==0 ? "-dead-" :
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14                    
-                    (epicsThreadIsSuspended(plc->scan_task_id)!=0 ? "suspended" :
+#ifdef HAVE_314_API
+                    epicsThreadIsSuspended(plc->scan_task_id)!=0 ? "suspended":
 #else
-                    (taskIdVerify(plc->scan_task_id) != OK   ? "-dead-" :
+                    taskIdVerify(plc->scan_task_id) != OK   ? "-dead-" :
 #endif
-                    "running")));
-            have_PLClock = epicsMutexLockWithTimeout(plc->lock,
-                                                     EIP_LONG_TIMEOUT) ==
-                           epicsMutexLockOK ;
+                    "running"));
+            have_PLClock = epicsMutexLock(plc->lock) == epicsMutexLockOK;
             if (! have_PLClock)
                 printf("   CANNOT GET PLC'S LOCK!\n");
             if (level > 3)
@@ -1038,7 +984,7 @@ void drvEtherIP_dump ()
     
     epicsMutexLock(drvEtherIP_private.lock);
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
-         plc; plc=DLL_next(PLC,plc))
+         plc;  plc=DLL_next(PLC,plc))
     {
         epicsMutexLock(plc->lock);
         printf ("PLC %s\n", plc->name);
@@ -1048,17 +994,19 @@ void drvEtherIP_dump ()
             for (info=DLL_first(TagInfo, &list->taginfos); info;
                  info=DLL_next(TagInfo, info))
             {
-                EIP_printf (0, "%s ", info->string_tag);
+                EIP_printf(0, "%s ", info->string_tag);
+                epicsMutexLock(info->data_lock);
                 if (info->valid_data_size >= 0)
-                    dump_raw_CIP_data (info->data, info->elements);
+                    dump_raw_CIP_data(info->data, info->elements);
                 else
-                    printf (" - no data -\n");
+                    printf(" - no data -\n");
+                epicsMutexUnlock(info->data_lock);
             }
         }
-        epicsMutexUnlock (plc->lock);
+        epicsMutexUnlock(plc->lock);
     }
-    epicsMutexUnlock (drvEtherIP_private.lock);
-    printf ("\n");
+    epicsMutexUnlock(drvEtherIP_private.lock);
+    printf("\n");
 }
 
 void drvEtherIP_reset_statistics ()
@@ -1068,7 +1016,7 @@ void drvEtherIP_reset_statistics ()
 
     epicsMutexLock(drvEtherIP_private.lock);
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
-         plc; plc=DLL_next(PLC,plc))
+         plc;  plc = DLL_next(PLC,plc))
     {
         epicsMutexLock(plc->lock);
         plc->plc_errors = 0;
@@ -1076,30 +1024,29 @@ void drvEtherIP_reset_statistics ()
         for (list=DLL_first(ScanList, &plc->scanlists); list;
              list=DLL_next(ScanList, list))
             reset_ScanList (list);
-        epicsMutexUnlock (plc->lock);
+        epicsMutexUnlock(plc->lock);
     }
-    epicsMutexUnlock (drvEtherIP_private.lock);
+    epicsMutexUnlock(drvEtherIP_private.lock);
 }
 
 /* Create a PLC entry:
  * name : identifier
  * ip_address: DNS name or dot-notation
  */
-eip_bool drvEtherIP_define_PLC(const char *PLC_name, const char *ip_addr, int slot)
+eip_bool drvEtherIP_define_PLC(const char *PLC_name,
+                               const char *ip_addr, int slot)
 {
     PLC *plc;
 
     epicsMutexLock(drvEtherIP_private.lock);
     plc = get_PLC(PLC_name, true);
-    if (! plc)
+    if (plc)
     {
-        epicsMutexUnlock(drvEtherIP_private.lock);
-        return false;
+        EIP_strdup(&plc->ip_addr, ip_addr, strlen(ip_addr));
+        plc->slot = slot;
     }
-    EIP_strdup(&plc->ip_addr, ip_addr, strlen(ip_addr));
-    plc->slot = slot;
     epicsMutexUnlock(drvEtherIP_private.lock);
-    return true;
+    return plc != 0;
 }
 
 /* Returns PLC or 0 if not found */
@@ -1108,9 +1055,8 @@ PLC *drvEtherIP_find_PLC (const char *PLC_name)
     PLC *plc;
 
     epicsMutexLock(drvEtherIP_private.lock);
-    plc = get_PLC (PLC_name, /*create*/ false);
+    plc = get_PLC(PLC_name, /*create*/ false);
     epicsMutexUnlock (drvEtherIP_private.lock);
-
     return plc;
 }
 
@@ -1154,56 +1100,49 @@ TagInfo *drvEtherIP_add_tag(PLC *plc, double period,
             info = 0;
         }
     }
-    epicsMutexUnlock(plc->lock);
-    
+    epicsMutexUnlock(plc->lock);    
     return info;
 }
 
 void  drvEtherIP_add_callback (PLC *plc, TagInfo *info,
                                EIPCallback callback, void *arg)
 {
-    TagCallback *cb;
-    
+    TagCallback *cb;    
     epicsMutexLock(plc->lock);
     for (cb = DLL_first(TagCallback, &info->callbacks);
-         cb; cb = DLL_next(TagCallback, cb))
+         cb;  cb = DLL_next(TagCallback, cb))
     {
-        if (cb->callback == callback &&
-            cb->arg      == arg)
+        if (cb->callback == callback  &&  cb->arg == arg)
         {
-            epicsMutexUnlock (plc->lock);
+            epicsMutexUnlock(plc->lock);
             return;
         }
     }
     /* Add new one */
-    cb = (TagCallback *) malloc (sizeof (TagCallback));
-    if (! cb)
-        return;
-    
+    if (!(cb = (TagCallback *) malloc(sizeof (TagCallback))))
+        return;   
     cb->callback = callback;
     cb->arg      = arg;
-    DLL_append (&info->callbacks, cb);
-    epicsMutexUnlock (plc->lock);
+    DLL_append(&info->callbacks, cb);
+    epicsMutexUnlock(plc->lock);
 }
 
 void drvEtherIP_remove_callback (PLC *plc, TagInfo *info,
                                  EIPCallback callback, void *arg)
 {
     TagCallback *cb;
-
     epicsMutexLock(plc->lock);
     for (cb = DLL_first(TagCallback, &info->callbacks);
-         cb; cb=DLL_next(TagCallback, cb))
+         cb;  cb=DLL_next(TagCallback, cb))
     {
-        if (cb->callback == callback &&
-            cb->arg      == arg)
+        if (cb->callback == callback  &&  cb->arg == arg)
         {
-            DLL_unlink (&info->callbacks, cb);
-            free (cb);
+            DLL_unlink(&info->callbacks, cb);
+            free(cb);
             break;
         }
     }
-    epicsMutexUnlock (plc->lock);
+    epicsMutexUnlock(plc->lock);
 }
 
 /* (Re-)connect to IOC,
@@ -1220,7 +1159,7 @@ int drvEtherIP_restart()
     if (drvEtherIP_private.lock == 0) return 0;
     epicsMutexLock(drvEtherIP_private.lock);
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
-         plc; plc=DLL_next(PLC,plc))
+         plc;  plc = DLL_next(PLC,plc))
     {
         /* block scan task (if running): */
         epicsMutexLock(plc->lock);
@@ -1228,7 +1167,7 @@ int drvEtherIP_restart()
          * disconnect, PLC_scan_task will reconnect */
         disconnect_PLC(plc);
         /* check the scan task */
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#ifdef HAVE_314_API
         if (plc->scan_task_id==0)          
 #else
         if (plc->scan_task_id==0 || taskIdVerify(plc->scan_task_id)==ERROR)
@@ -1242,10 +1181,10 @@ int drvEtherIP_restart()
             taskname[2] = 'P';
             memcpy(&taskname[3], plc->name, len);
             taskname[len+3] = '\0';
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#ifdef HAVE_314_API
             plc->scan_task_id = epicsThreadCreate(
               taskname,
-              epicsThreadPriorityMedium,
+              epicsThreadPriorityHigh,
               epicsThreadGetStackSize(epicsThreadStackMedium),
               (EPICSTHREADFUNC)PLC_scan_task,
               (void *)plc);
@@ -1295,7 +1234,6 @@ int drvEtherIP_read_tag(const char *ip_addr,
         EIP_free_ParsedTag(tag);
     }
     EIP_shutdown(&c);
-
     return 0;
 }
 
@@ -1312,8 +1250,7 @@ struct
     NULL
 };
 
-
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
+#ifdef HAVE_314_API
 epicsExportAddress(drvet,drvEtherIP);
 #endif
 

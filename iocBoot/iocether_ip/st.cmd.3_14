@@ -21,7 +21,9 @@ drvEtherIP_init()
 hostAdd("myplc", "192.168.0.50")
 # You might need this, too, if the IP is on
 # a different subnet: routeAdd <target>, <gateway>
-# routeAdd("128.165.160.146", "128.165.160.241")
+# routeAdd("192.168.0.50, "128.165.160.241")
+# Test if we can get to the PLC:
+ping "myplc", 2
 
 # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
 # The driver/device uses the <name> to indentify the PLC.
@@ -36,12 +38,9 @@ hostAdd("myplc", "192.168.0.50")
 drvEtherIP_define_PLC("plc1", "myplc", 0)
 
 # 10 - Truckload of detailed messages down to the raw send/receive buffers
-#  8 - Good value for operation
+#  7 - Good value for operation
 #  0 - Nothing except very severe problems
-EIP_verbosity=8
-
-#The following uses drvTS for vxWorks. May be needed for hardware event systems
-#TSinit
+EIP_verbosity=7
 
 cd top
 dbLoadDatabase("dbd/example.dbd")
@@ -57,9 +56,6 @@ example_registerRecordDeviceDriver(pdbbase)
 #dbLoadRecords("db/bo.db",      "PLC=plc1,IOC=snsioc4")
 #dbLoadRecords("db/mbbo.db",    "PLC=plc1,IOC=snsioc4")
 dbLoadRecords("db/test.db",    "PLC=plc1,IOC=plc1")
-
-# Default master port: 18233
-TSconfigure (1, 10, 0, 18299, 0, 0, 0)
 
 cd startup
 iocInit()
