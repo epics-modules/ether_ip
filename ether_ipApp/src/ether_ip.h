@@ -332,6 +332,19 @@ typedef enum
     T_CIP_STRUCT = 0x02A0
 } CIP_Type;
 
+/* These are experimental:
+ * The ENEC doc just shows several structures
+ * for TIMER, COUNTER, CONTROL and indicates that
+ * the T_CIP_STRUCT = 0x02A0 is followed by
+ * two more bytes, shown as "?? ??".
+ * Looks like for strings, those are always 0x0FCE,
+ * followed by INT length, INT 0, 82 characters and more zeroes
+ */
+typedef enum
+{
+    T_CIP_STRUCT_STRING = 0x0FCE
+} CIP_STRUCT_Type;
+
 /* Size of appreviated type code.
  * We only use those with size 2, no structures */
 #define CIP_Typecode_size 2

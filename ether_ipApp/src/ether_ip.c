@@ -905,7 +905,7 @@ CN_USINT *make_CIP_ReadData(CN_USINT *request,
 /* dump CIP data, type and data are in raw format */
 void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
 {
-    CN_UINT        type;
+    CN_UINT        type, len;
     const CN_USINT *buf;
     size_t         i;
     CN_USINT       vs;
@@ -964,9 +964,26 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
                 EIP_printf(0, " 0x%08X", (unsigned int)vd);
             }
             break;
+        case T_CIP_STRUCT:
+            /* Check UINT sub-type that follows the "STRUCT" type code */
+            buf = unpack_UINT(buf, &vi);
+            if (vi == T_CIP_STRUCT_STRING)
+            {
+                /* String: A0 02 CE 0F (len L) (len H) 00 00 (chars...) */
+                buf = unpack_UINT(buf, &len);
+                buf = unpack_UINT(buf, &vi);
+                EIP_printf(0, "STRING '%s'\n", (const char *)buf);
+            }
+            else
+            {
+                EIP_printf(0, "Unknown CIP struct (type 0x%04X) 0x%04X: ",
+                           type, vi);
+                EIP_hexdump(0, buf, elements*CIP_Type_size(type));
+            }
+            break;
         default:
             EIP_printf(0, "raw CIP data, unknown type 0x%04X: ",
-                    type);
+                       type);
             EIP_hexdump(0, buf, elements*CIP_Type_size(type));
     }
     EIP_printf(0, "\n");
