@@ -1698,6 +1698,12 @@ eip_bool EIP_reserve_buffer (void **buffer, size_t *size, size_t requested)
     void *old_buffer;
     int  old_size;
 
+    if (requested >= EIP_BUFFER_PANIC_THRESHOLD)
+    {
+        EIP_printf(1, "EIP_reserve_buffer refuses to allocate %d bytes\n",
+                   requested);
+        return false;
+    }
     if (*size >= requested)
         return true;
 

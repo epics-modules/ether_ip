@@ -166,9 +166,12 @@ void EIP_hexdump(int level, const void *_data, int len);
  * The response has an overhead of 40 bytes, see above: 24+6+10.
  * The request has an overhead of 52 bytes.
  *
+ * Buffer code rejects requests > EIP_BUFFER_PANIC_THRESHOLD
+ * because that's not supposed to happen.
  */
 #define EIP_BUFFER_LIMIT 538
 #define EIP_PROTOCOL_OVERHEAD 52
+#define EIP_BUFFER_PANIC_THRESHOLD 600
 
 /********************************************************
  * ControlNet data types

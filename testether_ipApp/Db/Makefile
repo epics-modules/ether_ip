@@ -29,6 +29,7 @@ DB += mbbo.db
 DB += ramp.db
 DB += eip_stat.db 
 DB += test.db 
+DB += mod.db 
 
 #----------------------------------------------------
 # Declare template files which do not show up in DB

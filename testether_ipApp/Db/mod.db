@@ -1,0 +1,21 @@
+# EPICS Database file                    -*- shell-script -*-
+#
+# Testing access to SNS NC RF Modulator
+# Read a single REAL tag called "REAL"
+record(ai, "Vmon")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP,  "@$(PLC) P1R0[2]")
+    field(PREC, "1")
+    field(EGU,  "kV")
+}
+
+record(ai, "Imon")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP,  "@$(PLC) P1R0[3]")
+    field(PREC, "1")
+    field(EGU,  "A")
+}

@@ -8,6 +8,7 @@ include $(TOP)/configure/CONFIG
 
 # No optimization, we want debugging info:
 HOST_OPT=NO
+CROSS_OPT=NO
 
 # On WIN32, have to add socket library
 # to build the test program
