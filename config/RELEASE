@@ -9,7 +9,7 @@
 #
 # Add your declarations here
 
-TEMPLATE_TOP=/cs/epics/R3.13.3/base/templates/makeBaseApp/top
-EPICS_BASE=/cs/epics/R3.13.3/base
-ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/current
+TEMPLATE_TOP=/cs/epics/R3.13.5/base/templates/makeBaseApp/top
+EPICS_BASE=/cs/epics/R3.13.5/base
+ETHER_IP=/cs/epics/ADE/R3.13.5/support/ether_ip/current
 #SHARE=
