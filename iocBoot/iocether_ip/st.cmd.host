@@ -1,3 +1,4 @@
+#! ../../bin/linux-x86/example
 # 3.14 example startup file for a Host (tried: linux-x86) -*- shell-script -*-
 
 # Initialize EtherIP driver, define PLCs
