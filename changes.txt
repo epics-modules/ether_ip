@@ -1,4 +1,13 @@
 -*- outline -*-
+
+This file contains information about the version numbers
+and what's changed.
+Hopefully, the #defines ETHERIP_MAYOR and ETHERIP_MINOR
+in ether_ipApp/src/drvEtherIP.h are updated accordingly,
+so that you can see the current version at runtime via
+drvEtherIP_report.
+
+
 * 2004, 02/11 V2.3 
 (CVS Release Tag --> ether_ip-2-3)
 Create munch file to support
