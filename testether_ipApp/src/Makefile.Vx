@@ -1,0 +1,19 @@
+# Makefile.Vx
+TOP = ../../..
+include $(TOP)/config/CONFIG_APP
+#----------------------------------------
+#  ADD MACRO DEFINITIONS AFTER THIS LINE
+
+LIBOBJS += $(ETHER_IP_BIN)/ether_ipLib
+
+include ../baseLIBOBJS
+
+LIBNAME = testether_ip
+INSTALLS += iocCore
+
+#Note that the command line that builds the
+#library $(LIBNAME) may be HUGE (>3kB)
+#
+include $(TOP)/config/RULES.Vx
+#----------------------------------------
+#  ADD RULES AFTER THIS LINE
