@@ -1,4 +1,5 @@
 To run the example application on Linux, do something like this:
 
 export LD_LIBRARY_PATH=../../lib/linux-x86:$LD_LIBRARY_PATH;
- ../../bin/linux-x86/ether_ip_test st.cmd.host
+ ../../bin/linux-x86/example st.cmd.host
+
