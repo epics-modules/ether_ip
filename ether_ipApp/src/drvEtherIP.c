@@ -850,7 +850,13 @@ long drvEtherIP_report(int level)
     EIPIdentityInfo *ident;
     ScanList *list;
     bool have_drvlock, have_PLClock;
-    
+
+    if (level <= 0)
+    {
+        printf("drvEtherIP V%d.%d - ControlLogix 5000 PLC via EtherNet/IP\n",
+               ETHERIP_MAYOR, ETHERIP_MINOR);
+        return 0;
+    }
     printf("drvEtherIP V%d.%d report, -*- outline -*-\n",
            ETHERIP_MAYOR, ETHERIP_MINOR);
     if (drvEtherIP_private.lock == 0)
@@ -858,7 +864,7 @@ long drvEtherIP_report(int level)
         printf(" drvEtherIP lock is 0, did you call drvEtherIP_init?\n");
         return 0;
     }
-    if (level > 0)
+    if (level > 1)
         printf("  SEM_ID lock: 0x%X\n",
                (unsigned int) drvEtherIP_private.lock);
     have_drvlock = semTake(drvEtherIP_private.lock, EIP_SEM_TIMEOUT*5) == OK;
@@ -867,8 +873,8 @@ long drvEtherIP_report(int level)
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
          plc; plc=DLL_next(PLC,plc))
     {
-        printf ("* PLC '%s', IP '%s':\n", plc->name, plc->ip_addr);
-        if (level > 0)
+        printf ("* PLC '%s', IP '%s'\n", plc->name, plc->ip_addr);
+        if (level > 1)
         {
             ident = &plc->connection.info;
             printf("  Interface name        : %s\n", ident->name);
@@ -881,7 +887,7 @@ long drvEtherIP_report(int level)
             printf("  scan thread slow count: %u\n", plc->slow_scans);
             printf("  connection errors     : %u\n", plc->plc_errors);
         }
-        if (level > 1)
+        if (level > 2)
         {
             printf("  SEM_ID lock           : 0x%X\n",
                    (unsigned int) plc->lock);
@@ -892,12 +898,12 @@ long drvEtherIP_report(int level)
             have_PLClock = semTake(plc->lock, EIP_SEM_TIMEOUT*5) == OK;
             if (! have_PLClock)
                 printf("   CANNOT GET PLC'S LOCK!\n");
-            if (level > 2)
+            if (level > 3)
             {
                 printf("** ");
                 EIP_dump_connection(&plc->connection);
             }
-            if (level > 3)
+            if (level > 4)
             {
                 for (list=DLL_first(ScanList, &plc->scanlists); list;
                      list=DLL_next(ScanList, list))
