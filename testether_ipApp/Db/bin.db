@@ -3870,3 +3870,58 @@ record(bi, "$(user):bi351")
 	field(OSV,  "MAJOR")
 }
 
+record(bo,"CryoTest:TstCh:bo00") {
+    field(DESC,"binary output record")
+    field(SCAN,"Passive")
+    field(DTYP,"EtherIP")
+    field(FLNK,"0")
+    field(OUT,"@plc1 PCRTSTB04[0] S 1")
+    field(ZNAM,"Off")
+    field(ONAM,"On")
+}
+record(bi,"CryoTest:TstCh:bi00") {
+    field(DESC,"binary input record")
+    field(SCAN,"1 second")
+    field(DTYP,"EtherIP")
+    field(FLNK,"0")
+    field(INP,"@plc1 PCRTSTB03[0]")
+    field(ZNAM,"Off")
+    field(ONAM,"On")
+}
+record(bo,"CryoTest:TstCh:bo08") {
+    field(DESC,"binary output record")
+    field(SCAN,"Passive")
+    field(DTYP,"EtherIP")
+    field(FLNK,"0")
+    field(OUT,"@plc1 PCRTSTB04[8] S 1")
+    field(ZNAM,"Off")
+    field(ONAM,"On")
+}
+record(bi,"CryoTest:TstCh:bi08") {
+    field(DESC,"binary input record")
+    field(SCAN,"1 second")
+    field(DTYP,"EtherIP")
+    field(FLNK,"0")
+    field(INP,"@plc1 PCRTSTB03[8]")
+    field(ZNAM,"Off")
+    field(ONAM,"On")
+}
+record(bo,"CryoTest:TstCh:bo09") {
+    field(DESC,"binary output record")
+    field(SCAN,"Passive")
+    field(DTYP,"EtherIP")
+    field(FLNK,"0")
+    field(OUT,"@plc1 PCRTSTB04[9] S 1")
+    field(ZNAM,"Off")
+    field(ONAM,"On")
+}
+record(bi,"CryoTest:TstCh:bi09") {
+    field(DESC,"binary input record")
+    field(SCAN,"1 second")
+    field(DTYP,"EtherIP")
+    field(FLNK,"0")
+    field(INP,"@plc1 PCRTSTB03[9]")
+    field(ZNAM,"Off")
+    field(ONAM,"On")
+}
+

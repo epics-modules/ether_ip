@@ -1,13 +1,11 @@
 -*- outline -*- $Id$
 
 * Todo
-
-** doc
+** doc can never be good enough
 ** Check timeout choices in semTake calls
 ** make Unix/Win32 cmd tools more useful?
 
 * EtherNet/IP
-
 EtherNet/IP, originally called "ControlNet over Ethernet"
 as defined in the ControlNet Spec, Errata 2, is the protocol
 used by A/B ControlLogix PLCs.
@@ -16,15 +14,13 @@ This software is both a commandline test tool for Win32/Unix
 and a driver/device for EPICS IOCs.
 
 * Files
-
-ether_ip.[ch]	 EtherNet/IP protocol
+ether_ip.[ch]    EtherNet/IP protocol
 dl_list*         Double-linked list, used by the following
-drvEtherIP*	 vxWorks driver
+drvEtherIP*      vxWorks driver
 devEtherIP*      EPICS device support
 ether_ip_test.c  main for Unix/Win32
 
 * Supported Record types
-
 ** Analog input
    The analog input record can be connected to single analog tags,
    a single analog tag that is part of a structure as well
@@ -34,6 +30,7 @@ ether_ip_test.c  main for Unix/Win32
    When the tag on the PLC is of type CN_REAL, the VAL field is set
    directly (no conversion).
    Otherwise RVAL is set and conversions (linear, ...) can be used.
+   The analog record should not be used with BOOL arrays.
 
 ** Analog output
    Similar to analog input, no special flags are supported.
@@ -46,7 +43,6 @@ ether_ip_test.c  main for Unix/Win32
    are allowed.
 
 * Installation, Setup for EPICS
-
   To use this software, several steps are required.
   Many of these are handled by the SNS ADE,
   but the following steps list the details in case
@@ -111,7 +107,7 @@ ether_ip_test.c  main for Unix/Win32
 
       Again the st.cmd example shows this.
 
-   6) Driver Tests	
+   6) Driver Tests      
       Some of these work all the time, other require an actual
       EPICS database to be running with records that use
       the EtherIP driver/device.
@@ -137,7 +133,6 @@ ether_ip_test.c  main for Unix/Win32
        drvEtherIP_report 5
 
 * Record Configuration
-
 ** Device type
    Has to be "EtherIP" as defined in dbd file, example:
 
@@ -192,6 +187,12 @@ ether_ip_test.c  main for Unix/Win32
       Then the driver reads the array
       (elements 0 up to the highest requested one)
       and the record picks the single element from that array.
+      The array element can be a decimal: [1] [42]
+      ... or an octal number [00] [07] [010] ...
+      ... or a hex. number [0x00] [0x0F] [0x10] ...
+      A number like [09] will fail without error since this
+      starts like an octal with '0' but is invalid.
+      As a result, element 0 will be used.
    c) Tag is an array AND the element flag "E"
       is given.
       Then this record reads the single array element.
@@ -216,6 +217,25 @@ ether_ip_test.c  main for Unix/Win32
       hold about 512 bytes.
       So in this case you have to read elements 401-410
       one by one.
+   c) If you have to use a binary record type (bi, bo, mbbi, ...)
+      with a non-BOOL array element.
+      Example:  PLC tag DINT dint[5]
+      Assume an mbbi record, INP="@plc1 dint[3]", NOBT=10.
+      You might have configured this to mean:
+                          Bits 0...9 from dint[5].
+      What you get is:    Bits 3...10, all in the first DINT,
+      because the driver assumes that a binary record talks to
+      a BOOL array if arrays are used.
+      You can connect an analog ai to dint[3] and will in fact
+      get all the bits from the 3rd DINT.
+
+      If you have to use a mbbi, there are two options:
+      1) read the tag into an ai and then read that with an mbbi
+      2) use "@plc1 dint[3] E".
+         Now the driver will not pick apart the array element & bits
+         but just require "dint[3]" from the PLC.
+         Drawback: This is a single request, it will not be combined
+                   with other array requests to the same "dint" tag.
 
 ** Flags
    The "E" flag was already mentioned:
@@ -318,9 +338,9 @@ with a non-bool tag on the PLC.
 Therefore make sure that the types match:
 
 AI:                    Tag should be Single BOOL, REAL, ...
-		       or array of REAL
+                       or array of REAL
 BI, MBBI, MBBIDirect:  Tag should be Single BOOL, Real, ...
-		       or BOOL[]
+                       or BOOL[]
 
 * Write support
 
