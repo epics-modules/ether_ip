@@ -325,3 +325,38 @@ record(waveform, "$(IOC):DINTLwf")
 	field(NELM, "40")
 	field(FTVL, "LONG")
 }
+
+# Some I/O Intr tests
+record(bi, "$(IOC):bi_int0")
+{
+	field(SCAN, "I/O Intr")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) DINTs[0] B 0 S 1")
+	field(ZNAM, "False")
+	field(ONAM, "True")
+}
+
+record(bi, "$(IOC):bi_int1")
+{
+	field(SCAN, "I/O Intr")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) DINTs[0] B 1 S 1")
+	field(ZNAM, "False")
+	field(ONAM, "True")
+}
+
+record(bi, "$(IOC):bi_int2")
+{
+	field(SCAN, "I/O Intr")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) DINTs[0] B 2 S 1")
+	field(ZNAM, "False")
+	field(ONAM, "True")
+}
+
+record(ao, "$(IOC):aoDINTs0")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@$(PLC) DINTs[0] S 1")
+}
