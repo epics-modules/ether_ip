@@ -10,21 +10,27 @@ The current release is 0-5.
 The non-commited next release will be 0-6.
 Replace <RELEASE> by the current release.
 
+Example for getting specific release:
+cvs -d :ext:kasemir@ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot \
+     export -r ether_ip-0-5 -d 0-5 ether_ip
+
 What you have to do is
 - compile the ether_ip driver/device sources
 - somehow load them into vxWorks on the IOC
-- include the DBD description of the new device support
+- include the DBD descriptions of the new device support
   so that EPICS knows about them
 - create EPICS records that use the new driver
 
 The directory structure and Makefiles were created by 
 makeBaseApp.pl from EPICS R3.13.3 base.
-Most important:
-Choose (or override the base config) for the target architecture
-in config/CONFIG.
-
-In iocBoot/iocether_ip/Makefile, select the ARCH for the test IOC
-(if you want to use that test setup).
+In case you choose to skip reading the manual on makeBaseApp:
+- Choose (or override the base config) for the target architecture
+  in config/CONFIG.
+- In iocBoot/iocether_ip/Makefile, select the ARCH for the test IOC
+  (if you want to use that test setup).
+- You have to modify config/RELEASE so that ETHER_IP point to where you
+  put the stuff, e.g.
+    ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/0-5 
 
 * I. ether_ip directory structure:
 ether_ip/
