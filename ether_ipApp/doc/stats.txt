@@ -351,4 +351,6 @@ usual  18 ms
 Two of those REAL[30] requests are actually combined in the driver
 because they fit the 500byte buffer limit.)
 
-
+Addendum:
+After one week, the max. scan time for the BOOLs[352] was 0.15secs,
+no errors.
