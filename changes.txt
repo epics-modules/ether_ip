@@ -1,5 +1,11 @@
 -*- outline -*-
 
+* 2003, 10/31 V2.2
+R3.14.4 port
+
+* V2.1
+waveform supports CHAR
+
 * 2003, 04/29 V2.0
 Stephanie Allison, saa@SLAC.Stanford.EDU, 
 ported the EtherIP support to EPICS R3.14!
