@@ -299,7 +299,7 @@ void usage(const char *progname)
     fprintf(stderr, "    -v verbosity\n");
     fprintf(stderr, "    -i ip  (as 123.456.789.001 or DNS name)\n");
     fprintf(stderr, "    -p port\n");
-    fprintf(stderr, "    -s slot\n");
+    fprintf(stderr, "    -s PLC slot in ControlLogix crate (default: 0)\n");
     fprintf(stderr, "    -t timeout (ms)\n");
     fprintf(stderr, "    -a array size\n");
     fprintf(stderr, "    -w <double value to write>\n");

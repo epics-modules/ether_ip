@@ -17,7 +17,6 @@ drvEtherIP_init
 
 # Tell vxWorks how to get to "snsioc1":
 hostAdd "snsioc1", "128.165.160.146"
-
 # You might need this, too: routeAdd <target>, <gateway>
 # routeAdd "128.165.160.146", "128.165.160.241"
 
@@ -30,24 +29,24 @@ hostAdd "snsioc1", "128.165.160.146"
 # The IP address gets us to the ENET interface.
 # To get to the PLC itself, we need the slot that
 # it resides in. The first, left-most slot in the
-# ControlLogix crate is slot 0:
-drvEtherIP_define_PLC "plc1", "snsioc1"
+# ControlLogix crate is slot 0.
+drvEtherIP_define_PLC "plc1", "snsioc1", 6
 
 EIP_verbosity=10
 
 cd top
 dbLoadDatabase("./dbd/ether_ip_test.dbd")
-dbLoadRecords("./db/ramp.db","user=kay")
-dbLoadRecords("./db/eip_stat.db","PLC=plc1,IOC=snsioc47,TAG=BOOLs")
-dbLoadRecords("./db/ai.db","user=kay")
-dbLoadRecords("./db/ana.db","user=kay")
-dbLoadRecords("./db/bi.db","user=kay")
-dbLoadRecords("./db/bin.db","user=kay")
-dbLoadRecords("./db/mbbi.db","user=kay")
-dbLoadRecords("./db/ao.db","user=kay")
-dbLoadRecords("./db/bo.db","user=kay")
-dbLoadRecords("./db/mbbo.db","user=kay")
-#dbLoadRecords("./db/test.db","user=kay")
+dbLoadRecords("./db/ramp.db",    "IOC=snsioc4")
+dbLoadRecords("./db/eip_stat.db","PLC=plc1,IOC=snsioc4,TAG=REAL")
+dbLoadRecords("./db/ai.db",      "PLC=plc1,IOC=snsioc4")
+dbLoadRecords("./db/ana.db",     "PLC=plc1,IOC=snsioc4")
+dbLoadRecords("./db/bi.db",      "PLC=plc1,IOC=snsioc4")
+dbLoadRecords("./db/bin.db",     "PLC=plc1,IOC=snsioc4")
+dbLoadRecords("./db/mbbi.db",    "PLC=plc1,IOC=snsioc4")
+dbLoadRecords("./db/ao.db",      "PLC=plc1,IOC=snsioc4")
+dbLoadRecords("./db/bo.db",      "PLC=plc1,IOC=snsioc4")
+dbLoadRecords("./db/mbbo.db",    "PLC=plc1,IOC=snsioc4")
+dbLoadRecords("./db/test.db",    "PLC=plc1,IOC=snsioc4")
 #dbLoadRecords("./db/null.db","user=kay")
 
 # Time syncronization:

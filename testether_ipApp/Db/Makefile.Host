@@ -17,7 +17,6 @@ include $(TOP)/config/CONFIG_APP
 # Add databases, templates, substitutions like this
 
 DB += ai.db
-DB += alh.db
 DB += ana.db
 DB += ao.db
 DB += bi.db

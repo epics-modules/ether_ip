@@ -1,4 +1,4 @@
-record(ai, "$(user):ai_REAL")
+record(ai, "$(IOC):ai_REAL")
 {
 	field(SCAN, ".1 second")
 	field(DTYP, "EtherIP")
@@ -17,7 +17,7 @@ record(ai, "$(user):ai_REAL")
 	field(LLSV, "MAJOR")
 }
 
-record(ai, "$(user):ai_DINT")
+record(ai, "$(IOC):ai_DINT")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
@@ -36,7 +36,7 @@ record(ai, "$(user):ai_DINT")
 	field(LLSV, "MAJOR")
 }
 
-record(ai, "$(user):ai_USER")
+record(ai, "$(IOC):ai_USER")
 {
 	field(SCAN, "1 second")
 	field(DTYP, "EtherIP")

@@ -1,20 +1,20 @@
 
-record(bi, "$(user):BOOL")
+record(bi, "$(IOC):BOOL")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOL")
+	field(INP, "@$(PLC) BOOL")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi_REAL")
+record(bi, "$(IOC):bi_REAL")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 REAL")
+	field(INP, "@$(PLC) REAL")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")

@@ -1,3927 +1,3872 @@
-record(bi, "$(user):bi0")
+record(bi, "$(IOC):bi0")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[0] S 0.1")
+	field(INP, "@$(PLC) BOOLs[0] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi1")
+record(bi, "$(IOC):bi1")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[1] S 0.1")
+	field(INP, "@$(PLC) BOOLs[1] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi2")
+record(bi, "$(IOC):bi2")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[2] S 0.1")
+	field(INP, "@$(PLC) BOOLs[2] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi3")
+record(bi, "$(IOC):bi3")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[3] S 0.1")
+	field(INP, "@$(PLC) BOOLs[3] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi4")
+record(bi, "$(IOC):bi4")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[4] S 0.1")
+	field(INP, "@$(PLC) BOOLs[4] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi5")
+record(bi, "$(IOC):bi5")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[5] S 0.1")
+	field(INP, "@$(PLC) BOOLs[5] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi6")
+record(bi, "$(IOC):bi6")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[6] S 0.1")
+	field(INP, "@$(PLC) BOOLs[6] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi7")
+record(bi, "$(IOC):bi7")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[7] S 0.1")
+	field(INP, "@$(PLC) BOOLs[7] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi8")
+record(bi, "$(IOC):bi8")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[8] S 0.1")
+	field(INP, "@$(PLC) BOOLs[8] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi9")
+record(bi, "$(IOC):bi9")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[9] S 0.1")
+	field(INP, "@$(PLC) BOOLs[9] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi10")
+record(bi, "$(IOC):bi10")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[10] S 0.1")
+	field(INP, "@$(PLC) BOOLs[10] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi11")
+record(bi, "$(IOC):bi11")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[11] S 0.1")
+	field(INP, "@$(PLC) BOOLs[11] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi12")
+record(bi, "$(IOC):bi12")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[12] S 0.1")
+	field(INP, "@$(PLC) BOOLs[12] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi13")
+record(bi, "$(IOC):bi13")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[13] S 0.1")
+	field(INP, "@$(PLC) BOOLs[13] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi14")
+record(bi, "$(IOC):bi14")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[14] S 0.1")
+	field(INP, "@$(PLC) BOOLs[14] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi15")
+record(bi, "$(IOC):bi15")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[15] S 0.1")
+	field(INP, "@$(PLC) BOOLs[15] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi16")
+record(bi, "$(IOC):bi16")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[16] S 0.1")
+	field(INP, "@$(PLC) BOOLs[16] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi17")
+record(bi, "$(IOC):bi17")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[17] S 0.1")
+	field(INP, "@$(PLC) BOOLs[17] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi18")
+record(bi, "$(IOC):bi18")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[18] S 0.1")
+	field(INP, "@$(PLC) BOOLs[18] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi19")
+record(bi, "$(IOC):bi19")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[19] S 0.1")
+	field(INP, "@$(PLC) BOOLs[19] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi20")
+record(bi, "$(IOC):bi20")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[20] S 0.1")
+	field(INP, "@$(PLC) BOOLs[20] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi21")
+record(bi, "$(IOC):bi21")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[21] S 0.1")
+	field(INP, "@$(PLC) BOOLs[21] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi22")
+record(bi, "$(IOC):bi22")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[22] S 0.1")
+	field(INP, "@$(PLC) BOOLs[22] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi23")
+record(bi, "$(IOC):bi23")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[23] S 0.1")
+	field(INP, "@$(PLC) BOOLs[23] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi24")
+record(bi, "$(IOC):bi24")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[24] S 0.1")
+	field(INP, "@$(PLC) BOOLs[24] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi25")
+record(bi, "$(IOC):bi25")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[25] S 0.1")
+	field(INP, "@$(PLC) BOOLs[25] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi26")
+record(bi, "$(IOC):bi26")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[26] S 0.1")
+	field(INP, "@$(PLC) BOOLs[26] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi27")
+record(bi, "$(IOC):bi27")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[27] S 0.1")
+	field(INP, "@$(PLC) BOOLs[27] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi28")
+record(bi, "$(IOC):bi28")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[28] S 0.1")
+	field(INP, "@$(PLC) BOOLs[28] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi29")
+record(bi, "$(IOC):bi29")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[29] S 0.1")
+	field(INP, "@$(PLC) BOOLs[29] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi30")
+record(bi, "$(IOC):bi30")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[30] S 0.1")
+	field(INP, "@$(PLC) BOOLs[30] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi31")
+record(bi, "$(IOC):bi31")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[31] S 0.1")
+	field(INP, "@$(PLC) BOOLs[31] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi32")
+record(bi, "$(IOC):bi32")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[32] S 0.1")
+	field(INP, "@$(PLC) BOOLs[32] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi33")
+record(bi, "$(IOC):bi33")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[33] S 0.1")
+	field(INP, "@$(PLC) BOOLs[33] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi34")
+record(bi, "$(IOC):bi34")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[34] S 0.1")
+	field(INP, "@$(PLC) BOOLs[34] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi35")
+record(bi, "$(IOC):bi35")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[35] S 0.1")
+	field(INP, "@$(PLC) BOOLs[35] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi36")
+record(bi, "$(IOC):bi36")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[36] S 0.1")
+	field(INP, "@$(PLC) BOOLs[36] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi37")
+record(bi, "$(IOC):bi37")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[37] S 0.1")
+	field(INP, "@$(PLC) BOOLs[37] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi38")
+record(bi, "$(IOC):bi38")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[38] S 0.1")
+	field(INP, "@$(PLC) BOOLs[38] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi39")
+record(bi, "$(IOC):bi39")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[39] S 0.1")
+	field(INP, "@$(PLC) BOOLs[39] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi40")
+record(bi, "$(IOC):bi40")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[40] S 0.1")
+	field(INP, "@$(PLC) BOOLs[40] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi41")
+record(bi, "$(IOC):bi41")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[41] S 0.1")
+	field(INP, "@$(PLC) BOOLs[41] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi42")
+record(bi, "$(IOC):bi42")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[42] S 0.1")
+	field(INP, "@$(PLC) BOOLs[42] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi43")
+record(bi, "$(IOC):bi43")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[43] S 0.1")
+	field(INP, "@$(PLC) BOOLs[43] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi44")
+record(bi, "$(IOC):bi44")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[44] S 0.1")
+	field(INP, "@$(PLC) BOOLs[44] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi45")
+record(bi, "$(IOC):bi45")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[45] S 0.1")
+	field(INP, "@$(PLC) BOOLs[45] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi46")
+record(bi, "$(IOC):bi46")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[46] S 0.1")
+	field(INP, "@$(PLC) BOOLs[46] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi47")
+record(bi, "$(IOC):bi47")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[47] S 0.1")
+	field(INP, "@$(PLC) BOOLs[47] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi48")
+record(bi, "$(IOC):bi48")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[48] S 0.1")
+	field(INP, "@$(PLC) BOOLs[48] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi49")
+record(bi, "$(IOC):bi49")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[49] S 0.1")
+	field(INP, "@$(PLC) BOOLs[49] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi50")
+record(bi, "$(IOC):bi50")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[50] S 0.1")
+	field(INP, "@$(PLC) BOOLs[50] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi51")
+record(bi, "$(IOC):bi51")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[51] S 0.1")
+	field(INP, "@$(PLC) BOOLs[51] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi52")
+record(bi, "$(IOC):bi52")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[52] S 0.1")
+	field(INP, "@$(PLC) BOOLs[52] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi53")
+record(bi, "$(IOC):bi53")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[53] S 0.1")
+	field(INP, "@$(PLC) BOOLs[53] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi54")
+record(bi, "$(IOC):bi54")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[54] S 0.1")
+	field(INP, "@$(PLC) BOOLs[54] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi55")
+record(bi, "$(IOC):bi55")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[55] S 0.1")
+	field(INP, "@$(PLC) BOOLs[55] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi56")
+record(bi, "$(IOC):bi56")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[56] S 0.1")
+	field(INP, "@$(PLC) BOOLs[56] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi57")
+record(bi, "$(IOC):bi57")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[57] S 0.1")
+	field(INP, "@$(PLC) BOOLs[57] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi58")
+record(bi, "$(IOC):bi58")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[58] S 0.1")
+	field(INP, "@$(PLC) BOOLs[58] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi59")
+record(bi, "$(IOC):bi59")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[59] S 0.1")
+	field(INP, "@$(PLC) BOOLs[59] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi60")
+record(bi, "$(IOC):bi60")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[60] S 0.1")
+	field(INP, "@$(PLC) BOOLs[60] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi61")
+record(bi, "$(IOC):bi61")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[61] S 0.1")
+	field(INP, "@$(PLC) BOOLs[61] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi62")
+record(bi, "$(IOC):bi62")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[62] S 0.1")
+	field(INP, "@$(PLC) BOOLs[62] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi63")
+record(bi, "$(IOC):bi63")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[63] S 0.1")
+	field(INP, "@$(PLC) BOOLs[63] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi64")
+record(bi, "$(IOC):bi64")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[64] S 0.1")
+	field(INP, "@$(PLC) BOOLs[64] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi65")
+record(bi, "$(IOC):bi65")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[65] S 0.1")
+	field(INP, "@$(PLC) BOOLs[65] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi66")
+record(bi, "$(IOC):bi66")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[66] S 0.1")
+	field(INP, "@$(PLC) BOOLs[66] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi67")
+record(bi, "$(IOC):bi67")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[67] S 0.1")
+	field(INP, "@$(PLC) BOOLs[67] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi68")
+record(bi, "$(IOC):bi68")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[68] S 0.1")
+	field(INP, "@$(PLC) BOOLs[68] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi69")
+record(bi, "$(IOC):bi69")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[69] S 0.1")
+	field(INP, "@$(PLC) BOOLs[69] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi70")
+record(bi, "$(IOC):bi70")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[70] S 0.1")
+	field(INP, "@$(PLC) BOOLs[70] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi71")
+record(bi, "$(IOC):bi71")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[71] S 0.1")
+	field(INP, "@$(PLC) BOOLs[71] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi72")
+record(bi, "$(IOC):bi72")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[72] S 0.1")
+	field(INP, "@$(PLC) BOOLs[72] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi73")
+record(bi, "$(IOC):bi73")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[73] S 0.1")
+	field(INP, "@$(PLC) BOOLs[73] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi74")
+record(bi, "$(IOC):bi74")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[74] S 0.1")
+	field(INP, "@$(PLC) BOOLs[74] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi75")
+record(bi, "$(IOC):bi75")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[75] S 0.1")
+	field(INP, "@$(PLC) BOOLs[75] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi76")
+record(bi, "$(IOC):bi76")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[76] S 0.1")
+	field(INP, "@$(PLC) BOOLs[76] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi77")
+record(bi, "$(IOC):bi77")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[77] S 0.1")
+	field(INP, "@$(PLC) BOOLs[77] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi78")
+record(bi, "$(IOC):bi78")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[78] S 0.1")
+	field(INP, "@$(PLC) BOOLs[78] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi79")
+record(bi, "$(IOC):bi79")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[79] S 0.1")
+	field(INP, "@$(PLC) BOOLs[79] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi80")
+record(bi, "$(IOC):bi80")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[80] S 0.1")
+	field(INP, "@$(PLC) BOOLs[80] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi81")
+record(bi, "$(IOC):bi81")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[81] S 0.1")
+	field(INP, "@$(PLC) BOOLs[81] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi82")
+record(bi, "$(IOC):bi82")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[82] S 0.1")
+	field(INP, "@$(PLC) BOOLs[82] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi83")
+record(bi, "$(IOC):bi83")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[83] S 0.1")
+	field(INP, "@$(PLC) BOOLs[83] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi84")
+record(bi, "$(IOC):bi84")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[84] S 0.1")
+	field(INP, "@$(PLC) BOOLs[84] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi85")
+record(bi, "$(IOC):bi85")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[85] S 0.1")
+	field(INP, "@$(PLC) BOOLs[85] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi86")
+record(bi, "$(IOC):bi86")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[86] S 0.1")
+	field(INP, "@$(PLC) BOOLs[86] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi87")
+record(bi, "$(IOC):bi87")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[87] S 0.1")
+	field(INP, "@$(PLC) BOOLs[87] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi88")
+record(bi, "$(IOC):bi88")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[88] S 0.1")
+	field(INP, "@$(PLC) BOOLs[88] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi89")
+record(bi, "$(IOC):bi89")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[89] S 0.1")
+	field(INP, "@$(PLC) BOOLs[89] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi90")
+record(bi, "$(IOC):bi90")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[90] S 0.1")
+	field(INP, "@$(PLC) BOOLs[90] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi91")
+record(bi, "$(IOC):bi91")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[91] S 0.1")
+	field(INP, "@$(PLC) BOOLs[91] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi92")
+record(bi, "$(IOC):bi92")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[92] S 0.1")
+	field(INP, "@$(PLC) BOOLs[92] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi93")
+record(bi, "$(IOC):bi93")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[93] S 0.1")
+	field(INP, "@$(PLC) BOOLs[93] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi94")
+record(bi, "$(IOC):bi94")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[94] S 0.1")
+	field(INP, "@$(PLC) BOOLs[94] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi95")
+record(bi, "$(IOC):bi95")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[95] S 0.1")
+	field(INP, "@$(PLC) BOOLs[95] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi96")
+record(bi, "$(IOC):bi96")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[96] S 0.1")
+	field(INP, "@$(PLC) BOOLs[96] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi97")
+record(bi, "$(IOC):bi97")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[97] S 0.1")
+	field(INP, "@$(PLC) BOOLs[97] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi98")
+record(bi, "$(IOC):bi98")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[98] S 0.1")
+	field(INP, "@$(PLC) BOOLs[98] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi99")
+record(bi, "$(IOC):bi99")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[99] S 0.1")
+	field(INP, "@$(PLC) BOOLs[99] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi100")
+record(bi, "$(IOC):bi100")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[100] S 0.1")
+	field(INP, "@$(PLC) BOOLs[100] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi101")
+record(bi, "$(IOC):bi101")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[101] S 0.1")
+	field(INP, "@$(PLC) BOOLs[101] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi102")
+record(bi, "$(IOC):bi102")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[102] S 0.1")
+	field(INP, "@$(PLC) BOOLs[102] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi103")
+record(bi, "$(IOC):bi103")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[103] S 0.1")
+	field(INP, "@$(PLC) BOOLs[103] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi104")
+record(bi, "$(IOC):bi104")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[104] S 0.1")
+	field(INP, "@$(PLC) BOOLs[104] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi105")
+record(bi, "$(IOC):bi105")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[105] S 0.1")
+	field(INP, "@$(PLC) BOOLs[105] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi106")
+record(bi, "$(IOC):bi106")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[106] S 0.1")
+	field(INP, "@$(PLC) BOOLs[106] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi107")
+record(bi, "$(IOC):bi107")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[107] S 0.1")
+	field(INP, "@$(PLC) BOOLs[107] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi108")
+record(bi, "$(IOC):bi108")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[108] S 0.1")
+	field(INP, "@$(PLC) BOOLs[108] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi109")
+record(bi, "$(IOC):bi109")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[109] S 0.1")
+	field(INP, "@$(PLC) BOOLs[109] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi110")
+record(bi, "$(IOC):bi110")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[110] S 0.1")
+	field(INP, "@$(PLC) BOOLs[110] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi111")
+record(bi, "$(IOC):bi111")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[111] S 0.1")
+	field(INP, "@$(PLC) BOOLs[111] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi112")
+record(bi, "$(IOC):bi112")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[112] S 0.1")
+	field(INP, "@$(PLC) BOOLs[112] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi113")
+record(bi, "$(IOC):bi113")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[113] S 0.1")
+	field(INP, "@$(PLC) BOOLs[113] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi114")
+record(bi, "$(IOC):bi114")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[114] S 0.1")
+	field(INP, "@$(PLC) BOOLs[114] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi115")
+record(bi, "$(IOC):bi115")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[115] S 0.1")
+	field(INP, "@$(PLC) BOOLs[115] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi116")
+record(bi, "$(IOC):bi116")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[116] S 0.1")
+	field(INP, "@$(PLC) BOOLs[116] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi117")
+record(bi, "$(IOC):bi117")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[117] S 0.1")
+	field(INP, "@$(PLC) BOOLs[117] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi118")
+record(bi, "$(IOC):bi118")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[118] S 0.1")
+	field(INP, "@$(PLC) BOOLs[118] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi119")
+record(bi, "$(IOC):bi119")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[119] S 0.1")
+	field(INP, "@$(PLC) BOOLs[119] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi120")
+record(bi, "$(IOC):bi120")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[120] S 0.1")
+	field(INP, "@$(PLC) BOOLs[120] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi121")
+record(bi, "$(IOC):bi121")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[121] S 0.1")
+	field(INP, "@$(PLC) BOOLs[121] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi122")
+record(bi, "$(IOC):bi122")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[122] S 0.1")
+	field(INP, "@$(PLC) BOOLs[122] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi123")
+record(bi, "$(IOC):bi123")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[123] S 0.1")
+	field(INP, "@$(PLC) BOOLs[123] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi124")
+record(bi, "$(IOC):bi124")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[124] S 0.1")
+	field(INP, "@$(PLC) BOOLs[124] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi125")
+record(bi, "$(IOC):bi125")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[125] S 0.1")
+	field(INP, "@$(PLC) BOOLs[125] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi126")
+record(bi, "$(IOC):bi126")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[126] S 0.1")
+	field(INP, "@$(PLC) BOOLs[126] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi127")
+record(bi, "$(IOC):bi127")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[127] S 0.1")
+	field(INP, "@$(PLC) BOOLs[127] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi128")
+record(bi, "$(IOC):bi128")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[128] S 0.1")
+	field(INP, "@$(PLC) BOOLs[128] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi129")
+record(bi, "$(IOC):bi129")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[129] S 0.1")
+	field(INP, "@$(PLC) BOOLs[129] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi130")
+record(bi, "$(IOC):bi130")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[130] S 0.1")
+	field(INP, "@$(PLC) BOOLs[130] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi131")
+record(bi, "$(IOC):bi131")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[131] S 0.1")
+	field(INP, "@$(PLC) BOOLs[131] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi132")
+record(bi, "$(IOC):bi132")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[132] S 0.1")
+	field(INP, "@$(PLC) BOOLs[132] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi133")
+record(bi, "$(IOC):bi133")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[133] S 0.1")
+	field(INP, "@$(PLC) BOOLs[133] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi134")
+record(bi, "$(IOC):bi134")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[134] S 0.1")
+	field(INP, "@$(PLC) BOOLs[134] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi135")
+record(bi, "$(IOC):bi135")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[135] S 0.1")
+	field(INP, "@$(PLC) BOOLs[135] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi136")
+record(bi, "$(IOC):bi136")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[136] S 0.1")
+	field(INP, "@$(PLC) BOOLs[136] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi137")
+record(bi, "$(IOC):bi137")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[137] S 0.1")
+	field(INP, "@$(PLC) BOOLs[137] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi138")
+record(bi, "$(IOC):bi138")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[138] S 0.1")
+	field(INP, "@$(PLC) BOOLs[138] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi139")
+record(bi, "$(IOC):bi139")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[139] S 0.1")
+	field(INP, "@$(PLC) BOOLs[139] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi140")
+record(bi, "$(IOC):bi140")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[140] S 0.1")
+	field(INP, "@$(PLC) BOOLs[140] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi141")
+record(bi, "$(IOC):bi141")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[141] S 0.1")
+	field(INP, "@$(PLC) BOOLs[141] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi142")
+record(bi, "$(IOC):bi142")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[142] S 0.1")
+	field(INP, "@$(PLC) BOOLs[142] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi143")
+record(bi, "$(IOC):bi143")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[143] S 0.1")
+	field(INP, "@$(PLC) BOOLs[143] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi144")
+record(bi, "$(IOC):bi144")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[144] S 0.1")
+	field(INP, "@$(PLC) BOOLs[144] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi145")
+record(bi, "$(IOC):bi145")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[145] S 0.1")
+	field(INP, "@$(PLC) BOOLs[145] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi146")
+record(bi, "$(IOC):bi146")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[146] S 0.1")
+	field(INP, "@$(PLC) BOOLs[146] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi147")
+record(bi, "$(IOC):bi147")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[147] S 0.1")
+	field(INP, "@$(PLC) BOOLs[147] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi148")
+record(bi, "$(IOC):bi148")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[148] S 0.1")
+	field(INP, "@$(PLC) BOOLs[148] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi149")
+record(bi, "$(IOC):bi149")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[149] S 0.1")
+	field(INP, "@$(PLC) BOOLs[149] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi150")
+record(bi, "$(IOC):bi150")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[150] S 0.1")
+	field(INP, "@$(PLC) BOOLs[150] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi151")
+record(bi, "$(IOC):bi151")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[151] S 0.1")
+	field(INP, "@$(PLC) BOOLs[151] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi152")
+record(bi, "$(IOC):bi152")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[152] S 0.1")
+	field(INP, "@$(PLC) BOOLs[152] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi153")
+record(bi, "$(IOC):bi153")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[153] S 0.1")
+	field(INP, "@$(PLC) BOOLs[153] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi154")
+record(bi, "$(IOC):bi154")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[154] S 0.1")
+	field(INP, "@$(PLC) BOOLs[154] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi155")
+record(bi, "$(IOC):bi155")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[155] S 0.1")
+	field(INP, "@$(PLC) BOOLs[155] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi156")
+record(bi, "$(IOC):bi156")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[156] S 0.1")
+	field(INP, "@$(PLC) BOOLs[156] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi157")
+record(bi, "$(IOC):bi157")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[157] S 0.1")
+	field(INP, "@$(PLC) BOOLs[157] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi158")
+record(bi, "$(IOC):bi158")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[158] S 0.1")
+	field(INP, "@$(PLC) BOOLs[158] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi159")
+record(bi, "$(IOC):bi159")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[159] S 0.1")
+	field(INP, "@$(PLC) BOOLs[159] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi160")
+record(bi, "$(IOC):bi160")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[160] S 0.1")
+	field(INP, "@$(PLC) BOOLs[160] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi161")
+record(bi, "$(IOC):bi161")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[161] S 0.1")
+	field(INP, "@$(PLC) BOOLs[161] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi162")
+record(bi, "$(IOC):bi162")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[162] S 0.1")
+	field(INP, "@$(PLC) BOOLs[162] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi163")
+record(bi, "$(IOC):bi163")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[163] S 0.1")
+	field(INP, "@$(PLC) BOOLs[163] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi164")
+record(bi, "$(IOC):bi164")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[164] S 0.1")
+	field(INP, "@$(PLC) BOOLs[164] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi165")
+record(bi, "$(IOC):bi165")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[165] S 0.1")
+	field(INP, "@$(PLC) BOOLs[165] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi166")
+record(bi, "$(IOC):bi166")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[166] S 0.1")
+	field(INP, "@$(PLC) BOOLs[166] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi167")
+record(bi, "$(IOC):bi167")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[167] S 0.1")
+	field(INP, "@$(PLC) BOOLs[167] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi168")
+record(bi, "$(IOC):bi168")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[168] S 0.1")
+	field(INP, "@$(PLC) BOOLs[168] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi169")
+record(bi, "$(IOC):bi169")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[169] S 0.1")
+	field(INP, "@$(PLC) BOOLs[169] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi170")
+record(bi, "$(IOC):bi170")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[170] S 0.1")
+	field(INP, "@$(PLC) BOOLs[170] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi171")
+record(bi, "$(IOC):bi171")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[171] S 0.1")
+	field(INP, "@$(PLC) BOOLs[171] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi172")
+record(bi, "$(IOC):bi172")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[172] S 0.1")
+	field(INP, "@$(PLC) BOOLs[172] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi173")
+record(bi, "$(IOC):bi173")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[173] S 0.1")
+	field(INP, "@$(PLC) BOOLs[173] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi174")
+record(bi, "$(IOC):bi174")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[174] S 0.1")
+	field(INP, "@$(PLC) BOOLs[174] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi175")
+record(bi, "$(IOC):bi175")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[175] S 0.1")
+	field(INP, "@$(PLC) BOOLs[175] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi176")
+record(bi, "$(IOC):bi176")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[176] S 0.1")
+	field(INP, "@$(PLC) BOOLs[176] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi177")
+record(bi, "$(IOC):bi177")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[177] S 0.1")
+	field(INP, "@$(PLC) BOOLs[177] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi178")
+record(bi, "$(IOC):bi178")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[178] S 0.1")
+	field(INP, "@$(PLC) BOOLs[178] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi179")
+record(bi, "$(IOC):bi179")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[179] S 0.1")
+	field(INP, "@$(PLC) BOOLs[179] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi180")
+record(bi, "$(IOC):bi180")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[180] S 0.1")
+	field(INP, "@$(PLC) BOOLs[180] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi181")
+record(bi, "$(IOC):bi181")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[181] S 0.1")
+	field(INP, "@$(PLC) BOOLs[181] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi182")
+record(bi, "$(IOC):bi182")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[182] S 0.1")
+	field(INP, "@$(PLC) BOOLs[182] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi183")
+record(bi, "$(IOC):bi183")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[183] S 0.1")
+	field(INP, "@$(PLC) BOOLs[183] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi184")
+record(bi, "$(IOC):bi184")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[184] S 0.1")
+	field(INP, "@$(PLC) BOOLs[184] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi185")
+record(bi, "$(IOC):bi185")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[185] S 0.1")
+	field(INP, "@$(PLC) BOOLs[185] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi186")
+record(bi, "$(IOC):bi186")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[186] S 0.1")
+	field(INP, "@$(PLC) BOOLs[186] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi187")
+record(bi, "$(IOC):bi187")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[187] S 0.1")
+	field(INP, "@$(PLC) BOOLs[187] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi188")
+record(bi, "$(IOC):bi188")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[188] S 0.1")
+	field(INP, "@$(PLC) BOOLs[188] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi189")
+record(bi, "$(IOC):bi189")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[189] S 0.1")
+	field(INP, "@$(PLC) BOOLs[189] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi190")
+record(bi, "$(IOC):bi190")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[190] S 0.1")
+	field(INP, "@$(PLC) BOOLs[190] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi191")
+record(bi, "$(IOC):bi191")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[191] S 0.1")
+	field(INP, "@$(PLC) BOOLs[191] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi192")
+record(bi, "$(IOC):bi192")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[192] S 0.1")
+	field(INP, "@$(PLC) BOOLs[192] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi193")
+record(bi, "$(IOC):bi193")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[193] S 0.1")
+	field(INP, "@$(PLC) BOOLs[193] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi194")
+record(bi, "$(IOC):bi194")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[194] S 0.1")
+	field(INP, "@$(PLC) BOOLs[194] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi195")
+record(bi, "$(IOC):bi195")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[195] S 0.1")
+	field(INP, "@$(PLC) BOOLs[195] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi196")
+record(bi, "$(IOC):bi196")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[196] S 0.1")
+	field(INP, "@$(PLC) BOOLs[196] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi197")
+record(bi, "$(IOC):bi197")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[197] S 0.1")
+	field(INP, "@$(PLC) BOOLs[197] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi198")
+record(bi, "$(IOC):bi198")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[198] S 0.1")
+	field(INP, "@$(PLC) BOOLs[198] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi199")
+record(bi, "$(IOC):bi199")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[199] S 0.1")
+	field(INP, "@$(PLC) BOOLs[199] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi200")
+record(bi, "$(IOC):bi200")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[200] S 0.1")
+	field(INP, "@$(PLC) BOOLs[200] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi201")
+record(bi, "$(IOC):bi201")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[201] S 0.1")
+	field(INP, "@$(PLC) BOOLs[201] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi202")
+record(bi, "$(IOC):bi202")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[202] S 0.1")
+	field(INP, "@$(PLC) BOOLs[202] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi203")
+record(bi, "$(IOC):bi203")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[203] S 0.1")
+	field(INP, "@$(PLC) BOOLs[203] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi204")
+record(bi, "$(IOC):bi204")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[204] S 0.1")
+	field(INP, "@$(PLC) BOOLs[204] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi205")
+record(bi, "$(IOC):bi205")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[205] S 0.1")
+	field(INP, "@$(PLC) BOOLs[205] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi206")
+record(bi, "$(IOC):bi206")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[206] S 0.1")
+	field(INP, "@$(PLC) BOOLs[206] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi207")
+record(bi, "$(IOC):bi207")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[207] S 0.1")
+	field(INP, "@$(PLC) BOOLs[207] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi208")
+record(bi, "$(IOC):bi208")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[208] S 0.1")
+	field(INP, "@$(PLC) BOOLs[208] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi209")
+record(bi, "$(IOC):bi209")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[209] S 0.1")
+	field(INP, "@$(PLC) BOOLs[209] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi210")
+record(bi, "$(IOC):bi210")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[210] S 0.1")
+	field(INP, "@$(PLC) BOOLs[210] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi211")
+record(bi, "$(IOC):bi211")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[211] S 0.1")
+	field(INP, "@$(PLC) BOOLs[211] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi212")
+record(bi, "$(IOC):bi212")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[212] S 0.1")
+	field(INP, "@$(PLC) BOOLs[212] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi213")
+record(bi, "$(IOC):bi213")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[213] S 0.1")
+	field(INP, "@$(PLC) BOOLs[213] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi214")
+record(bi, "$(IOC):bi214")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[214] S 0.1")
+	field(INP, "@$(PLC) BOOLs[214] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi215")
+record(bi, "$(IOC):bi215")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[215] S 0.1")
+	field(INP, "@$(PLC) BOOLs[215] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi216")
+record(bi, "$(IOC):bi216")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[216] S 0.1")
+	field(INP, "@$(PLC) BOOLs[216] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi217")
+record(bi, "$(IOC):bi217")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[217] S 0.1")
+	field(INP, "@$(PLC) BOOLs[217] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi218")
+record(bi, "$(IOC):bi218")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[218] S 0.1")
+	field(INP, "@$(PLC) BOOLs[218] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi219")
+record(bi, "$(IOC):bi219")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[219] S 0.1")
+	field(INP, "@$(PLC) BOOLs[219] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi220")
+record(bi, "$(IOC):bi220")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[220] S 0.1")
+	field(INP, "@$(PLC) BOOLs[220] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi221")
+record(bi, "$(IOC):bi221")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[221] S 0.1")
+	field(INP, "@$(PLC) BOOLs[221] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi222")
+record(bi, "$(IOC):bi222")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[222] S 0.1")
+	field(INP, "@$(PLC) BOOLs[222] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi223")
+record(bi, "$(IOC):bi223")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[223] S 0.1")
+	field(INP, "@$(PLC) BOOLs[223] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi224")
+record(bi, "$(IOC):bi224")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[224] S 0.1")
+	field(INP, "@$(PLC) BOOLs[224] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi225")
+record(bi, "$(IOC):bi225")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[225] S 0.1")
+	field(INP, "@$(PLC) BOOLs[225] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi226")
+record(bi, "$(IOC):bi226")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[226] S 0.1")
+	field(INP, "@$(PLC) BOOLs[226] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi227")
+record(bi, "$(IOC):bi227")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[227] S 0.1")
+	field(INP, "@$(PLC) BOOLs[227] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi228")
+record(bi, "$(IOC):bi228")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[228] S 0.1")
+	field(INP, "@$(PLC) BOOLs[228] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi229")
+record(bi, "$(IOC):bi229")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[229] S 0.1")
+	field(INP, "@$(PLC) BOOLs[229] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi230")
+record(bi, "$(IOC):bi230")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[230] S 0.1")
+	field(INP, "@$(PLC) BOOLs[230] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi231")
+record(bi, "$(IOC):bi231")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[231] S 0.1")
+	field(INP, "@$(PLC) BOOLs[231] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi232")
+record(bi, "$(IOC):bi232")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[232] S 0.1")
+	field(INP, "@$(PLC) BOOLs[232] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi233")
+record(bi, "$(IOC):bi233")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[233] S 0.1")
+	field(INP, "@$(PLC) BOOLs[233] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi234")
+record(bi, "$(IOC):bi234")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[234] S 0.1")
+	field(INP, "@$(PLC) BOOLs[234] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi235")
+record(bi, "$(IOC):bi235")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[235] S 0.1")
+	field(INP, "@$(PLC) BOOLs[235] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi236")
+record(bi, "$(IOC):bi236")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[236] S 0.1")
+	field(INP, "@$(PLC) BOOLs[236] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi237")
+record(bi, "$(IOC):bi237")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[237] S 0.1")
+	field(INP, "@$(PLC) BOOLs[237] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi238")
+record(bi, "$(IOC):bi238")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[238] S 0.1")
+	field(INP, "@$(PLC) BOOLs[238] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi239")
+record(bi, "$(IOC):bi239")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[239] S 0.1")
+	field(INP, "@$(PLC) BOOLs[239] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi240")
+record(bi, "$(IOC):bi240")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[240] S 0.1")
+	field(INP, "@$(PLC) BOOLs[240] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi241")
+record(bi, "$(IOC):bi241")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[241] S 0.1")
+	field(INP, "@$(PLC) BOOLs[241] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi242")
+record(bi, "$(IOC):bi242")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[242] S 0.1")
+	field(INP, "@$(PLC) BOOLs[242] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi243")
+record(bi, "$(IOC):bi243")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[243] S 0.1")
+	field(INP, "@$(PLC) BOOLs[243] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi244")
+record(bi, "$(IOC):bi244")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[244] S 0.1")
+	field(INP, "@$(PLC) BOOLs[244] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi245")
+record(bi, "$(IOC):bi245")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[245] S 0.1")
+	field(INP, "@$(PLC) BOOLs[245] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi246")
+record(bi, "$(IOC):bi246")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[246] S 0.1")
+	field(INP, "@$(PLC) BOOLs[246] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi247")
+record(bi, "$(IOC):bi247")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[247] S 0.1")
+	field(INP, "@$(PLC) BOOLs[247] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi248")
+record(bi, "$(IOC):bi248")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[248] S 0.1")
+	field(INP, "@$(PLC) BOOLs[248] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi249")
+record(bi, "$(IOC):bi249")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[249] S 0.1")
+	field(INP, "@$(PLC) BOOLs[249] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi250")
+record(bi, "$(IOC):bi250")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[250] S 0.1")
+	field(INP, "@$(PLC) BOOLs[250] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi251")
+record(bi, "$(IOC):bi251")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[251] S 0.1")
+	field(INP, "@$(PLC) BOOLs[251] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi252")
+record(bi, "$(IOC):bi252")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[252] S 0.1")
+	field(INP, "@$(PLC) BOOLs[252] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi253")
+record(bi, "$(IOC):bi253")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[253] S 0.1")
+	field(INP, "@$(PLC) BOOLs[253] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi254")
+record(bi, "$(IOC):bi254")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[254] S 0.1")
+	field(INP, "@$(PLC) BOOLs[254] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi255")
+record(bi, "$(IOC):bi255")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[255] S 0.1")
+	field(INP, "@$(PLC) BOOLs[255] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi256")
+record(bi, "$(IOC):bi256")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[256] S 0.1")
+	field(INP, "@$(PLC) BOOLs[256] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi257")
+record(bi, "$(IOC):bi257")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[257] S 0.1")
+	field(INP, "@$(PLC) BOOLs[257] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi258")
+record(bi, "$(IOC):bi258")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[258] S 0.1")
+	field(INP, "@$(PLC) BOOLs[258] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi259")
+record(bi, "$(IOC):bi259")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[259] S 0.1")
+	field(INP, "@$(PLC) BOOLs[259] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi260")
+record(bi, "$(IOC):bi260")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[260] S 0.1")
+	field(INP, "@$(PLC) BOOLs[260] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi261")
+record(bi, "$(IOC):bi261")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[261] S 0.1")
+	field(INP, "@$(PLC) BOOLs[261] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi262")
+record(bi, "$(IOC):bi262")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[262] S 0.1")
+	field(INP, "@$(PLC) BOOLs[262] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi263")
+record(bi, "$(IOC):bi263")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[263] S 0.1")
+	field(INP, "@$(PLC) BOOLs[263] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi264")
+record(bi, "$(IOC):bi264")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[264] S 0.1")
+	field(INP, "@$(PLC) BOOLs[264] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi265")
+record(bi, "$(IOC):bi265")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[265] S 0.1")
+	field(INP, "@$(PLC) BOOLs[265] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi266")
+record(bi, "$(IOC):bi266")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[266] S 0.1")
+	field(INP, "@$(PLC) BOOLs[266] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi267")
+record(bi, "$(IOC):bi267")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[267] S 0.1")
+	field(INP, "@$(PLC) BOOLs[267] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi268")
+record(bi, "$(IOC):bi268")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[268] S 0.1")
+	field(INP, "@$(PLC) BOOLs[268] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi269")
+record(bi, "$(IOC):bi269")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[269] S 0.1")
+	field(INP, "@$(PLC) BOOLs[269] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi270")
+record(bi, "$(IOC):bi270")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[270] S 0.1")
+	field(INP, "@$(PLC) BOOLs[270] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi271")
+record(bi, "$(IOC):bi271")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[271] S 0.1")
+	field(INP, "@$(PLC) BOOLs[271] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi272")
+record(bi, "$(IOC):bi272")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[272] S 0.1")
+	field(INP, "@$(PLC) BOOLs[272] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi273")
+record(bi, "$(IOC):bi273")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[273] S 0.1")
+	field(INP, "@$(PLC) BOOLs[273] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi274")
+record(bi, "$(IOC):bi274")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[274] S 0.1")
+	field(INP, "@$(PLC) BOOLs[274] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi275")
+record(bi, "$(IOC):bi275")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[275] S 0.1")
+	field(INP, "@$(PLC) BOOLs[275] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi276")
+record(bi, "$(IOC):bi276")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[276] S 0.1")
+	field(INP, "@$(PLC) BOOLs[276] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi277")
+record(bi, "$(IOC):bi277")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[277] S 0.1")
+	field(INP, "@$(PLC) BOOLs[277] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi278")
+record(bi, "$(IOC):bi278")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[278] S 0.1")
+	field(INP, "@$(PLC) BOOLs[278] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi279")
+record(bi, "$(IOC):bi279")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[279] S 0.1")
+	field(INP, "@$(PLC) BOOLs[279] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi280")
+record(bi, "$(IOC):bi280")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[280] S 0.1")
+	field(INP, "@$(PLC) BOOLs[280] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi281")
+record(bi, "$(IOC):bi281")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[281] S 0.1")
+	field(INP, "@$(PLC) BOOLs[281] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi282")
+record(bi, "$(IOC):bi282")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[282] S 0.1")
+	field(INP, "@$(PLC) BOOLs[282] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi283")
+record(bi, "$(IOC):bi283")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[283] S 0.1")
+	field(INP, "@$(PLC) BOOLs[283] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi284")
+record(bi, "$(IOC):bi284")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[284] S 0.1")
+	field(INP, "@$(PLC) BOOLs[284] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi285")
+record(bi, "$(IOC):bi285")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[285] S 0.1")
+	field(INP, "@$(PLC) BOOLs[285] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi286")
+record(bi, "$(IOC):bi286")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[286] S 0.1")
+	field(INP, "@$(PLC) BOOLs[286] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi287")
+record(bi, "$(IOC):bi287")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[287] S 0.1")
+	field(INP, "@$(PLC) BOOLs[287] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi288")
+record(bi, "$(IOC):bi288")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[288] S 0.1")
+	field(INP, "@$(PLC) BOOLs[288] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi289")
+record(bi, "$(IOC):bi289")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[289] S 0.1")
+	field(INP, "@$(PLC) BOOLs[289] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi290")
+record(bi, "$(IOC):bi290")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[290] S 0.1")
+	field(INP, "@$(PLC) BOOLs[290] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi291")
+record(bi, "$(IOC):bi291")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[291] S 0.1")
+	field(INP, "@$(PLC) BOOLs[291] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi292")
+record(bi, "$(IOC):bi292")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[292] S 0.1")
+	field(INP, "@$(PLC) BOOLs[292] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi293")
+record(bi, "$(IOC):bi293")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[293] S 0.1")
+	field(INP, "@$(PLC) BOOLs[293] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi294")
+record(bi, "$(IOC):bi294")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[294] S 0.1")
+	field(INP, "@$(PLC) BOOLs[294] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi295")
+record(bi, "$(IOC):bi295")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[295] S 0.1")
+	field(INP, "@$(PLC) BOOLs[295] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi296")
+record(bi, "$(IOC):bi296")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[296] S 0.1")
+	field(INP, "@$(PLC) BOOLs[296] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi297")
+record(bi, "$(IOC):bi297")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[297] S 0.1")
+	field(INP, "@$(PLC) BOOLs[297] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi298")
+record(bi, "$(IOC):bi298")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[298] S 0.1")
+	field(INP, "@$(PLC) BOOLs[298] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi299")
+record(bi, "$(IOC):bi299")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[299] S 0.1")
+	field(INP, "@$(PLC) BOOLs[299] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi300")
+record(bi, "$(IOC):bi300")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[300] S 0.1")
+	field(INP, "@$(PLC) BOOLs[300] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi301")
+record(bi, "$(IOC):bi301")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[301] S 0.1")
+	field(INP, "@$(PLC) BOOLs[301] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi302")
+record(bi, "$(IOC):bi302")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[302] S 0.1")
+	field(INP, "@$(PLC) BOOLs[302] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi303")
+record(bi, "$(IOC):bi303")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[303] S 0.1")
+	field(INP, "@$(PLC) BOOLs[303] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi304")
+record(bi, "$(IOC):bi304")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[304] S 0.1")
+	field(INP, "@$(PLC) BOOLs[304] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi305")
+record(bi, "$(IOC):bi305")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[305] S 0.1")
+	field(INP, "@$(PLC) BOOLs[305] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi306")
+record(bi, "$(IOC):bi306")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[306] S 0.1")
+	field(INP, "@$(PLC) BOOLs[306] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi307")
+record(bi, "$(IOC):bi307")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[307] S 0.1")
+	field(INP, "@$(PLC) BOOLs[307] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi308")
+record(bi, "$(IOC):bi308")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[308] S 0.1")
+	field(INP, "@$(PLC) BOOLs[308] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi309")
+record(bi, "$(IOC):bi309")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[309] S 0.1")
+	field(INP, "@$(PLC) BOOLs[309] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi310")
+record(bi, "$(IOC):bi310")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[310] S 0.1")
+	field(INP, "@$(PLC) BOOLs[310] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi311")
+record(bi, "$(IOC):bi311")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[311] S 0.1")
+	field(INP, "@$(PLC) BOOLs[311] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi312")
+record(bi, "$(IOC):bi312")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[312] S 0.1")
+	field(INP, "@$(PLC) BOOLs[312] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi313")
+record(bi, "$(IOC):bi313")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[313] S 0.1")
+	field(INP, "@$(PLC) BOOLs[313] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi314")
+record(bi, "$(IOC):bi314")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[314] S 0.1")
+	field(INP, "@$(PLC) BOOLs[314] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi315")
+record(bi, "$(IOC):bi315")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[315] S 0.1")
+	field(INP, "@$(PLC) BOOLs[315] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi316")
+record(bi, "$(IOC):bi316")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[316] S 0.1")
+	field(INP, "@$(PLC) BOOLs[316] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi317")
+record(bi, "$(IOC):bi317")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[317] S 0.1")
+	field(INP, "@$(PLC) BOOLs[317] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi318")
+record(bi, "$(IOC):bi318")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[318] S 0.1")
+	field(INP, "@$(PLC) BOOLs[318] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi319")
+record(bi, "$(IOC):bi319")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[319] S 0.1")
+	field(INP, "@$(PLC) BOOLs[319] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi320")
+record(bi, "$(IOC):bi320")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[320] S 0.1")
+	field(INP, "@$(PLC) BOOLs[320] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi321")
+record(bi, "$(IOC):bi321")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[321] S 0.1")
+	field(INP, "@$(PLC) BOOLs[321] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi322")
+record(bi, "$(IOC):bi322")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[322] S 0.1")
+	field(INP, "@$(PLC) BOOLs[322] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi323")
+record(bi, "$(IOC):bi323")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[323] S 0.1")
+	field(INP, "@$(PLC) BOOLs[323] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi324")
+record(bi, "$(IOC):bi324")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[324] S 0.1")
+	field(INP, "@$(PLC) BOOLs[324] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi325")
+record(bi, "$(IOC):bi325")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[325] S 0.1")
+	field(INP, "@$(PLC) BOOLs[325] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi326")
+record(bi, "$(IOC):bi326")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[326] S 0.1")
+	field(INP, "@$(PLC) BOOLs[326] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi327")
+record(bi, "$(IOC):bi327")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[327] S 0.1")
+	field(INP, "@$(PLC) BOOLs[327] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi328")
+record(bi, "$(IOC):bi328")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[328] S 0.1")
+	field(INP, "@$(PLC) BOOLs[328] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi329")
+record(bi, "$(IOC):bi329")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[329] S 0.1")
+	field(INP, "@$(PLC) BOOLs[329] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi330")
+record(bi, "$(IOC):bi330")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[330] S 0.1")
+	field(INP, "@$(PLC) BOOLs[330] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi331")
+record(bi, "$(IOC):bi331")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[331] S 0.1")
+	field(INP, "@$(PLC) BOOLs[331] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi332")
+record(bi, "$(IOC):bi332")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[332] S 0.1")
+	field(INP, "@$(PLC) BOOLs[332] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi333")
+record(bi, "$(IOC):bi333")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[333] S 0.1")
+	field(INP, "@$(PLC) BOOLs[333] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi334")
+record(bi, "$(IOC):bi334")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[334] S 0.1")
+	field(INP, "@$(PLC) BOOLs[334] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi335")
+record(bi, "$(IOC):bi335")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[335] S 0.1")
+	field(INP, "@$(PLC) BOOLs[335] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi336")
+record(bi, "$(IOC):bi336")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[336] S 0.1")
+	field(INP, "@$(PLC) BOOLs[336] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi337")
+record(bi, "$(IOC):bi337")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[337] S 0.1")
+	field(INP, "@$(PLC) BOOLs[337] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi338")
+record(bi, "$(IOC):bi338")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[338] S 0.1")
+	field(INP, "@$(PLC) BOOLs[338] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi339")
+record(bi, "$(IOC):bi339")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[339] S 0.1")
+	field(INP, "@$(PLC) BOOLs[339] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi340")
+record(bi, "$(IOC):bi340")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[340] S 0.1")
+	field(INP, "@$(PLC) BOOLs[340] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi341")
+record(bi, "$(IOC):bi341")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[341] S 0.1")
+	field(INP, "@$(PLC) BOOLs[341] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi342")
+record(bi, "$(IOC):bi342")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[342] S 0.1")
+	field(INP, "@$(PLC) BOOLs[342] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi343")
+record(bi, "$(IOC):bi343")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[343] S 0.1")
+	field(INP, "@$(PLC) BOOLs[343] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi344")
+record(bi, "$(IOC):bi344")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[344] S 0.1")
+	field(INP, "@$(PLC) BOOLs[344] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi345")
+record(bi, "$(IOC):bi345")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[345] S 0.1")
+	field(INP, "@$(PLC) BOOLs[345] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi346")
+record(bi, "$(IOC):bi346")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[346] S 0.1")
+	field(INP, "@$(PLC) BOOLs[346] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi347")
+record(bi, "$(IOC):bi347")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[347] S 0.1")
+	field(INP, "@$(PLC) BOOLs[347] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi348")
+record(bi, "$(IOC):bi348")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[348] S 0.1")
+	field(INP, "@$(PLC) BOOLs[348] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi349")
+record(bi, "$(IOC):bi349")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[349] S 0.1")
+	field(INP, "@$(PLC) BOOLs[349] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi350")
+record(bi, "$(IOC):bi350")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[350] S 0.1")
+	field(INP, "@$(PLC) BOOLs[350] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
 }
 
-record(bi, "$(user):bi351")
+record(bi, "$(IOC):bi351")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[351] S 0.1")
+	field(INP, "@$(PLC) BOOLs[351] S 0.1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 	field(ZSV,  "NO_ALARM")
 	field(OSV,  "MAJOR")
-}
-
-record(bo,"CryoTest:TstCh:bo00") {
-    field(DESC,"binary output record")
-    field(SCAN,"Passive")
-    field(DTYP,"EtherIP")
-    field(FLNK,"0")
-    field(OUT,"@plc1 PCRTSTB04[0] S 1")
-    field(ZNAM,"Off")
-    field(ONAM,"On")
-}
-record(bi,"CryoTest:TstCh:bi00") {
-    field(DESC,"binary input record")
-    field(SCAN,"1 second")
-    field(DTYP,"EtherIP")
-    field(FLNK,"0")
-    field(INP,"@plc1 PCRTSTB03[0]")
-    field(ZNAM,"Off")
-    field(ONAM,"On")
-}
-record(bo,"CryoTest:TstCh:bo08") {
-    field(DESC,"binary output record")
-    field(SCAN,"Passive")
-    field(DTYP,"EtherIP")
-    field(FLNK,"0")
-    field(OUT,"@plc1 PCRTSTB04[8] S 1")
-    field(ZNAM,"Off")
-    field(ONAM,"On")
-}
-record(bi,"CryoTest:TstCh:bi08") {
-    field(DESC,"binary input record")
-    field(SCAN,"1 second")
-    field(DTYP,"EtherIP")
-    field(FLNK,"0")
-    field(INP,"@plc1 PCRTSTB03[8]")
-    field(ZNAM,"Off")
-    field(ONAM,"On")
-}
-record(bo,"CryoTest:TstCh:bo09") {
-    field(DESC,"binary output record")
-    field(SCAN,"Passive")
-    field(DTYP,"EtherIP")
-    field(FLNK,"0")
-    field(OUT,"@plc1 PCRTSTB04[9] S 1")
-    field(ZNAM,"Off")
-    field(ONAM,"On")
-}
-record(bi,"CryoTest:TstCh:bi09") {
-    field(DESC,"binary input record")
-    field(SCAN,"1 second")
-    field(DTYP,"EtherIP")
-    field(FLNK,"0")
-    field(INP,"@plc1 PCRTSTB03[9]")
-    field(ZNAM,"Off")
-    field(ONAM,"On")
 }
 

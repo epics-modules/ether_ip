@@ -1,8 +1,8 @@
-record(mbbi, "$(user):mbbi0")
+record(mbbi, "$(IOC):mbbi0")
 {
 	field(SCAN, "1 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[30]")
+	field(INP, "@$(PLC) BOOLs[30]")
 	field(NOBT, "3")
 	field(ZRVL, "0")
 	field(ONVL, "1")
@@ -22,11 +22,11 @@ record(mbbi, "$(user):mbbi0")
 	field(SVST, "One -One - One")
 }
 
-record(mbbi, "$(user):mbbi1")
+record(mbbi, "$(IOC):mbbi1")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[10] S .5")
+	field(INP, "@$(PLC) BOOLs[10] S .5")
 	field(NOBT, "2")
 	field(ZRVL, "0")
 	field(ONVL, "1")
@@ -38,19 +38,19 @@ record(mbbi, "$(user):mbbi1")
 	field(THST, "One - One")
 }
 
-record(mbbiDirect, "$(user):mbbid0")
+record(mbbiDirect, "$(IOC):mbbid0")
 {
 	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[20] S .5")
+	field(INP, "@$(PLC) BOOLs[20] S .5")
 	field(NOBT, "5")
 }
 
-record(mbbiDirect, "$(user):mbbid1")
+record(mbbiDirect, "$(IOC):mbbid1")
 {
 	field(SCAN, "1 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 BOOLs[30]")
+	field(INP, "@$(PLC) BOOLs[30]")
 	field(NOBT, "32")
 }
 

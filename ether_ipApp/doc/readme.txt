@@ -1,316 +1,412 @@
 -*- outline -*- $Id$
 
-* Todo
-** doc can never be good enough
-** Check timeout choices in semTake calls
-** make Unix/Win32 cmd tools more useful?
-
 * EtherNet/IP
 EtherNet/IP, originally called "ControlNet over Ethernet"
 as defined in the ControlNet Spec, Errata 2, is the protocol
-used by A/B ControlLogix PLCs.
+used by Allen-Bradley ControlLogix PLCs.
 
 This software is both a commandline test tool for Win32/Unix
 and a driver/device for EPICS IOCs.
 
-* Files
-ether_ip.[ch]    EtherNet/IP protocol
-dl_list*         Double-linked list, used by the following
-drvEtherIP*      vxWorks driver
-devEtherIP*      EPICS device support
-ether_ip_test.c  main for Unix/Win32
+* Compilation
+See the top-level README
 
-* Supported Record types
-** Analog input
-   The analog input record can be connected to single analog tags,
-   a single analog tag that is part of a structure as well
-   as an array element.
-   By default the tag itself is read. Additional input flags
-   select several statistical pieces of information.
-   When the tag on the PLC is of type CN_REAL, the VAL field is set
-   directly (no conversion).
-   Otherwise RVAL is set and conversions (linear, ...) can be used.
-   The analog record should not be used with BOOL arrays.
-
-** Analog output
-   Similar to analog input, no special flags are supported.
-
-** Binary input, output, MBB[IO], MBB[IO]Direct
-   These expect to be connected to a BOOL or BOOL[].
-   Note the comments on CIP data below.
-   You can connect an MBB* to a _single_ DINT or REAL,
-   but not array elements.
-   Only BOOL arrays are allowed.
-   Again:
-   Only BOOL arrays are allowed.
-
-   If you have to interface a DINT array and want to decode
-   bits with an MBBI record:
-   Setup an analog input record to read the DINT element,
-   then FLNK to an MBBI.
-
-* Installation, Setup for EPICS
-  To use this software, several steps are required.
-  Many of these are handled by the SNS ADE,
-  but the following steps list the details in case
-  you run into problems.
-  1) Compile the driver with the ADE.
-
-  2) The IOC's VxWorks startup file has to load the
-     object files that were created for VxWorks in the initial step,
-     either by themself or after combining
-     all the needed object files into a library
-     (this is what most EPICS ADEs do).
-
-     The ether_ipApp creates a library "ether_ipLib"
-     which contains only the driver code.
-
-     The seperate testether_ipApp combines that library with EPICS base
-     objects into "testether_ip".
-     The example in iocBoot/iocether_ip/st.cmd loads that library.
-
-  3) To inform EPICS of this new driver/device,
-     a DBD file like this one is used:
-       include "base.dbd"
-       include "ether_ip.dbd"
-     Refer to the EPICS Application deveopers guide for details
-     on DBD files and how to load them in the vxWorks startup-file
-     with "dbLoadDatabase".
-
-  4) Since the driver uses TCP/IP, the route to the PLC has to defined
-     properly. In total, these steps include:
-
-       # Define the DNS name for the PLC, so we can it instead of the
-       # raw IP address
-       hostAdd "snsplc1", "128.165.160.146"
-
-       # *IF* "128.165.160.146" is in a different subnet
-       # that the IOC cannot get to directly, define
-       # a route table entry. In this example, ..254 is the gateway
-       routeAdd "128.165.160.146", "128.165.160.254"
-
-       # Test: See if the IOC can get to "snsplc1":
-       ping "snsplc1", 5
-
-     The st.cmd example shows this.
-
-  5) Driver configuration in the startup file:
-     Before calling iocInit, the driver's PLC table has to be
-     configured like this:
-    
-       # Initialize EtherIP driver, define PLCs
-       # -------------------------------------
-       drvEtherIP_init
-
-       # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
-       # The driver/device uses the <name> to indentify the PLC.
-       # 
-       # <ip_addr> can be an IP address in dot-notation
-       # or a name that the IOC knows about (defined via hostAdd,
-       # see step 4).
-       # The IP address gets us to the ENET interface.
-       # To get to the PLC itself, we need the slot that
-       # it resides in. The first, left-most slot in the
-       # ControlLogix crate is slot 0:
-       drvEtherIP_define_PLC "plc1", "snsplc1", 0
-       
-       # EtherIP driver verbosity, 0=silent, up to 10:
-       EIP_verbosity=4
-
-      Again the st.cmd example shows this.
-
-   6) Driver Tests      
-      Some of these work all the time, other require an actual
-      EPICS database to be running with records that use
-      the EtherIP driver/device.
-   
-       # List available commands (always available)
-       drvEtherIP_help
-
-       # Read Test: (always available)
-       # drvEtherIP_read_tag <ip>, <tag>, <elements>, <ms_timeout>
-       # 
-       # This call uses the IP address or the name registered
-       # with hostAdd, _not_ the PLC as defined in a call to
-       # drvEtherIP_define_PLC
-       drvEtherIP_read_tag "snsplc1", "my_tag", 1, 5000
-
-       # Dump all tags that the driver is currently scanning
-       # (requires EPICS database)
-       # drvEtherIP_dump    
-
-       # drvEtherIP_report <level>:
-       # Dump various infos, also called by "dbior"
-       # (requires EPICS database)
-       drvEtherIP_report 10
-
-       # Hint: It's useful to redirect the output to
-       # the host:
-       drvEtherIP_report 10 >/tmp/eip.txt
-       # Then, on the Win32 or Unix host, open that file
-       # with EMACS! The outline format allows easy browsing.
-
-* Record Configuration
-** Device type
-   Has to be "EtherIP" as defined in dbd file, example:
-
-   field(DTYP, "EtherIP")
-
-** Scan Field
-   The driver has to know how often it should communicate
-   with the PLC.
-
-*** Periodic
-   For periodically scanned records (e.g. SCAN="1 second")
-   this is based on the SCAN field.
-   The record then simply reads the most recent value.
-   The scan tasks of the driver and the EPICS database
-   are not synchronized.
-
-*** I/O Intr
-   For the case of SCAN="I/O Intr",
-   the driver causes the record to be processed as soon
-   as a new value is received.
-   To determine the rate at which the driver communicates,
-   the SCAN field can no longer be used
-   because it does not specify a period as in the previous case.
-   Instead, a scan flag has to be included in the link field
-   like this:
-
-   field(SCAN, "I/O Intr")
-   field(INP, "@snsioc1 temp S .1")
-
-   See below for more on the scan flag.
-
-** Input/Output Link
-   The input/output link (INP for Ai, Bi) has to match
-    "@<plc name> <tag> [flags]".
-
-   Example:
-
-   field(INP, "@snsioc1 temp")
-   field(INP, "@snsioc1 PVs.VAL[3]")
-   field(INP, "@snsioc1 PVs.VAL[3] E")
-
-   Options:
-   a) The tag is a single elementary item, the type matches the record,
-      i.e. REAL for AnalogInput, BOOL for BinaryInput.
-      The tag might reference an element in a complicated
-      structure of arrays of structure etc.,
-      but the element it references in the end is a
-      REAL, BOOL, .., no structure or array.
-      In this case the record reads the single tag.
-   b) The tag is an array of a matching elementary type,
-      the array element to pick is specified.
-      Then the driver reads the array
-      (elements 0 up to the highest requested one)
-      and the record picks the single element from that array.
-      The array element can be a decimal: [1] [42]
-      ... or an octal number [00] [07] [010] ...
-      ... or a hex. number [0x00] [0x0F] [0x10] ...
-      A number like [09] will fail without error since this
-      starts like an octal with '0' but is invalid.
-      As a result, element 0 will be used.
-   c) Tag is an array AND the element flag "E"
-      is given.
-      Then this record reads the single array element.
-  
-   For a single record, reading
-      "arraytag[3]"
-   is very similar to reading
-      "arraytag[3] E"
-   But when several records reference the "arraytag",
-   in the latter case it'll be read once as a whole
-   by the driver, instead of posting a seperate request
-   per record.
-   So there is rarely need to use the E flag because
-   it will reduce performance.
-   Exceptions:
-   a) You need array element 100 and only this element,
-      so there is no point reading the array from 0 to 100.
-   b) You want array elements 401, 402, ... 410.
-      It's not possible for the driver to read 401-410 only,
-      it has to read 0-410. This, however, might be impossible
-      because the send/receive buffers of the PLC can only
-      hold about 512 bytes.
-      So in this case you have to read elements 401-410
-      one by one.
-   c) If you have to use a binary record type (bi, bo, mbbi, ...)
-      with a non-BOOL array element.
-      Example:  PLC tag DINT dint[5]
-      Assume an mbbi record, INP="@plc1 dint[3]", NOBT=10.
-      You might have configured this to mean:
-                          Bits 0...9 from dint[3].
-      What you get is:    Bits 3...10, all in the first DINT,
-      because the driver assumes that a binary record talks to
-      a BOOL array if arrays are used.
-      You can connect an analog ai to dint[3] and will in fact
-      get all the bits from the 3rd DINT.
-
-      If you have to use a mbbi, there are two options:
-      1) read the tag into an ai and then read that with an mbbi
-      2) use "@plc1 dint[3] E".
-         Now the driver will not pick apart the array element & bits
-         but just require "dint[3]" from the PLC.
-         Drawback: This is a single request, it will not be combined
-                   with other array requests to the same "dint" tag.
-
-** Flags
-   The "E" flag was already mentioned:
-      tag[5] E
-   means that the driver really only transfers tag[5],
-   this won't be combined with other array tags.
-
-*** Scan Flag
-   The time format is in seconds, like the SCAN field,
-   but without "seconds".
-   Examples:
-   
-   field(INP, "@snsioc1 temp S .1")
-   field(INP, "@myplc xyz S 0.5")
-
-   There has to be a space after the "S" to distinguish
-   it from the other flags starting with "S".
-
-*** Statistics Flags
-   The driver holds statistics per Tag
-   which can be accessed via the flag field.
-
-   Allowed flags for the AI record:
-
-   PLC_ERRORS         - # of timeouts/errors in communication with PLC [count]
-   PLC_TASK_SLOW      - # times when scan task was too slow [count]
-   LIST_ERRORS        - Error count for tag's scan list
-   LIST_TICKS         - vx Ticktime when tag's list was checked
-   LIST_SCAN_TIME     - Time for handling scanlist [secs]
-   LIST_MIN_SCAN_TIME - min. of '' 
-   LIST_MAX_SCAN_TIME - max. of ''
-   TAG_TRANSFER_TIME  - Time for last round-trip data request */
-
-   When using the flags, a tag is always required.
-   For e.g. "TAG_TRANSFER_TIME" this makes sense because
-   you query per-tag information.
-   In other cases it's used to find the scanlist.
-
-   Examples:
-
-   field(INP, "@snsioc1 PVs.VAL LIST_MIN_SCAN_TIME")
-   field(INP, "@snsioc1 PVs.VAL LIST_MAX_SCAN_TIME")
-   field(INP, "@snsioc1 PVs.VAL LIST_SCAN_TIME")
-
-   The PLC_TASK_SLOW might be of less use than anticipated.
-   It's incremented when the scan task is done processing the list
-   and then notices that it's already time to process the list again.
-   Since all delays are specified in vxWorks ticks,
-   defaulting to 60 ticks per second, this scheduling is rather
-   coarse. With all the other task scheduling going on and ethernet
-   delays, PLC_TASK_SLOW will increment quite often without
-   a noticable impact on the data (no timeouts, no old data).
-
-* Driver Operation
+* Command-line tool
+The ether_ip_test executable (ether_ip_test.exe on Win32)
+allows for simple communication checks.
+The available command line options might change,
+use the "-?" option for help:
+    >ether_ip_test -?
+    Usage: ether_ip_test <flags> [tag]
+    Options:
+      -v verbosity
+      -i ip  (as 123.456.789.001 or DNS name)
+      -p port
+      -s PLC slot in ControlLogix crate (default: 0)
+      -s slot (default: 0)
+      -t timeout (ms)
+      -a array size
+      -w <double value to write>       
 
 Example:
-** Records
+Read tag "REAL" from plc with IP 128.165.160.146,
+PLC happens to be in slot 6 of the ControlLogix crate:
+    >ether_ip_test -i 128.165.160.146 -s 6 REAL
+    Tag REAL
+    REAL 0.002502
+
+Add the "-v 10" option to see a dump of all the exchanged
+EtherIP messages. The included error messages might help
+to detect why some tag cannot be read.
+
+* EPICS startup file
+1) Load Driver & Device Support
+The ether_ipApp creates a library "ether_ipLib"
+which contains only the driver code.
+
+You can load the ether_ipLib itself or use e.g.
+the makeBaseApp.pl ADE to include this library
+in your application library.
+
+2) IP Setup
+Since the driver uses TCP/IP, the route to the PLC has to defined:
+    # Define the DNS name for the PLC, so we can it instead of the
+    # raw IP address
+    hostAdd "snsplc1", "128.165.160.146"
+
+    # *IF* "128.165.160.146" is in a different subnet
+    # that the IOC cannot get to directly, define
+    # a route table entry. In this example, ..254 is the gateway
+    routeAdd "128.165.160.146", "128.165.160.254"
+
+    # Test: See if the IOC can get to "snsplc1":
+    ping "snsplc1", 5
+
+3) Driver Configuration
+Before calling iocInit, the driver has to be configured.
+Note that the IP address (128.165.160.146), the DNS name (snsplc1)
+and the name that the driver uses (plc1) are all related by different!
+    
+    # Initialize EtherIP driver, define PLCs
+    # -------------------------------------
+    drvEtherIP_init
+
+    # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
+    # The driver/device uses the <name> to indentify the PLC.
+    # 
+    # <ip_addr> can be an IP address in dot-notation
+    # or a name that the IOC knows about (defined via hostAdd).
+    # The IP address gets us to the ENET interface.
+    # To get to the PLC itself, we need the slot that
+    # it resides in. The first, left-most slot in the
+    # ControlLogix crate is slot 0:
+    drvEtherIP_define_PLC "plc1", "snsplc1", 0
+       
+    # EtherIP driver verbosity, 0=silent, up to 10:
+    EIP_verbosity=4
+
+4) Tell EPICS Database about Driver/Device
+To inform EPICS of this new driver/device, a DBD file is used.
+ether_ip.dbd looks like this:
+     driver(drvEtherIP)
+     device(ai,         INST_IO, devAiEtherIP,         "EtherIP")
+     device(bi,         INST_IO, devBiEtherIP,         "EtherIP")
+     device(mbbi,       INST_IO, devMbbiEtherIP,       "EtherIP")
+     device(mbbiDirect, INST_IO, devMbbiDirectEtherIP, "EtherIP")
+     device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
+     device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
+     device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")
+     device(mbboDirect, INST_IO, devMbboDirectEtherIP, "EtherIP")
+
+You can load this directly via dbLoadDatabase in the startup script.
+Usually, however, you would use something like the makeBaseApp.pl ADE,
+have this:
+       include "base.dbd"
+       include "ether_ip.dbd"
+in your application DBD file and then in the vxWorks startup script,
+"dbLoadDatabase" loads the single application DBD file which
+includes the EtherIP DBD file.
+                
+* EPICS records: Generic fields
+** DTYP: Device type
+Has to be "EtherIP" as defined in DBD file:
+    field(DTYP, "EtherIP")
+
+** SCAN: Scan Field
+The driver has to know how often it should communicate
+with the PLC. Per default, it uses the SCAN field
+of the record:
+    field(SCAN, "1 second")
+    field(SCAN, ".1 second")
+    field(SCAN, "10 second")
+...
+The driver scans the PLC at the same rate.
+The record simply reads the most recent value.
+Note: The scan tasks of the driver and the EPICS database
+are not synchronized.
+
+*** SCAN Passive
+Output records are often passive:
+They are only processed when the record is accessed via ChannelAccess
+from an operator screen where someone entered a new value for this
+record.
+
+The driver still tries to read the tag from the PLC in case it is
+changed from another source (another IOC, PanelView, ...). But the
+driver cannot extract an update rate from the SCAN field, so the "S"
+scan flag has to be used as described in the the INP/OUT link section.
+
+*** SCAN I/O Intr
+Input records can be configured to use
+    field(SCAN, "I/O Intr")
+The driver causes the record to be processed as soon as a new value is
+received. As in the Passive case, the driver needs the "S" scan
+flag to determine the poll rate.
+
+** INP, OUT: Input/Output Link
+The INP field for input records resp. the OUT field for output records
+has to match
+   field(INP, "@<plc name> <tag> [flags]")
+   field(OUT, "@<plc name> <tag> [flags]")
+
+<plc name>
+    This is the driver's name for the PLC, defined in the vxWorks
+    startup script via
+       drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
+    Example:
+       drvEtherIP_define_PLC "plc1", "snsplc1", 0
+    More detail on this as well as the IP address mapping
+    and routing can be found in the "Installation" section.
+
+<tag>
+    This can be a single tag "fred" that is defined in the "Controller
+    Tags" section of the PLC ladder logic. It can also be an array tag
+    "my_array[5]" as well as a structure element "Local:2:I.Ch0Data".
+    Array elements are indexed beginning with 0. 
+    Note: you can use decimals (2, 10, 15), hex numbers (0x0f) and
+    octal numbers (04, 07, 12). This means that 08 is invalid because
+    it is interpreted as an octal number!
+
+    The <tag> has to be a single elementary item (scalar tag, array
+    element, structure element), not a whole array or structure.
+
+<flags>
+    There are record-specific flags that will be explained
+    later. Common flags are:
+
+    "S <scan period>"
+    If the SCAN field does not specify a scan rate as in the case of
+    "Passive" and "I/O Intr", the S flag has to be used to inform the
+    driver of the requested update rate.
+
+    The time format is in seconds, like the SCAN field, but without "seconds".
+    Examples:
+       field(INP, "@snsioc1 temp S .1")
+       field(INP, "@myplc xyz S 0.5")
+    There has to be a space after the "S"!
+
+    "E" - force elementary transfer
+    If the tag refers to an array element,
+       field(INP, "@snsioc1 arraytag[5]")
+    the driver will combine all array requests into a single array
+    transfer for this tag. This is meant to reduce network traffic:
+    Records scanning arraytag[0], ... arraytag[5] will result in a single
+    "arraytag" transfer for elements 0 to 5.
+
+    The "E" flag overrides this:
+       field(INP, "@snsioc1 arraytag[5] E")
+    will result into an individual transfer of "arraytag" element 5,
+    not combined with other array elements.
+
+    Reasons for doing this:
+    a) The software can only transfer array elements 0 to N, always
+       beginning at 0. If you need array element 100 and only this element,
+       so there is no point reading the array from 0 to 100.
+    b) You want array elements 401, 402, ... 410. It's not possible
+       for the driver to read 401-410 only, it has to read 0-410. This,
+       however, might be impossible because the send/receive buffers of the
+       PLC can only hold about 512 bytes. So in this case you have to read
+       elements 401-410 one by one with the "E" flag.
+    c) Binary record types (bi, bo, mbbi, ...) with a non-BOOL array
+       element. See the binary record details below.
+
+* ai, Analog Input Record
+By default the tag itself is read:
+
+PLC Tag type      Action
+------------      ---------------------------------------------------
+REAL              VAL field is set (no conversion).
+INT, DINT, BOOL   RVAL is set, conversions (linear, ...) can be used.
+
+The analog record cannot be used with BOOL array elements,
+other arrays (REAL, INT, ...) are allowed.
+
+** Statistics Flags
+The driver holds statistics per Tag which can be accessed with ai
+records via the flag field. A valid tag is *always* required. For
+e.g. "TAG_TRANSFER_TIME" this makes sense because you query per-tag
+information. In other cases it's used to find the scanlist.
+
+    field(INP, "@$(PLC) $(TAG) PLC_ERRORS")
+    - # of timeouts/errors in communication with PLC [count]
+
+    field(INP, "@$(PLC) $(TAG) PLC_TASK_SLOW")
+    - # times when scan task was slow [count]
+
+    field(INP, "@$(PLC) $(TAG) LIST_TICKS")
+    - vx Ticktime when tag's list was checked.
+      Useful to monitor that the driver is still running.
+
+    field(INP, "@$(PLC) $(TAG) LIST_SCAN_TIME"),
+    field(INP, "@$(PLC) $(TAG) LIST_MIN_SCAN_TIME"),
+    field(INP, "@$(PLC) $(TAG) LIST_MAX_SCAN_TIME"),
+    - Time for handling scanlist [secs]: last, minumum, maximum
+
+    field(INP, "@$(PLC) $(TAG) TAG_TRANSFER_TIME")
+    - Time for last round-trip data request for this tag
+
+The PLC_TASK_SLOW flag is of less use than anticipated. It's
+incremented when the scan task is done processing the list and then
+notices that it's already time to process the list again. Since all
+delays are specified in vxWorks ticks, defaulting to 60 ticks per
+second, this scheduling is rather coarse. With all the other task
+scheduling going on and ethernet delays, PLC_TASK_SLOW will increment
+quite often without a noticable impact on the data (no timeouts, no
+old data).
+
+* ao, Analog Output Record
+Like analog input, tags of type REAL, INT, DINT, BOOL are supported as
+well as REAL, INT, DINT arrays (no BOOL arrays). No statistics flags
+are supported.	
+
+If the SCAN field is "Passive", the "S" flag has to be used.
+
+** Write support
+The problem is that the EPICS IOC and the crate that it's on do not
+"own" the PLC. Someone else might write to the PLC's tag (RSLogix,
+PanelMate, another IOC, command-line program). The PLC can also be
+rebooted independent from the IOC.
+Therefore the write records cannot just write once they have a new
+value, they have to reflect the actual value on the PLC.
+
+In order to learn about changes to the PLC from other sources, the
+driver scans write tags just like read tags, so it always knows the
+current value. When the record is processed, it checks if the value to
+be written is different from what the PLC has. If so, it puts its RVAL
+into the driver's table and marks it for update
+ -> the driver writes the new value to the PLC.
+
+Some glue code in the device is called for every value that the driver
+gets. It checks if this still matches the record's value. If not, the
+record's RVAL is updated and the record is processed. A user interface
+tool that looks at the record sees the actual value of the PLC.
+The record will not write the value that it just received because
+it can see that RVAL matches what the driver has.
+
+This fails if two output records are connected to the same tag,
+especially if one is a binary output that tries to write 0 or 1. In
+that case the two records each try to write "their" value into the
+tag, which is likely to make the value fluctuate.
+
+* bi, Binary Input Record
+Reads a single bit from a tag.
+
+PLC Tag type      Action
+------------      ---------------------------------------------------
+BOOL              VAL field is set to the BOOL value
+other             converted into UDINT, then bit 0 is read
+
+BOOL Arrays can be used:
+   field(INP, "@plc1 BOOLs[52]")
+will read the 52nd element of the BOOL array.
+
+INT, DINT arrays are treated as bit arrays:
+   field(INP, "@plc1 DINTs[40]")
+will *NOT* read array element #40 but bit #40 which is bit # 8 in the
+second DINT.
+
+If you want to read the first bit of DINT #40, the "E" flag can be
+used to make an elementary request for "DINTs[40]". The preferred solution,
+though, is the Bit flag.
+The TPRO field (see the section on debugging) is often helpful in
+analyzing what array element and what bit is used.
+
+** "B <bit>": Bit flag
+   field(INP, "@plc1 DINTs[1] B 8")
+will read bit #8 in the second DINT array element.
+
+* mbbi, mbbiDirect Multi-bit Binary Input Records
+These records read multiple consecutive bits, the count is given in
+the number-of-bits field:
+   field(NOBT, "3")
+
+The input specification follows the bi description,
+except that the addressed bit is the first bit.
+
+When using array elements, the same bit-addressing applies. As a
+result, the "B <blit>" flag should be used for non-BOOL arrays.
+
+Note: In the current implementation, the mbbiX records can read accross array
+elements of DINT arrays. This record reads element 4, bit 31 and
+element 5, bit 1:
+	field(INP, "@$(PLC) DINTs[4] B 31")
+	field(NOBT, "2")
+But this feature is merely a side effect, it's safer to read
+within one INT/DINT. Or use BOOL arrays.
+
+* bo, mbbo, mbboDirect Binary Output Records
+The output records use the same OUT configurations as the
+corresponding input records.
+
+If the SCAN field is "Passive", the "S" flag has to be used.
+
+Note that if several records read and write different elements of an
+array tag X, that tag is read once per cycle from element 0 up to the
+highest element index N that any record refers to. If any output record
+modifies an entry, the driver will write the array (0..N) in the next
+cycle since it is marked as changed.
+
+As a result, it is advisable to keep "read" and "write" arrays
+seperate, because otherwise elements meant for "read" will be written
+whenever one or more other elements are changed by output records.
+
+
+* Debugging
+On the IOC vxWorks console (or a telnet connection to the IOC), the
+driver can display information via the usual EPICS dbior call:
+    dbior "drvEtherIP", 10
+A direct call to
+    drvEtherIP_report 10
+yields the same result. Instead of 10, lower levels of verbosity are
+allowed.
+
+Hint: It's useful to redirect the output to the host:
+    drvEtherIP_report 10 >/tmp/eip.txt
+Then, on the Win32 or Unix host, open that file
+with EMACS. The outline format allows easy browsing.
+
+drvEtherIP_help shows all user-callable driver routines:
+    -> drvEtherIP_help
+    drvEtherIP V1.1 diagnostics routines:
+      int EIP_verbosity:
+      -  set to 0..10
+      drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
+      -  define a PLC name (used by EPICS records) as IP
+	 (DNS name or dot-notation) and slot (0...)
+      drvEtherIP_read_tag <ip>, <tag>, <elements>, <ms_timeout>
+      -  call to test a round-trip single tag read
+      drvEtherIP_report <level>
+      -  level = 0..10
+      drvEtherIP_dump
+      -  dump all tags and values; short version of drvEtherIP_report
+      drvEtherIP_reset_statistics
+      -  reset error counts and min/max scan times
+      drvEtherIP_restart
+      -  in case of communication errors, driver will restart,
+	 so calling this one directly shouldn't be necessary
+	 but is possible                           
+
+A common problem might be that a record does not seem to read/write
+the PLC tag that it was supposed to be connected to.
+When setting "TPRO" for a record, EPICS will log a message whenever a
+record is processed. The EtherIP device support shows some additional
+info on how it interpreted the INP/OUT link. Use a display manager, a
+command line channel access tool or
+    dbpf "record.TPRO", "1"
+in the vxWorks shell to set TPRO. Set TPRO to "0" to switch this off again.
+
+Example output for a binary input that addresses "DINTs[40]":
+process:   snsioc4:biDINTs40
+   link_text  : 'plc1 DINTs[40]'
+   PLC_name   : 'plc1'
+   string_tag : 'DINTs'
+   element    : 1          <- element 1, not 40!
+   mask       : 0x100      <- mask selects but 8
+(See the description of the bi record and the "B" flag for a better solution)
+
+* Driver Operation Details
+Example:
+Records
    "fred", 10 seconds
    "freddy", 10 seconds
    "jane", 10 seconds
@@ -320,36 +416,27 @@ Example:
    "binaries", element 5, 10Hz
    "binaries", element 10, 10Hz
 
-** Scanlist created from this
+Scanlist created from this
    10  Hz: "binaries", elements 0-10
     1  Hz: "binaries[3]"
     0.5Hz: "analogs.temp[2].input"
     0.1Hz: "fred", "freddy", "jane"
 
-** Driver actions
+Driver actions
    One thread and socket per PLC for communication.
-
    One TagInfo per tag: name, elements, sizes.
-
    ScanTask: runs over scanlists for its PLC.
    For each scanlist:
        Figure out how many requests can be combined
        into one request/response round-trip
        (~500 byte limit), record in TagInfo.
 
-
 * CIP data details
-
 Analog array REALs[40]:
-
 Read "REALS",    2 elements -> REAL[0], REAL[1]
-Read "REALS[0]", 2 elements -> REAL[0], REAL[1]
-Read "REALS[1]", 2 elements -> REAL[1], REAL[2]
 
 Binary array BOOLs[352]:
-
 Read "BOOLs",     1 element  -> 32bit DINT with bits  0..31
-Read "BOOLs[1]",  1 element  -> 32bit DINT with bits 32..63
 
 Access to binaries is translated inside the driver.
 Assume access to "fred[5]".
@@ -359,52 +446,10 @@ For binary records, we assume that the 5th _bit_ should be addressed.
 Therefore the first element (bits 0-31) is read and the single
 bit in there returned.
 
-This might cause confusion if a binary record is used
-with a non-bool tag on the PLC.
-Therefore make sure that the types match:
+* Files
+ether_ip.[ch]    EtherNet/IP protocol
+dl_list*         Double-linked list, used by the following
+drvEtherIP*      vxWorks driver
+devEtherIP*      EPICS device support
+ether_ip_test.c  main for Unix/Win32
 
-AI:                    Tag should be Single BOOL, REAL, ...
-                       or array of REAL
-BI, MBBI, MBBIDirect:  Tag should be Single BOOL, Real, ...
-                       or BOOL[]
-
-* Write support
-
-The problem is that the EPICS IOC and the crate that it's on
-do not "own" the PLC. Someone else might write to the PLC's tag
-(RSLogix, PanelMate, another IOC, command-line program).
-The PLC can also be rebooted independent from the IOC.
-
-Therefore the write records cannot just write once they
-have a new value, they have to reflect the actual value
-on the PLC.
-
-** Implementation:
-In order to learn about changes to the PLC from other sources, the
-driver scans write tags just like read tags, so it always knows the
-current value.
-
-When the record is processed, it checks if the value to be written is
-different from what the PLC has. If so, it puts its RVAL into the
-driver's table and marks it for update
--> the driver writes the new value to the PLC.
-
-Some glue code in the device is called for every value that the driver
-gets. It checks if this still matches the record's value. If not, the
-record's RVAL is updated and the record is processed. A user interface
-tool that looks at the record sees the actual value of the PLC.
-The record will not write the value that it just received because
-it can see that RVAL matches what the driver has.
-
-** Hint
-This fails if two output records are connected to the same tag,
-especially if one is a binary output that tries to write 0 or 1.
-In that case the two records each try to write "their" value
-into the tag, which is likely to make the value fluctuate.
-
-* Debugging
-
-  dbior or a direct call to drvEtherIP_report shows the driver's
-  lists for PLCs, ScanLists and Tags.
-  When setting "TPRO" for a record, device support shows some
-  info on how it interpreted the INP/OUT link.

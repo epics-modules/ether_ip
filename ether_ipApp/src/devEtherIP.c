@@ -31,6 +31,7 @@ typedef enum
     SPCO_VALUE, /* default */
     SPCO_READ_SINGLE_ELEMENT,
     SPCO_SCAN_PERIOD,
+    SPCO_BIT,
     SPCO_PLC_ERRORS,
     SPCO_PLC_TASK_SLOW,
     SPCO_LIST_ERRORS,
@@ -50,7 +51,8 @@ static struct
 {
   { "VALUE",               5 },
   { "E",                   1 },
-  { "S ",                  2 }, /* S<space> to distinguish from SCAN* */
+  { "S ",                  2 }, /* note <space> */
+  { "B ",                  2 }, /* note <space> */
   { "PLC_ERRORS",         10 }, /* Connection error count for tag's PLC */
   { "PLC_TASK_SLOW",      13 }, /* How often scan task had no time to wait */
   { "LIST_ERRORS",        11 }, /* Error count for tag's list */
@@ -140,7 +142,7 @@ static bool lock_data(const dbCommon *rec)
  * 1) NOBT might change but MASK is only set once
  * 2) MASK doesn't help when reading bits accross UDINT boundaries
  */
-static bool get_bits (dbCommon *rec, size_t bits, unsigned long *rval)
+static bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     bool           ok;
@@ -150,78 +152,69 @@ static bool get_bits (dbCommon *rec, size_t bits, unsigned long *rval)
     element = pvt->element;
     mask    = pvt->mask;
     *rval   = 0;
-    ok = get_CIP_UDINT (pvt->tag->data, element, &value);
+    ok = get_CIP_UDINT(pvt->tag->data, element, &value);
     if (ok)
     {
-        if (get_CIP_typecode(pvt->tag->data) == T_CIP_BITS)
-        {   /* Fetch bits from BOOL array.
-             * First one directly (faster for BI case),
-             * rest in loop */
-            if (value & mask)
-                *rval = 1;
-            for (i=1/*!*/; i<bits; ++i)
+        /* Fetch bits from BOOL array.
+         * First one directly (faster for BI case),
+         * rest in loop */
+        if (value & mask)
+            *rval = 1;
+        for (i=1/*!*/; i<bits; ++i)
+        {
+            mask <<= 1;
+            if (mask == 0) /* end of current UDINT ? */
             {
-                mask <<= 1;
-                if (mask == 0) /* end of current UDINT ? */
-                {
-                    mask = 1;
-                    ++element;
-                    ok = get_CIP_UDINT (pvt->tag->data, element, &value);
-                    if (! ok)
-                        break;
-                }
-                if (value & mask)
-                    *rval |= (unsigned long)1 << i;
+                mask = 1;
+                ++element;
+                ok = get_CIP_UDINT(pvt->tag->data, element, &value);
+                if (! ok)
+                    break;
             }
+            if (value & mask)
+                *rval |= (unsigned long)1 << i;
         }
-        else /* no binary data, just use value we got */
-            *rval = value;
     }
 
     return ok;
 }
 
 /* Pendant to get_bits */
-static bool put_bits (dbCommon *rec, size_t bits, unsigned long rval)
+static bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
     CN_UDINT       value, mask = pvt->mask;
     bool           ok = true;
     
-    if (get_CIP_typecode(pvt->tag->data) == T_CIP_BITS)
+    if (! get_CIP_UDINT(pvt->tag->data, element, &value))
+        return false;
+    /* Transfer bits into BOOL array.
+     * First one directly (faster for BI case), rest in loop */
+    if (rval & 1)
+        value |= mask;
+    else
+        value &= ~mask;
+    for (i=1/*!*/; i<bits; ++i)
     {
-        if (! get_CIP_UDINT (pvt->tag->data, element, &value))
-            return false;
-        /* Transfer bits into BOOL array.
-         * First one directly (faster for BI case), rest in loop */
+        rval >>= 1;
+        mask <<= 1;
+        if (mask == 0) /* end of current UDINT ? */
+        {
+            if (! (ok = put_CIP_UDINT (pvt->tag->data, element, value)))
+                break;
+            mask = 1; /* reset mask, go to next element */
+            ++element;
+            if (! (ok = get_CIP_UDINT (pvt->tag->data, element, &value)))
+                break;
+        }
         if (rval & 1)
             value |= mask;
         else
             value &= ~mask;
-        for (i=1/*!*/; i<bits; ++i)
-        {
-            rval >>= 1;
-            mask <<= 1;
-            if (mask == 0) /* end of current UDINT ? */
-            {
-                if (! (ok = put_CIP_UDINT (pvt->tag->data, element, value)))
-                    break;
-                mask = 1; /* reset mask, go to next element */
-                ++element;
-                if (! (ok = get_CIP_UDINT (pvt->tag->data, element, &value)))
-                    break;
-            }
-            if (rval & 1)
-                value |= mask;
-            else
-                value &= ~mask;
-        }
     }
-    else /* no binary data, just use raw value as it is */
-        value = rval;
 
-    if (ok && put_CIP_UDINT (pvt->tag->data, element, value))
+    if (ok && put_CIP_UDINT(pvt->tag->data, element, value))
     {
         pvt->tag->do_write = true;
         return true;
@@ -234,12 +227,12 @@ static bool put_bits (dbCommon *rec, size_t bits, unsigned long rval)
  * Used _IF_ scan="I/O Event":
  * Driver has new value, process record
  */
-static void scan_callback (void *arg)
+static void scan_callback(void *arg)
 {
     dbCommon      *rec = (dbCommon *) arg;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     if (rec->tpro)
-        printf ("EIP scan_callback ('%s')\n", rec->name);
+        printf("EIP scan_callback ('%s')\n", rec->name);
     scanIoRequest(pvt->ioscanpvt);
 }
 
@@ -422,20 +415,20 @@ static void check_mbbo_direct_callback (void *arg)
 }
 
 /* device support routine get_ioint_info */
-static long get_ioint_info (int cmd, dbCommon *rec, IOSCANPVT *ppvt)
+static long get_ioint_info(int cmd, dbCommon *rec, IOSCANPVT *ppvt)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-
     if (pvt)
         *ppvt = pvt->ioscanpvt;
     return 0;
 }
 
-/* Try to get SCAN period from record.
+/* Try to parse scan period from record's SCAN field.
+ * Sounds simple, but I ended up with this mess.
  * Is there a more elegant way to get this?
  * Returns <= 0 for error.
  */
-static double get_period (dbCommon *rec)
+static double get_period(dbCommon *rec)
 {
     char          *buf = 0, *p;
     size_t        buf_size = 0, len;
@@ -444,40 +437,40 @@ static double get_period (dbCommon *rec)
     double        period = -1.0;
 
     if (rec->scan < SCAN_1ST_PERIODIC)
-        return -1.0;
+        return period;
     
     /* Best guess for holding SCAN field name and value */
-    if (! EIP_reserve_buffer ((void**)&buf, &buf_size, 50))
-        return -1.0;
+    if (! EIP_reserve_buffer((void**)&buf, &buf_size, 50))
+        return period;
     /* Get SCAN field's address */
     len = strlen (rec->name);
-    if (! EIP_reserve_buffer ((void**)&buf, &buf_size, len+6))
+    if (! EIP_reserve_buffer((void**)&buf, &buf_size, len+6))
         goto leave;
-    memcpy (buf, rec->name, len);
-    memcpy (buf+len, ".SCAN", 6);
-    if (dbNameToAddr (buf, &scan_field) != 0)
+    memcpy(buf, rec->name, len);
+    memcpy(buf+len, ".SCAN", 6);
+    if (dbNameToAddr(buf, &scan_field) != 0)
         goto leave;
 
     /* Get value */
     len = dbBufferSize(DBR_STRING, options, count);
-    if (! EIP_reserve_buffer ((void**)&buf, &buf_size, len))
+    if (! EIP_reserve_buffer((void**)&buf, &buf_size, len))
         goto leave;
     if (dbGet(&scan_field, DBR_STRING, buf, &options, &count, 0) != 0)
         goto leave;
-    if (! strstr (buf, "second"))
+    if (! strstr(buf, "second"))
         goto leave;
-    period = strtod (buf, &p);
+    period = strtod(buf, &p);
     if (p==buf || period==HUGE_VAL || period==-HUGE_VAL)
         period = -1.0;
   leave:
-    free (buf);
+    free(buf);
     return period;
 }
 
 /* Given string "s", return next token and end of token
  * Returns 0 on end-of-string
  */
-static char *find_token (char *s, char **end)
+static char *find_token(char *s, char **end)
 {
     /* skip initial space  */
     while (*s == ' ')
@@ -486,9 +479,9 @@ static char *find_token (char *s, char **end)
     if (*s == '\0')
         return 0;
     
-    *end = strchr (s, ' ');
+    *end = strchr(s, ' ');
     if (*end == NULL)
-        *end = s + strlen (s);
+        *end = s + strlen(s);
 
     return s;
 }
@@ -501,72 +494,84 @@ static char *find_token (char *s, char **end)
  * bits: if >0 indicates that we want binary data,
  *       then it's the number of bits
  */
-static long analyze_link (dbCommon *rec,
-                          EIPCallback cbtype,
-                          const DBLINK *link, size_t bits)
+static long analyze_link(dbCommon *rec,
+                         EIPCallback cbtype,
+                         const DBLINK *link, size_t bits)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     char           *p, *end;
-    size_t         i, tag_len, last_element;
+    size_t         i, tag_len, last_element, bit=0;
     double         period = 0.0;
     bool           single_element = false;
     SpecialOptions special = SPCO_VALUE;
     
-    if (! EIP_strdup (&pvt->link_text, link->value.instio.string,
-                      strlen (link->value.instio.string)))
+    if (! EIP_strdup(&pvt->link_text, link->value.instio.string,
+                     strlen (link->value.instio.string)))
     {
-        errlogPrintf ("devEtherIP (%s): Cannot copy link\n", rec->name);
+        errlogPrintf("devEtherIP (%s): Cannot copy link\n", rec->name);
         return S_dev_noMemory;
     }
     /* Find PLC */
-    p = find_token (pvt->link_text, &end);
+    p = find_token(pvt->link_text, &end);
     if (! p)
     {
-        errlogPrintf ("devEtherIP (%s): Missing PLC in link '%s'\n",
-                      rec->name, pvt->link_text);
+        errlogPrintf("devEtherIP (%s): Missing PLC in link '%s'\n",
+                     rec->name, pvt->link_text);
         return S_db_badField;
     }
-    if (! EIP_strdup (&pvt->PLC_name, p, end-p))
+    if (! EIP_strdup(&pvt->PLC_name, p, end-p))
     {
-        errlogPrintf ("devEtherIP (%s): Cannot copy PLC\n", rec->name);
+        errlogPrintf("devEtherIP (%s): Cannot copy PLC\n", rec->name);
         return S_dev_noMemory;
     }
 
     /* Find Tag */
-    p = find_token (end, &end);
+    p = find_token(end, &end);
     if (! p)
     {
-        errlogPrintf ("devEtherIP (%s): Missing tag in link '%s'\n",
-                      rec->name, pvt->link_text);
+        errlogPrintf("devEtherIP (%s): Missing tag in link '%s'\n",
+                     rec->name, pvt->link_text);
         return(S_db_badField);
     }
     tag_len = end-p;
-    if (! EIP_strdup (&pvt->string_tag, p, tag_len))
+    if (! EIP_strdup(&pvt->string_tag, p, tag_len))
     {
         errlogPrintf ("devEtherIP (%s): Cannot copy tag\n", rec->name);
         return S_dev_noMemory;
     }
     
     /* Check for more flags */
-    while ((p = find_token (end, &end)))
+    while ((p = find_token(end, &end)))
     {
         for (i=1; i<SPCO_INVALID; ++i)
         {
-            if (strncmp (p,
-                         special_options[i].text,
-                         special_options[i].len) == 0)
+            if (strncmp(p,
+                        special_options[i].text,
+                        special_options[i].len) == 0)
             {
                 if (i==SPCO_READ_SINGLE_ELEMENT)
                         single_element = true;
                 else if (i==SPCO_SCAN_PERIOD)
                 {
-                    period = strtod (p+2, &end);
+                    period = strtod(p+2, &end);
                     if (end==p || period==HUGE_VAL || period==-HUGE_VAL)
                     {
-                        errlogPrintf ("devEtherIP (%s): "
-                                      "Error in scan flag in link '%s'\n",
-                                      rec->name, p, pvt->link_text);
-                        return(S_db_badField);
+                        errlogPrintf("devEtherIP (%s): "
+                                     "Error in scan flag in link '%s'\n",
+                                     rec->name, p, pvt->link_text);
+                        return S_db_badField;
+                    }
+                }
+                else if (i==SPCO_BIT)
+                {
+                    bit = strtod(p+2, &end);
+                    special = SPCO_BIT;
+                    if (end==p || period==HUGE_VAL || period==-HUGE_VAL)
+                    {
+                        errlogPrintf("devEtherIP (%s): "
+                                     "Error in bit flag in link '%s'\n",
+                                     rec->name, p, pvt->link_text);
+                        return S_db_badField;
                     }
                 }
                 else
@@ -576,21 +581,21 @@ static long analyze_link (dbCommon *rec,
         }
         if (i == SPCO_INVALID)
         {
-            errlogPrintf ("devEtherIP (%s): Invalid flag '%s' in link '%s'\n",
-                          rec->name, p, pvt->link_text);
-            return(S_db_badField);
+            errlogPrintf("devEtherIP (%s): Invalid flag '%s' in link '%s'\n",
+                         rec->name, p, pvt->link_text);
+            return S_db_badField;
         }
     }
     
     pvt->special = special;
     if (period <= 0.0) /* no scan flag-> get SCAN field: */
     {
-        period = get_period (rec);
+        period = get_period(rec);
         if (period <= 0)
         {
-            errlogPrintf ("devEtherIP (%s): cannot decode SCAN field,"
-                          " no scan flag given\n", rec->name);
-            return(S_db_badField);
+            errlogPrintf("devEtherIP (%s): cannot decode SCAN field,"
+                         " no scan flag given\n", rec->name);
+            return S_db_badField;
         }
     }
     
@@ -607,119 +612,115 @@ static long analyze_link (dbCommon *rec,
                     break;
             if (p <= pvt->string_tag)
             {
-                errlogPrintf ("devEtherIP (%s): malformed array tag in '%s'\n",
-                              rec->name, pvt->link_text);
-                return(S_db_badField);
+                errlogPrintf("devEtherIP (%s): malformed array tag in '%s'\n",
+                             rec->name, pvt->link_text);
+                return S_db_badField;
             }
             /* read element number */
-            pvt->element = strtol (p+1, &end, 0);
+            pvt->element = strtol(p+1, &end, 0);
             if (end==p+1 || pvt->element==LONG_MAX || pvt->element == LONG_MIN)
             {
-                errlogPrintf ("devEtherIP (%s): malformed array tag in '%s'\n",
-                              rec->name, pvt->link_text);
-                return(S_db_badField);
+                errlogPrintf("devEtherIP (%s): malformed array tag in '%s'\n",
+                             rec->name, pvt->link_text);
+                return S_db_badField;
             }
             /* remove element number text from tag */
             *p = '\0';
         }
     }
 
-    pvt->plc = drvEtherIP_find_PLC (pvt->PLC_name);
+    pvt->plc = drvEtherIP_find_PLC(pvt->PLC_name);
     if (! pvt->plc)
     {
-        errlogPrintf ("devEtherIP (%s): unknown PLC '%s'\n",
-                      rec->name, pvt->PLC_name);
-        return(S_db_badField);
+        errlogPrintf("devEtherIP (%s): unknown PLC '%s'\n",
+                     rec->name, pvt->PLC_name);
+        return S_db_badField;
     }
 
-    /* Special handling of binaries:
-     *
-     * For Element==0 it makes no difference,
-     * the tag might be almost any type,
-     * it'll be read as an UDINT and e.g. the BI record
-     * will turn that into 0/1.
-     *
-     * If element>0, assume that it's a BOOL array,
-     * so the data is packed into UDINTs (CIP "BITS").
-     * The actual element requested is the UDINT index,
-     * not the bit#. We later pick the bits within the UDINT via the mask.
+    /* For Element==0 the following makes no difference, only
+     * for binary records (bits=1 or more)
+     * Options:
+     * a) assume BOOL array (default)
+     * b) non-BOOL, SPCO_BIT selected a bit in INT, DINT, ...
      */
-    if (bits>0)
+    if (bits>0 && special != SPCO_BIT)
     {
-        /* determine first and last bit of interest,
-         * make sure we get up to there */
+        /* For element>0, assume that it's a BOOL array,
+         * so the data is packed into UDINTs (CIP "BITS").
+         * The actual element requested is the UDINT index,
+         * not the bit#.
+         * Pick the bits within the UDINT via the mask. */
         pvt->mask = 1U << (pvt->element & 0x1F); /* 0x1F == 31 */
         last_element = pvt->element + bits - 1;
         pvt->element >>= 5;
         last_element >>= 5;
     }
     else
-    {
+    {   /* Default (no binary rec) OR bit flag was given:
+         * Use the element as is, use bit # (default:0)   */
         last_element = pvt->element;
-        pvt->mask = 0;
+        pvt->mask = 1U << bit;
     }
 
     /* tell driver to read up to this record's elements */
-    pvt->tag = drvEtherIP_add_tag (pvt->plc, period,
-                                   pvt->string_tag,
-                                   last_element+1);
+    pvt->tag = drvEtherIP_add_tag(pvt->plc, period,
+                                  pvt->string_tag,
+                                  last_element+1);
     if (! pvt->tag)
     {
-        errlogPrintf ("devEtherIP (%s): cannot register tag '%s'\n",
-                      rec->name, pvt->string_tag);
-        return(S_db_badField);
+        errlogPrintf("devEtherIP (%s): cannot register tag '%s' with driver\n",
+                     rec->name, pvt->string_tag);
+        return S_db_badField;
     }
 
     if (cbtype == scan_callback)
-    {
+    {   /* scan_callback only allowed for SCAN=I/O Intr */
         if (rec->scan == SCAN_IO_EVENT)
-            drvEtherIP_add_callback (pvt->plc, pvt->tag,
-                                     scan_callback, rec);
+            drvEtherIP_add_callback(pvt->plc, pvt->tag,
+                                    scan_callback, rec);
         else
-            drvEtherIP_remove_callback (pvt->plc, pvt->tag,
-                                        scan_callback, rec);
+            drvEtherIP_remove_callback(pvt->plc, pvt->tag,
+                                       scan_callback, rec);
     }
     else
-        drvEtherIP_add_callback (pvt->plc, pvt->tag,
-                                 cbtype, rec);
+        drvEtherIP_add_callback(pvt->plc, pvt->tag, cbtype, rec);
     
     return 0;
 }
 
 /* Check if link still matches what was recorded in DevicePrivate.
  * On change, reparse and restart driver */
-static long check_link (dbCommon *rec, EIPCallback cbtype,
-                        const DBLINK *link, size_t bits)
+static long check_link(dbCommon *rec, EIPCallback cbtype,
+                       const DBLINK *link, size_t bits)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
 
     if (link->type != INST_IO)
     {
-        errlogPrintf ("devEtherIP (%s): INP is not INST_IO\n", rec->name);
+        errlogPrintf("devEtherIP (%s): INP is not INST_IO\n", rec->name);
         return S_db_badField;
     }
-    if (strcmp (link->value.instio.string, pvt->link_text))
+    if (strcmp(link->value.instio.string, pvt->link_text))
     {   /* Link has changed, start over */
         rec->udf = TRUE;
         if (pvt->plc && pvt->tag)
-            drvEtherIP_remove_callback (pvt->plc, pvt->tag,
-                                        cbtype, rec);
-        status = analyze_link (rec, cbtype, link, bits);
+            drvEtherIP_remove_callback(pvt->plc, pvt->tag, cbtype, rec);
+        status = analyze_link(rec, cbtype, link, bits);
         if (status)
             return status;
-        drvEtherIP_restart ();
+        drvEtherIP_restart();
     }
     return 0;
 }
 
 /* device init: Start driver after all records registered  */
 static bool driver_started = false;
-static long init (int run)
+static long init(int run)
 {
     if (run==1 && driver_started==false)
     {
-        drvEtherIP_restart ();
+        drvEtherIP_restart();
         driver_started = true;
     }
 
@@ -727,85 +728,85 @@ static long init (int run)
 }
 
 /* Common initialization for all record types */
-static long init_record (dbCommon *rec, EIPCallback cbtype,
-                         const DBLINK *link, size_t bits)
+static long init_record(dbCommon *rec, EIPCallback cbtype,
+                        const DBLINK *link, size_t bits)
 {
     DevicePrivate *pvt = calloc (sizeof (DevicePrivate), 1);
 
     if (! pvt)
     {
-        errlogPrintf ("devEtherIP (%s): cannot allocate DPVT\n", rec->name);
-        return(S_dev_noMemory);
+        errlogPrintf("devEtherIP (%s): cannot allocate DPVT\n", rec->name);
+        return S_dev_noMemory;
     }
     if (link->type != INST_IO)
     {
-        errlogPrintf ("devEtherIP (%s): INP is not INST_IO\n", rec->name);
+        errlogPrintf("devEtherIP (%s): INP is not INST_IO\n", rec->name);
         return S_db_badField;
     }
     scanIoInit(&pvt->ioscanpvt);
     rec->dpvt = pvt;
     
-    return analyze_link (rec, cbtype, link, bits);
+    return analyze_link(rec, cbtype, link, bits);
 }
 
-static long ai_init_record (aiRecord *rec)
+static long ai_init_record(aiRecord *rec)
 {
-    long status = init_record ((dbCommon *)rec, scan_callback, &rec->inp, 0);
+    long status = init_record((dbCommon *)rec, scan_callback, &rec->inp, 0);
     /* Make sure record processing routine does not perform any conversion*/
     rec->linr = 0;
     return status;
 }
 
-static long bi_init_record (biRecord *rec)
+static long bi_init_record(biRecord *rec)
 {
-    return init_record ((dbCommon *)rec, scan_callback, &rec->inp, 1);
+    return init_record((dbCommon *)rec, scan_callback, &rec->inp, 1);
 }
 
-static long mbbi_init_record (mbbiRecord *rec)
+static long mbbi_init_record(mbbiRecord *rec)
 {
-    long status = init_record ((dbCommon *)rec, scan_callback,
-                               &rec->inp, rec->nobt);
+    long status = init_record((dbCommon *)rec, scan_callback,
+                              &rec->inp, rec->nobt);
     rec->shft = 0;
     return status;
 }
 
-static long mbbi_direct_init_record (mbbiDirectRecord *rec)
+static long mbbi_direct_init_record(mbbiDirectRecord *rec)
 {
-    long status = init_record ((dbCommon *)rec, scan_callback,
-                               &rec->inp, rec->nobt);
+    long status = init_record((dbCommon *)rec, scan_callback,
+                              &rec->inp, rec->nobt);
     rec->shft = 0;
     return status;
 }
 
-static long ao_init_record (aoRecord *rec)
+static long ao_init_record(aoRecord *rec)
 {
-    return init_record ((dbCommon *)rec, check_ao_callback,
-                        &rec->out, 0);
+    return init_record((dbCommon *)rec, check_ao_callback,
+                       &rec->out, 0);
 }
 
-static long bo_init_record (boRecord *rec)
+static long bo_init_record(boRecord *rec)
 {
-    return init_record ((dbCommon *)rec, check_bo_callback,
-                        &rec->out, 1 /* bits */);
+    return init_record((dbCommon *)rec, check_bo_callback,
+                       &rec->out, 1 /* bits */);
 }
 
-static long mbbo_init_record (mbboRecord *rec)
+static long mbbo_init_record(mbboRecord *rec)
 {
-    long status = init_record ((dbCommon *)rec, check_mbbo_callback,
-                             &rec->out, rec->nobt);
+    long status = init_record((dbCommon *)rec, check_mbbo_callback,
+                              &rec->out, rec->nobt);
     rec->shft = 0;
     return status;
 }
 
-static long mbbo_direct_init_record (mbboDirectRecord *rec) 
+static long mbbo_direct_init_record(mbboDirectRecord *rec) 
 {
-    long status = init_record ((dbCommon *)rec, check_mbbo_direct_callback,
-                               &rec->out, rec->nobt);
+    long status = init_record((dbCommon *)rec, check_mbbo_direct_callback,
+                              &rec->out, rec->nobt);
     rec->shft = 0;
     return status;
 }
 
-static long ai_read (aiRecord *rec)
+static long ai_read(aiRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
@@ -814,8 +815,8 @@ static long ai_read (aiRecord *rec)
 
     rec->pact = TRUE;
     if (rec->tpro)
-        dump_DevicePrivate ((dbCommon *)rec);
-    status = check_link ((dbCommon *)rec, scan_callback, &rec->inp, 0);
+        dump_DevicePrivate((dbCommon *)rec);
+    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 0);
     if (status)
     {
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
@@ -829,11 +830,11 @@ static long ai_read (aiRecord *rec)
         {
             case SPCO_VALUE:
             case SPCO_READ_SINGLE_ELEMENT:
-                if (semTake (pvt->tag->data_lock, sysClkRateGet()) != OK)
+                if (semTake(pvt->tag->data_lock, sysClkRateGet()) != OK)
                 {
                     if (rec->sevr != INVALID_ALARM)
-                        errlogPrintf ("devEtherIP (%s): no data_lock\n",
-                                      rec->name);
+                        errlogPrintf("devEtherIP (%s): no data_lock\n",
+                                     rec->name);
                     ok = false;
                     break;
                 }
@@ -842,14 +843,14 @@ static long ai_read (aiRecord *rec)
                 {
                     if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
                     {
-                        ok = get_CIP_double (pvt->tag->data,
-                                             pvt->element, &rec->val);
+                        ok = get_CIP_double(pvt->tag->data,
+                                            pvt->element, &rec->val);
                         status = 2; /* don't convert */
                     }
                     else
                     {
-                        ok = get_CIP_UDINT (pvt->tag->data,
-                                            pvt->element, &rval);
+                        ok = get_CIP_UDINT(pvt->tag->data,
+                                           pvt->element, &rval);
                         rec->rval = rval;
                     }
                 }
@@ -907,7 +908,7 @@ static long ai_read (aiRecord *rec)
     return status;
 }
 
-static long bi_read (biRecord *rec)
+static long bi_read(biRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
@@ -915,18 +916,18 @@ static long bi_read (biRecord *rec)
     
     rec->pact = TRUE;
     if (rec->tpro)
-        dump_DevicePrivate ((dbCommon *)rec);
-    status = check_link ((dbCommon *)rec, scan_callback, &rec->inp, 1);
+        dump_DevicePrivate((dbCommon *)rec);
+    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1);
     if (status)
     {
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
         return status;
     }
 
-    if (lock_data ((dbCommon *)rec))
+    if (lock_data((dbCommon *)rec))
     {
-        ok = get_bits ((dbCommon *)rec, 1, &rec->rval);
-        semGive (pvt->tag->data_lock);
+        ok = get_bits((dbCommon *)rec, 1, &rec->rval);
+        semGive(pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1066,7 +1067,7 @@ static long ao_write(aoRecord *rec)
     return 0;
 }
 
-static long bo_write (boRecord *rec)
+static long bo_write(boRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
@@ -1075,25 +1076,25 @@ static long bo_write (boRecord *rec)
 
     rec->pact = TRUE;
     if (rec->tpro)
-        dump_DevicePrivate ((dbCommon *)rec);
-    status = check_link ((dbCommon *)rec, check_bo_callback, &rec->out, 1);
+        dump_DevicePrivate((dbCommon *)rec);
+    status = check_link((dbCommon *)rec, check_bo_callback, &rec->out, 1);
     if (status)
     {
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
         return status;
     }
 
-    if (lock_data ((dbCommon *)rec))
+    if (lock_data((dbCommon *)rec))
     {
-        if (get_bits ((dbCommon *)rec, 1, &rval) &&
+        if (get_bits((dbCommon *)rec, 1, &rval) &&
             rec->rval != rval)
         {
             if (rec->tpro)
                 printf ("rec '%s': write %lu\n",
                         rec->name, rec->rval);
-            ok = put_bits ((dbCommon *)rec, 1, rec->rval);
+            ok = put_bits((dbCommon *)rec, 1, rec->rval);
         }
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
     }
     else
         ok = false;

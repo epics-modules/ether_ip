@@ -1,45 +1,45 @@
 
-record(bo, "$(user):bo0")
+record(bo, "$(IOC):bo0")
 {
 	field(SCAN, "Passive")
 	field(DTYP, "EtherIP")
-	field(OUT, "@plc1 BOOLs[0] S 1")
+	field(OUT, "@$(PLC) BOOLs[0] S 1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 }
 
-record(bo, "$(user):bo2")
+record(bo, "$(IOC):bo2")
 {
 	field(SCAN, "Passive")
 	field(DTYP, "EtherIP")
-	field(OUT, "@plc1 BOOLs[2] S 1")
+	field(OUT, "@$(PLC) BOOLs[2] S 1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 }
 
-record(bo, "$(user):bo33")
+record(bo, "$(IOC):bo33")
 {
 	field(SCAN, "Passive")
 	field(DTYP, "EtherIP")
-	field(OUT, "@plc1 BOOLs[33] S 1")
+	field(OUT, "@$(PLC) BOOLs[33] S 1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 }
 
-record(bo, "$(user):bo240")
+record(bo, "$(IOC):bo240")
 {
 	field(SCAN, "Passive")
 	field(DTYP, "EtherIP")
-	field(OUT, "@plc1 BOOLs[240] S 1")
+	field(OUT, "@$(PLC) BOOLs[240] S 1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 }
 
-record(bo, "$(user):bo_USER")
+record(bo, "$(IOC):bo_IOC")
 {
 	field(SCAN, "Passive")
 	field(DTYP, "EtherIP")
-	field(OUT, "@plc1 USER.BOOL S 1")
+	field(OUT, "@$(PLC) IOC.BOOL S 1")
 	field(ZNAM, "False")
 	field(ONAM, "True")
 }

@@ -1,5 +1,23 @@
 -*- outline -*-
 
+* 2001, 06-19    V1.1
+
+** New "B <bit>" flag:
+Allows connection of binary records to non-BOOL arrays like INT, DINT.
+With B <bit> flag, the array element is used as is
+(no longer interpreted as a bit element) and the bit within the INT
+or DINT is selected via the new flag:
+
+   INP="@plc1 DINTs[40]"
+still results in reading bit 40, that is bit 8 in the second
+DINT.
+
+Now this can be written as
+   INP="@plc1 DINTs[1] B 8"
+
+A lot of ether_ipApp/doc/readme.txt, the "manual", has been rewritten.
+
+
 * 2001, 05-18    V1.0
 
 ** New "slot" parameter: drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
