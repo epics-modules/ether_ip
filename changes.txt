@@ -7,6 +7,19 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2004, 8/3  V2.6
+The SNS was using a patched versions of 2.5 that included
+error messages for the case that the clock jumps:
+The scheduling is based on the current time as
+reported by epicsTimeGetCurrent(). A 1 second scan list
+schedules itself for the time of the last run + 1 second.
+A jump in time to e.g. 1 month in the future would trick the driver,
+thinking that the last run was one month in the future and
+the next run is that one month ahead (plus 1 second).
+
+Now, the code attempts some reset in case of running into
+that error.
+
 * 2004, 3/17 V2.5
 The timing was wrong under R3.13, keeping the driver thread
 from sleeping. The code always uses the R3.14-type epicsTimeStamp,

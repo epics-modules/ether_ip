@@ -5,7 +5,7 @@
  * IOC driver that uses ether_ip routines,
  * keeping lists of PLCs and tags and scanlists etc.
  *
- * kasemir@lanl.gov
+ * kasemirk@ornl.gov
  */
 
 /* System */
@@ -197,6 +197,7 @@ static void dump_ScanList(const ScanList *list, int level)
     if (level > 4)
     {
         printf("  Errors        : %u\n", list->list_errors);
+        printf("  Schedule Errs : %u\n", list->sched_errors);
         epicsTimeToStrftime(tsString, sizeof(tsString),
                             "%Y/%m/%d %H:%M:%S.%04f", &list->scheduled_time);
         printf("  Next scan     : %s\n", tsString);
@@ -220,6 +221,8 @@ static void reset_ScanList(ScanList *scanlist)
 {
     scanlist->enabled        = true;
     scanlist->list_errors    = 0;
+    scanlist->sched_errors   = 0;
+    memset(&scanlist->scan_time,      0, sizeof(epicsTimeStamp));
     memset(&scanlist->scheduled_time, 0, sizeof(epicsTimeStamp));
     scanlist->min_scan_time  = 0.0;
     scanlist->max_scan_time  = 0.0;
@@ -234,7 +237,6 @@ static ScanList *new_ScanList(PLC *plc, double period)
     DLL_init(&list->taginfos);
     list->plc = plc;
     list->period = period;
-    memset(&list->scan_time, 0, sizeof(epicsTimeStamp));
     reset_ScanList (list);
     return list;
 }
@@ -778,7 +780,7 @@ static void PLC_scan_task(PLC *plc)
         if (delay > 60.0)
         {
             char      tsString[50];
-            printf("Scanlist %g secs has scheduling problem, delay = %g\n",
+            printf("Scanlist %g secs has scheduling problem, delay = %g sec\n",
                   list->period, delay);
             epicsTimeToStrftime(tsString, sizeof(tsString),
                                 "%Y/%m/%d %H:%M:%S.%04f", &list->scan_time);
@@ -789,8 +791,13 @@ static void PLC_scan_task(PLC *plc)
             epicsTimeToStrftime(tsString, sizeof(tsString),
                                 "%Y/%m/%d %H:%M:%S.%04f", &next_schedule);
             printf("  'Next    time' : %s\n", tsString);
-
-            delay = EIP_MIN_TIMEOUT;
+            /* Attempt to hack around this by waiting a minute,
+             * hoping that the clock looks better by then.
+             * Also resetting the scheduled time to 'now'.
+             */
+            delay = 60.0;
+            list->scheduled_time = start_time;
+            ++list->sched_errors;
         }
     }    
     /* Sleep until next turn. */

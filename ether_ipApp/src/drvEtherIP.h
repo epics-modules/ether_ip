@@ -15,7 +15,7 @@
 #include "dl_list.h"
 
 #define ETHERIP_MAYOR 2
-#define ETHERIP_MINOR 5
+#define ETHERIP_MINOR 6
 
 /* For timing */
 #define EIP_MIN_TIMEOUT         0.1  /* second */
@@ -78,6 +78,7 @@ struct __ScanList
     eip_bool       enabled;
     double         period;          /* scan period [secs]  */
     size_t         list_errors;     /* # of communication errors */
+    size_t         sched_errors;    /* # of scheduling errors */
     epicsTimeStamp scan_time;       /* stamp of last run time */
     epicsTimeStamp scheduled_time;  /* stamp for next run time */
     double         min_scan_time;   /* statistics: scan time in seconds */
