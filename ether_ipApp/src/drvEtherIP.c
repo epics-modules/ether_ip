@@ -659,11 +659,16 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                             elements = CIP_Type_size(get_CIP_typecode(data));
                             if (elements > 0)
                             {
-                                elements = data_size / elements;
+                                elements = (data_size-2) / elements;
+                                EIP_printf(10, "Data (%d elements): \n",
+                                           elements);
                                 dump_raw_CIP_data(data, elements);
                             }
                             else
-                                EIP_printf(10, "Unknown Data type:\n");
+                            {
+                                EIP_printf(10, "Unknown Data type 0x%02X\n",
+                                           get_CIP_typecode(data));
+                            }
                         }
                     }
                     else

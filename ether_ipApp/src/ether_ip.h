@@ -111,25 +111,50 @@ void EIP_printf(int level, const char *format, ...);
 
 void EIP_hexdump(int level, const void *_data, int len);
 
-/* Unclear:
- * There is a limit for the PLC transfer buffer.
- * Spec page P. 2-5 mentions "504 bytes" as the CIP UCMM limit,
- * Spec page 156 in version 2.0, errata 2 mentions "511 bytes"
- * as the "Forward_Open" connection size limit.
+/* There is a limit for the PLC transfer buffer.
+ * Spec page 2-5 mentions 504 bytes as the CIP UCMM limit,
+ * Spec page 156 in version 2.0, errata 2 mentions 511 bytes
+ * as the Forward_Open connection size limit.
  * None if this tells me exactly where the limit is
  * and whether it's 500 or 504 or ??
  * Is it in the PLC controller, so the Ethernet overhead
  * (encapsulation header) is handled by the ENET module
  * and does not count?
- * Is it in the ENET module, so the total inc. encapsulation
+ * Is it in the ENET module, so the total including encapsulation
  * is limited?
+ *
+ * Test: Used command-line EtherIP tool to read elements of SINT[].
+ * 492 elements: Results in 538 byte response, OK
+ * 493 elements: Results in 538 byte response, Fault
+ *               (error 0x06, Buffer too small, partial data only)
+ * Likewise INT[] array: <=246 elements, <=538 byte response, OK
+ * Note: That command-line tool sends a single read request.
+ *       The EPICS driver sends read/write requests within
+ *       a multi-request, so the individual array reads must
+ *       be slightly smaller for the driver! While the command-line
+ *       tool can read INT[246], the driver cannot!
+ *
+ * Possible conclusions: 
+ * -> Total response limited to 538 bytes?
+ * 538 - EncapsulationHeader(24)                              = 514
+ *     - RR Data handle & timeout(6)                          = 508
+ *     - RR Data packet head.:count, address,..., length (10) = 498
+ * -> MR_Response & data limited to 498 bytes?
+ *
+ * Tests w/ driver on IOC indicated that PLC also complains when
+ * the _request_ reaches 538 bytes
+ * -> request & response each limited to 538 bytes.
+ *
  * These macros are the best guess for the buffer
  * plus the protocol overhead (encap. header).
  * EIP_BUFFER_LIMIT - EIP_PROTOCOL_OVERHEAD are used
  * to fit the Multi-Request.
+ * The response has an overhead of 40 bytes, see above: 24+6+10.
+ * The request has an overhead of 52 bytes.
+ *
  */
-#define EIP_BUFFER_LIMIT 500
-#define EIP_PROTOCOL_OVERHEAD 54
+#define EIP_BUFFER_LIMIT 538
+#define EIP_PROTOCOL_OVERHEAD 52
 
 /********************************************************
  * ControlNet data types

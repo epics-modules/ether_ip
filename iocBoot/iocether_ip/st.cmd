@@ -1,12 +1,7 @@
 # -*- shell-script -*-
 # Example vxWorks startup file
 
-# Following must be added for many board support packages
-#cd <full path to target bin directory>
-
 < cdCommands
-
-#< ../nfsCommands
 
 cd appbin
 ld < iocCore
@@ -16,9 +11,9 @@ ld < testether_ip
 drvEtherIP_init
 
 # Tell vxWorks how to get to "snsioc1":
-hostAdd "snsioc1", "128.165.160.146"
+hostAdd("snsioc1", "128.165.160.146")
 # You might need this, too: routeAdd <target>, <gateway>
-# routeAdd "128.165.160.146", "128.165.160.241"
+# routeAdd("128.165.160.146", "128.165.160.241")
 
 # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
 # The driver/device uses the <name> to indentify the PLC.
@@ -30,9 +25,12 @@ hostAdd "snsioc1", "128.165.160.146"
 # To get to the PLC itself, we need the slot that
 # it resides in. The first, left-most slot in the
 # ControlLogix crate is slot 0.
-drvEtherIP_define_PLC "plc1", "snsioc1", 0
+drvEtherIP_define_PLC("plc1", "snsioc1", 0)
 
-EIP_verbosity=10
+# 10 - Truckload of detailed messages down to the raw send/receive buffers
+#  8 - Good value for operation
+#  0 - Nothing except very severe problems
+IP_verbosity=10
 
 cd top
 dbLoadDatabase("./dbd/ether_ip_test.dbd")
@@ -46,8 +44,8 @@ dbLoadDatabase("./dbd/ether_ip_test.dbd")
 #dbLoadRecords("./db/ao.db",      "PLC=plc1,IOC=snsioc4")
 #dbLoadRecords("./db/bo.db",      "PLC=plc1,IOC=snsioc4")
 #dbLoadRecords("./db/mbbo.db",    "PLC=plc1,IOC=snsioc4")
-dbLoadRecords("./db/test.db",    "PLC=plc1,IOC=snsioc4")
-#dbLoadRecords("./db/null.db","user=kay")
+#dbLoadRecords("./db/test.db",    "PLC=plc1,IOC=snsioc3")
+dbLoadRecords("./db/x.db",    "PLC=plc1")
 
 # Default master port: 18233
 TSconfigure (1, 10, 0, 18299, 0, 0, 0)

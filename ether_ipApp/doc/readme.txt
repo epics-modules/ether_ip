@@ -3,14 +3,13 @@
 * This document
 is part of the EPICS EtherIP package, to be found in
 <ether_ip>/ether_ipApp/doc/readme.txt.
-For now this is the "manual" on how to use the driver.
+This is the "Manual" on how to use the driver.
 
 For details on the underlying protocol, see
 "Interfacing the ControlLogix PLC Over EtherNet/IP",
  K.U. Kasemir, L.R. Dalesio
  ICALEPCS PSN THAP020
  LANL E-Print Archive: http://arXiv.org/abs/cs.NI/0110065
-
 
 * EtherNet/IP
 EtherNet/IP, originally called "ControlNet over Ethernet"
@@ -148,7 +147,7 @@ the data is also held in an array element "xfer[5]" which the EPICS
 record can use for the network transfer.
 Arrays should be one-directional: Use separate "EPICS to PLC" and "PLC
 to EPICS" arrays. Because of PLC buffer limitations, the array size is
-unfortunately limited to about BOOL[352] and REAL[40]. While you can
+unfortunately limited to about BOOL[350] and REAL[40]. While you can
 define bigger arrays, those cannot be transferred over the network
 with EtherIP. Consequently you might end up with several transfer arrays.
 
@@ -769,20 +768,52 @@ Driver actions
        into one request/response round-trip
        (~500 byte limit), record in TagInfo.
 
-* CIP data details
-Analog array REALs[40]:
-Read "REALS",    2 elements -> REAL[0], REAL[1]
+The driver simply adds requests from the current scanlist
+until the buffer limit is reached. The following tags are
+placed in another transfer. The driver does not try every possible
+combination of tags from the current scanlist to find the optimal
+combination to reduce the number of transfers.
+It does not combine tags from e.g. the 10 second scanlist
+with tags from the 1 second scanlist every 10th turn.
 
-Binary array BOOLs[352]:
-Read "BOOLs",     1 element  -> 32bit DINT with bits  0..31
+* PLC Buffer Limit
+See ether_ip.h for details on the limit which is about 500 bytes.
+
+The driver can only combine read/write requests into one multi-request
+until either the combined request or the expected response reaches a
+buffer limit. In practice, this means:
+
+When reading many INT tags, each with a 4-character tag name,
+32 read commands can be combined until hitting the request-size limit.
+The response of 32 * 2 bytes (INT) plus some protocol overhead is much
+smaller than the request.
+
+When reading many REAL tags, each with a 1-character tag name, 39 read
+commands combine into one request. Both the request and the response
+are close to the limit.
+
+When reading elements of a REAL array tag, 120 array elements can be read.
+The request contains the single array tag, asking for 111 elements,
+the response reaches the transfer buffer limit. Similarly, INT arrays
+can use up to 240 element.
+
+The guideline of "limit arrays to 40 elements" allow the driver a lot
+of flexibility: It can combine three REAL[40] requests into one
+transfer or add several single-tag requests with 2 x INT[40] requests etc.
+
+* CIP data details
+Analog array REALs[40], read "REALs", 2 elements
+-> REALs[0], REALs[1]
+
+Binary array BOOLs[352], read "BOOLs", 1 element
+-> 32bit DINT with bits  0..31
 
 Access to binaries is translated inside the driver.
-Assume access to "fred[5]".
-
+Assume access to "fred[5]":
 For analog records, a request to the 5th array element is assumed.
 For binary records, we assume that the 5th _bit_ should be addressed.
 Therefore the first element (bits 0-31) is read and the single
-bit in there returned.
+bit number 5 in there returned.
 
 * Files
 ether_ip.[ch]    EtherNet/IP protocol

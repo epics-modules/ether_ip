@@ -9,7 +9,7 @@ CVS root: ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot
 Module:   support/linac/ether_ip (aliased as module ether_ip)
 Tag:      ether_ip-<RELEASE>
 
-The current release is 1-9.
+The current release is 1-10.
 Replace <RELEASE> by the current release.
 You can also just use "current" for the RELEASE
 and with a periodic cvs update you'll always have
@@ -19,7 +19,7 @@ version and only upgrade during service times.
 
 Example for getting a specific release:
 cvs -d :ext:kasemir@ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot \
-     export -r ether_ip-1-9 -d 1-9 ether_ip
+     export -r ether_ip-1-10 -d 1-10 ether_ip
 
 What you have to do is
 - compile the ether_ip driver/device sources

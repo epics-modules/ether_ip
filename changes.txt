@@ -1,5 +1,15 @@
 -*- outline -*-
 
+* 2002, 10/16 V1.10
+Tested read access for various numbers of scalar and array tags.
+Found that all is OK until either the request or response buffer
+reaches 538 bytes. Unclear how "538" relates to the numbers "504"
+or "511" found in the EtherIP spec.
+
+Hopefully fixed the driver:
+Before, only the read/write and data portion were limited to 500 bytes,
+now the total is limited to 538 bytes.
+
 * 2002, 10/15
 Pilar created a perfectly fine database that causes
 communication errors, causing the PLC to return an error code
