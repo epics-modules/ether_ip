@@ -15,7 +15,7 @@
 #include "dl_list.h"
 
 #define ETHERIP_MAYOR 1
-#define ETHERIP_MINOR 4
+#define ETHERIP_MINOR 5
 
 /* TCP port */
 #define ETHERIP_PORT 0xAF12

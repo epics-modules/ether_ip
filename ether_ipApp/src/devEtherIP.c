@@ -868,6 +868,9 @@ static long check_link(dbCommon *rec, EIPCallback cbtype,
     }
     if (strcmp(link->value.instio.string, pvt->link_text))
     {   /* Link has changed, start over */
+        if (rec->tpro)
+            printf("Rec '%s': EtherIP link has changed, restarting\n",
+                   rec->name);
         rec->udf = TRUE;
         if (pvt->plc && pvt->tag)
             drvEtherIP_remove_callback(pvt->plc, pvt->tag, cbtype, rec);
@@ -1001,8 +1004,7 @@ static long ai_read(aiRecord *rec)
     if (ok)
     {
         /* Most common case: ai reads a tag from PLC */
-        if (pvt->special == 0  ||
-            pvt->special & SPCO_READ_SINGLE_ELEMENT)
+        if (pvt->special < SPCO_PLC_ERRORS)
         {   
             if (pvt->tag->valid_data_size > 0 &&
                 pvt->tag->elements > pvt->element)

@@ -1,5 +1,8 @@
 -*- outline -*-
 
+* 2002, 04/30 V1.5
+SCAN="I/O Intr" was broken.
+
 * 2002, 03/15 V1.4
 Hopefully fixed a problem that occurs when device requests write while
 driver is in the middle of a read (used to look as if the PLC didn't
