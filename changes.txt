@@ -1,5 +1,10 @@
 -*- outline -*-
 
+* 2002, 03/15 V1.4
+Hopefully fixed a problem that occurs when device requests write while
+driver is in the middle of a read (used to look as if the PLC didn't
+get the write)
+
 * 2002, 02-19 V1.3
 
 ** Added "FORCE" option to output records
