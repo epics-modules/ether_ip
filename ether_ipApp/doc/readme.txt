@@ -610,6 +610,25 @@ element 5, bit 1:
 But this feature is merely a side effect, it's safer to read
 within one INT/DINT. Or use BOOL arrays.
 
+* bo, mbbo, mbboDirect Binary Output Records
+The output records use the same OUT configurations as the
+corresponding input records.
+
+If the SCAN field is "Passive", the "S" flag has to be used.
+
+Note that if several records read and write different elements of an
+array tag X, that tag is read once per cycle from element 0 up to the
+highest element index N that any record refers to. If any output record
+modifies an entry, the driver will write the array (0..N) in the next
+cycle since it is marked as changed.
+
+As a result, it is advisable to keep "read" and "write" arrays
+separate, because otherwise elements meant for "read" will be written
+whenever one or more other elements are changed by output records.
+
+** write caveats
+See the ao comments.
+
 * stringin String Input Records
 String input records can be connected to STRING tags
 on the PLC:
@@ -634,24 +653,34 @@ To the driver, a STRING tag looks like a "CIP structure" and the
 location of the string length and character data in there were
 determined from tests.
 
-* bo, mbbo, mbboDirect Binary Output Records
-The output records use the same OUT configurations as the
-corresponding input records.
+* waveform Array Input Records
+Waveform records can be connected to REAL or DINT array tags
+on the PLC:
+        field(DTYP, "EtherIP")
+        field(SCAN, "1 second")
+        field(INP,  "@$(PLC) array_tag")
+        field(NELM, "40")
+	field(FTVL, "DOUBLE")
+or
+	field(FTVL, "LONG")
 
-If the SCAN field is "Passive", the "S" flag has to be used.
+** Note on tags in INP
+On the PLC, "array_tag" could be
+      fred = REAL[40]
+or   
+      fred = DINT[80]
+When specifying the array tag in INP, do not use
+'fred[0]' or 'fred[any other number]', use only 'fred'.
+The NELM field defines the number of elements read from the tag.
+The record will read fred[0] ... fred[NELM-1].
 
-Note that if several records read and write different elements of an
-array tag X, that tag is read once per cycle from element 0 up to the
-highest element index N that any record refers to. If any output record
-modifies an entry, the driver will write the array (0..N) in the next
-cycle since it is marked as changed.
-
-As a result, it is advisable to keep "read" and "write" arrays
-separate, because otherwise elements meant for "read" will be written
-whenever one or more other elements are changed by output records.
-
-** write caveats
-See the ao comments.
+** Note on FTVL
+For REAL[] array tags, FTVL must be DOUBLE.
+For DINT[] array tags, FTVL must be LONG.
+That way, the data type sizes match and no conversion
+is necessary.
+For other array tags, FTVL==LONG might work
+but is not guaranteed to work.
 
 * Debugging
 The driver can display information via the usual EPICS dbior call
@@ -723,7 +752,7 @@ in array element 40, you should have used "DINTs[40] B 0"
     Is it parsed correctly, i.e. is the PLC_name what you
     meant to use for a PLC name?
     Does the combination of string_tag, element & mask make sense?
-( ) All "drvEtherIP_report 10", locate the information
+( ) Call "drvEtherIP_report 10", locate the information
     for the tag that the record uses:
     *** Tag 'Word2' @ 0x18F0F38:
       scanlist            : 0x191B5F0

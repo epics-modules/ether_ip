@@ -106,18 +106,6 @@ record(ao, "$(IOC):aoDINTs2")
 	field(OUT, "@$(PLC) DINTs[2] S 1")
 }
 
-      
-# Dito, but REAL tag which is part of the
-# structure of an analog output module
-# (generated automatically if you use
-#  such a module in slot 2)
-record(ao, "$(IOC):aoDINTs2")
-{
-	field(SCAN, "Passive")
-	field(DTYP, "EtherIP")
-	field(OUT, "@$(PLC) Local:2:O.Ch1Data S 1")
-}
-
 # -------------------------------------------------
 # Binary records
 # -------------------------------------------------
@@ -193,6 +181,7 @@ record(mbbo, "$(IOC):mbboBOOLs300")
 	field(THST, "One - One")
 }
 
+    
 # !! Note !!
 # The following binary records are NOT connected
 # to BOOL arrays.
@@ -301,7 +290,38 @@ record(mbbiDirect, "$(IOC):mbbidINTs3_4")
 	field(NOBT, "5")
 }
 
+# -------------------------------------------------
+# Other odd records
+# -------------------------------------------------
 
+# Note that string data type of PLC is longer
+# than the string record's value,
+# so what you get might be truncated
+record(stringin, "$(IOC):string")
+{
+	field(SCAN, "1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) STRING")
+}
 
+# IF the tag is of type REAL,
+# the waveform must use DOUBLE !
+record(waveform, "$(IOC):REALwf")
+{
+	field(SCAN, "1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) REALs")
+	field(NELM, "40")
+	field(FTVL, "DOUBLE")
+}
 
-
+# IF the tag is of type not-REAL,
+# the waveform must use LONG !
+record(waveform, "$(IOC):DINTLwf")
+{
+	field(SCAN, "1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) DINTs")
+	field(NELM, "40")
+	field(FTVL, "LONG")
+}

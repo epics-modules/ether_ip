@@ -28,6 +28,8 @@
 #include <mbbiRecord.h>
 #include <mbbiDirectRecord.h>
 #include <stringinRecord.h>
+#include <waveformRecord.h>
+#include <menuFtype.h>
 #include <aoRecord.h>
 #include <boRecord.h>
 #include <mbboRecord.h>
@@ -670,12 +672,15 @@ static char *find_token(char *s, char **end)
  *
  *      @PLC tag flags
  *
+ * count: number of array elements to read (only != 1 for waveform record)
  * bits: if >0 indicates that we want binary data,
  *       then it's the number of bits
  */
 static long analyze_link(dbCommon *rec,
                          EIPCallback cbtype,
-                         const DBLINK *link, size_t bits)
+                         const DBLINK *link,
+                         size_t count,
+                         size_t bits)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     char           *p, *end;
@@ -716,7 +721,7 @@ static long analyze_link(dbCommon *rec,
     tag_len = end-p;
     if (! EIP_strdup(&pvt->string_tag, p, tag_len))
     {
-        errlogPrintf ("devEtherIP (%s): Cannot copy tag\n", rec->name);
+        errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
         return S_dev_noMemory;
     }
     
@@ -733,7 +738,17 @@ static long analyze_link(dbCommon *rec,
             {
                 special |= mask;
                 if (mask==SPCO_READ_SINGLE_ELEMENT)
+                {
+                    if (count != 1)
+                    {
+                        errlogPrintf("devEtherIP (%s): "
+                                     "Array record cannot use 'E' flag "
+                                     "('%s')\n",
+                                     rec->name, pvt->link_text);
+                        return S_db_badField;
+                    }
                     single_element = true;
+                }
                 else if (mask==SPCO_SCAN_PERIOD)
                 {
                     period = strtod(p+2, &end);
@@ -741,7 +756,7 @@ static long analyze_link(dbCommon *rec,
                     {
                         errlogPrintf("devEtherIP (%s): "
                                      "Error in scan flag in link '%s'\n",
-                                     rec->name, p, pvt->link_text);
+                                     rec->name, pvt->link_text);
                         return S_db_badField;
                     }
                 }
@@ -752,7 +767,7 @@ static long analyze_link(dbCommon *rec,
                     {
                         errlogPrintf("devEtherIP (%s): "
                                      "Error in bit flag in link '%s'\n",
-                                     rec->name, p, pvt->link_text);
+                                     rec->name, pvt->link_text);
                         return S_db_badField;
                     }
                 }
@@ -822,6 +837,12 @@ static long analyze_link(dbCommon *rec,
         return S_db_badField;
     }
 
+    if (count > 1 && (bits > 0  || (special & SPCO_BIT)))
+    {
+        errlogPrintf("devEtherIP (%s): cannot access bits for array records\n",
+                     rec->name);
+        return S_db_badField;
+    }
     /* For Element==0 the following makes no difference, only
      * for binary records (bits=1 or more)
      * Options:
@@ -850,7 +871,7 @@ static long analyze_link(dbCommon *rec,
     /* tell driver to read up to this record's elements */
     pvt->tag = drvEtherIP_add_tag(pvt->plc, period,
                                   pvt->string_tag,
-                                  last_element+1);
+                                  last_element+count);
     if (! pvt->tag)
     {
         errlogPrintf("devEtherIP (%s): cannot register tag '%s' with driver\n",
@@ -876,7 +897,7 @@ static long analyze_link(dbCommon *rec,
 /* Check if link still matches what was recorded in DevicePrivate.
  * On change, reparse and restart driver */
 static long check_link(dbCommon *rec, EIPCallback cbtype,
-                       const DBLINK *link, size_t bits)
+                       const DBLINK *link, size_t count, size_t bits)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
@@ -894,7 +915,7 @@ static long check_link(dbCommon *rec, EIPCallback cbtype,
         rec->udf = TRUE;
         if (pvt->plc && pvt->tag)
             drvEtherIP_remove_callback(pvt->plc, pvt->tag, cbtype, rec);
-        status = analyze_link(rec, cbtype, link, bits);
+        status = analyze_link(rec, cbtype, link, count, bits);
         if (status)
             return status;
         drvEtherIP_restart();
@@ -917,7 +938,7 @@ static long init(int run)
 
 /* Common initialization for all record types */
 static long init_record(dbCommon *rec, EIPCallback cbtype,
-                        const DBLINK *link, size_t bits)
+                        const DBLINK *link, size_t count, size_t bits)
 {
     DevicePrivate *pvt = calloc (sizeof (DevicePrivate), 1);
     if (! pvt)
@@ -933,12 +954,12 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
     scanIoInit(&pvt->ioscanpvt);
     rec->dpvt = pvt;
     
-    return analyze_link(rec, cbtype, link, bits);
+    return analyze_link(rec, cbtype, link, count, bits);
 }
 
 static long ai_init_record(aiRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, scan_callback, &rec->inp, 0);
+    long status = init_record((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
     /* Make sure record processing routine does not perform any conversion*/
     rec->linr = 0;
     return status;
@@ -946,13 +967,13 @@ static long ai_init_record(aiRecord *rec)
 
 static long bi_init_record(biRecord *rec)
 {
-    return init_record((dbCommon *)rec, scan_callback, &rec->inp, 1);
+    return init_record((dbCommon *)rec, scan_callback, &rec->inp, 1, 1);
 }
 
 static long mbbi_init_record(mbbiRecord *rec)
 {
     long status = init_record((dbCommon *)rec, scan_callback,
-                              &rec->inp, rec->nobt);
+                              &rec->inp, 1, rec->nobt);
     rec->shft = 0;
     return status;
 }
@@ -960,7 +981,7 @@ static long mbbi_init_record(mbbiRecord *rec)
 static long mbbi_direct_init_record(mbbiDirectRecord *rec)
 {
     long status = init_record((dbCommon *)rec, scan_callback,
-                              &rec->inp, rec->nobt);
+                              &rec->inp, 1, rec->nobt);
     rec->shft = 0;
     return status;
 }
@@ -968,14 +989,21 @@ static long mbbi_direct_init_record(mbbiDirectRecord *rec)
 static long si_init_record(stringinRecord *rec)
 {
     long status = init_record((dbCommon *)rec, scan_callback,
-                              &rec->inp, 0);
+                              &rec->inp, 1, 0);
+    return status;
+}
+
+static long wf_init_record(waveformRecord *rec)
+{
+    long status = init_record((dbCommon *)rec, scan_callback, &rec->inp,
+                              rec->nelm, 0);
     return status;
 }
 
 static long ao_init_record(aoRecord *rec)
 {
     long status = init_record((dbCommon *)rec, check_ao_callback,
-                              &rec->out, 0);
+                              &rec->out, 1, 0);
     if (status)
         return status;
     return 2; /* don't convert, we have no value, yet */
@@ -984,7 +1012,7 @@ static long ao_init_record(aoRecord *rec)
 static long bo_init_record(boRecord *rec)
 {
     long status = init_record((dbCommon *)rec, check_bo_callback,
-                              &rec->out, 1 /* bits */);
+                              &rec->out, 1, 1);
     if (status)
         return status;
     return 2; /* don't convert, we have no value, yet */
@@ -993,7 +1021,7 @@ static long bo_init_record(boRecord *rec)
 static long mbbo_init_record(mbboRecord *rec)
 {
     long status = init_record((dbCommon *)rec, check_mbbo_callback,
-                              &rec->out, rec->nobt);
+                              &rec->out, 1, rec->nobt);
     rec->shft = 0;
     if (status)
         return status;
@@ -1003,7 +1031,7 @@ static long mbbo_init_record(mbboRecord *rec)
 static long mbbo_direct_init_record(mbboDirectRecord *rec) 
 {
     long status = init_record((dbCommon *)rec, check_mbbo_direct_callback,
-                              &rec->out, rec->nobt);
+                              &rec->out, 1, rec->nobt);
     rec->shft = 0;
     if (status)
         return status;
@@ -1019,7 +1047,7 @@ static long ai_read(aiRecord *rec)
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 0);
+    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
 
     if (status)
     {
@@ -1118,7 +1146,7 @@ static long bi_read(biRecord *rec)
     
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1);
+    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1, 1);
     if (status)
     {
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
@@ -1149,7 +1177,7 @@ static long mbbi_read (mbbiRecord *rec)
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
     status = check_link ((dbCommon *)rec, scan_callback,
-                         &rec->inp, rec->nobt);
+                         &rec->inp, 1, rec->nobt);
     if (status)
     {
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
@@ -1181,7 +1209,7 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
     status = check_link ((dbCommon *)rec, scan_callback,
-                         &rec->inp, rec->nobt);
+                         &rec->inp, 1, rec->nobt);
     if (status)
     {
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
@@ -1212,7 +1240,7 @@ static long si_read(stringinRecord *rec)
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 0);
+    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
     if (status)
     {
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
@@ -1229,6 +1257,83 @@ static long si_read(stringinRecord *rec)
     if (ok)
         rec->udf = FALSE;
     else
+        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
+    
+    return status;
+}
+
+static long wf_read(waveformRecord *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    long status;
+    bool ok;
+    CN_DINT *dint;
+    double  *dbl;
+    size_t i;
+
+    if (rec->tpro)
+        dump_DevicePrivate((dbCommon *)rec);
+    status = check_link((dbCommon *)rec, scan_callback, &rec->inp,
+                        rec->nelm, 0);
+    if (status)
+    {
+        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
+        return status;
+    }
+
+    ok = lock_data((dbCommon *)rec);
+    if (ok)
+    {
+        if (pvt->tag->valid_data_size > 0 &&
+            pvt->tag->elements >= rec->nelm)
+        {
+            if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
+            {
+                if (rec->ftvl == menuFtypeDOUBLE)
+                {
+                    dbl = (double *)rec->bptr;
+                    for (i=0; ok && i<rec->nelm; ++i)
+                    {
+                        ok = get_CIP_double(pvt->tag->data, i, dbl);
+                        ++dbl;
+                    }
+                    if (ok)
+                        rec->nord = rec->nelm;
+                }
+                else
+                {
+                    recGblRecordError(S_db_badField, (void *)rec,
+                                      "EtherIP: tag data type requires "
+                                      "waveform FTVL==DOUBLE");
+                    ok = false;
+                }
+            }
+            else
+            {
+                if (rec->ftvl == menuFtypeLONG)
+                {
+                    dint = (long *)rec->bptr;
+                    for (i=0; ok && i<rec->nelm; ++i)
+                    {
+                        ok = get_CIP_DINT(pvt->tag->data, i, dint);
+                        ++dint;
+                    }
+                    if (ok)
+                        rec->nord = rec->nelm;
+                }
+                else
+                {
+                    recGblRecordError(S_db_badField, (void *)rec,
+                                      "EtherIP: tag data type requires "
+                                      "waveform FTVL==LONG");
+                    ok = false;
+                }
+            }
+        }
+        semGive (pvt->tag->data_lock);
+    }
+    
+    if (!ok)
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
     
     return status;
@@ -1251,7 +1356,7 @@ static long ao_write(aoRecord *rec)
     }
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, check_ao_callback, &rec->out, 0);
+    status = check_link((dbCommon *)rec, check_ao_callback, &rec->out, 1, 0);
     if (status)
     {
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
@@ -1320,7 +1425,7 @@ static long bo_write(boRecord *rec)
     }
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, check_bo_callback, &rec->out, 1);
+    status = check_link((dbCommon *)rec, check_bo_callback, &rec->out, 1, 1);
     if (status)
     {
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
@@ -1371,7 +1476,7 @@ static long mbbo_write (mbboRecord *rec)
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
     status = check_link ((dbCommon *)rec, check_mbbo_callback,
-                         &rec->out, rec->nobt);
+                         &rec->out, 1, rec->nobt);
     if (status)
     {
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
@@ -1420,7 +1525,7 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, check_mbbo_direct_callback,
-                         &rec->out, rec->nobt);
+                         &rec->out, 1, rec->nobt);
     if (status)
     {
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
@@ -1518,6 +1623,16 @@ DSET devSiEtherIP =
     si_init_record,
     get_ioint_info,
     si_read
+};
+
+DSET devWfEtherIP =
+{
+    5,
+    NULL,
+    init,
+    wf_init_record,
+    get_ioint_info,
+    wf_read
 };
 
 DSET devAoEtherIP =

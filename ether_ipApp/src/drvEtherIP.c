@@ -711,6 +711,8 @@ static void PLC_scan_task(PLC *plc)
     if (!assert_PLC_connect(plc))
     {   /* don't rush since connection takes network bandwidth */
         semGive(plc->lock);
+        EIP_printf(2, "drvEtherIP scan task waiting for PLC '%s'\n",
+                   plc->name);
         taskDelay(timeout_ticks);
         goto scan_loop;
     }

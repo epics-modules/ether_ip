@@ -33,7 +33,7 @@ include "mbboDirectRecord.dbd"
 #include "seqRecord.dbd"
 #include "stateRecord.dbd"
 #include "steppermotorRecord.dbd"
-#include "stringinRecord.dbd"
+include "stringinRecord.dbd"
 #include "stringoutRecord.dbd"
 #include "subRecord.dbd"
 #include "gsubRecord.dbd"
@@ -41,7 +41,7 @@ include "mbboDirectRecord.dbd"
 #include "subArrayRecord.dbd"
 #include "timerRecord.dbd"
 #include "waitRecord.dbd"
-#include "waveformRecord.dbd"
+include "waveformRecord.dbd"
 device(ai,CONSTANT,devAiSoft,"Soft Channel")
 device(ai,CONSTANT,devAiSoftRaw,"Raw Soft Channel")
 #device(ai,VME_IO,devAiXy566Se,"XYCOM-566 SE Scanned")
@@ -165,15 +165,15 @@ device(mbboDirect,CONSTANT,devMbboDirectSoftRaw,"Raw Soft Channel")
 #device(steppermotor,VME_IO,devSmCompumotor1830,"Compumotor 1830")
 #device(steppermotor,VME_IO,devSmOms6Axis,"OMS 6-Axis")
 #device(steppermotor,AB_IO,devSmAB1746Hstp1,"Allen Bradley 1746-HTSP1")
-#device(stringin,CONSTANT,devSiSoft,"Soft Channel")
-#device(stringin,CONSTANT,devSiTestAsyn,"Test Asyn")
+device(stringin,CONSTANT,devSiSoft,"Soft Channel")
+device(stringin,CONSTANT,devSiTestAsyn,"Test Asyn")
 #device(stringout,CONSTANT,devSoSoft,"Soft Channel")
 #device(stringout,CONSTANT,devSoTestAsyn,"Test Asyn")
 #device(subArray,CONSTANT,devSASoft,"Soft Channel")
 #device(timer,VME_IO,devTmMizar8310,"Mizar-8310")
 #device(timer,VME_IO,devTmDg535,"DG 535")
 #device(timer,VME_IO,devTmAt5Vxi,"VXI-AT5-TIME")
-#device(waveform,CONSTANT,devWfSoft,"Soft Channel")
+device(waveform,CONSTANT,devWfSoft,"Soft Channel")
 #device(waveform,VME_IO,devWfXy566Sc,"XYCOM-566 Single Channel")
 #device(waveform,VME_IO,devWfComet,"Comet Digitizer")
 #device(waveform,VME_IO,devWfJoergerVtr1,"Joerger Digitizer")
