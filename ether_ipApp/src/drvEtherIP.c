@@ -735,7 +735,7 @@ void drvEtherIP_init ()
 void drvEtherIP_help ()
 {
     printf ("drvEtherIP, diagnostics routines:\n");
-    printf ("    int EIPverbosity:\n");
+    printf ("    int EIP_verbosity:\n");
     printf ("    -  set to 0..10\n");
     printf ("    drvEtherIP_define_PLC <name>, <ip_addr>\n");
     printf ("    drvEtherIP_read_tag <ip>, <tag>, <elements>, <ms_timeout>\n");

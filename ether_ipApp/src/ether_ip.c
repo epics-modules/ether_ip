@@ -41,20 +41,20 @@ static const CN_UINT __endian_test = 0x0001;
  * The unpack seems to work because all var-args are pointer-sized.
  */
 
-INLINE CN_USINT *pack_USINT (CN_USINT *buffer, CN_USINT val)
+INLINE CN_USINT *pack_USINT(CN_USINT *buffer, CN_USINT val)
 {
     *buffer++ = val;
     return buffer;
 }
 
-INLINE CN_USINT *pack_UINT (CN_USINT *buffer, CN_UINT val)
+INLINE CN_USINT *pack_UINT(CN_USINT *buffer, CN_UINT val)
 {
     *buffer++ =  val & 0x00FF;
     *buffer++ = (val & 0xFF00) >> 8;
     return buffer;
 }
 
-INLINE CN_USINT *pack_UDINT (CN_USINT *buffer, CN_UDINT val)
+INLINE CN_USINT *pack_UDINT(CN_USINT *buffer, CN_UDINT val)
 {
     *buffer++ =  val & 0x000000FF;
     *buffer++ = (val & 0x0000FF00) >> 8;
@@ -63,7 +63,7 @@ INLINE CN_USINT *pack_UDINT (CN_USINT *buffer, CN_UDINT val)
     return buffer;
 }
 
-INLINE CN_USINT *pack_REAL (CN_USINT *buffer, CN_REAL val)
+INLINE CN_USINT *pack_REAL(CN_USINT *buffer, CN_REAL val)
 {
     const CN_USINT *p;
     
@@ -86,23 +86,23 @@ INLINE CN_USINT *pack_REAL (CN_USINT *buffer, CN_REAL val)
     return buffer;
 }
 
-INLINE const CN_USINT *unpack_UINT  (const CN_USINT *buffer, CN_UINT *val)
+INLINE const CN_USINT *unpack_UINT(const CN_USINT *buffer, CN_UINT *val)
 {
     *val =  buffer[0]
-        | (buffer[1]<<8);
+         | (buffer[1]<<8);
     return buffer + 2;
 }
 
-INLINE const CN_USINT *unpack_UDINT  (const CN_USINT *buffer, CN_UDINT *val)
+INLINE const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
 {
     *val =  buffer[0]
-        | (buffer[1]<< 8)
-        | (buffer[2]<<16)
-        | (buffer[3]<<24);
+         | (buffer[1]<< 8)
+         | (buffer[2]<<16)
+         | (buffer[3]<<24);
     return buffer + 4;
 }
 
-INLINE const CN_USINT *unpack_REAL  (const CN_USINT *buffer, CN_REAL *val)
+INLINE const CN_USINT *unpack_REAL(const CN_USINT *buffer, CN_REAL *val)
 {
     CN_USINT *p;
     if (is_little_endian)
@@ -121,14 +121,14 @@ INLINE const CN_USINT *unpack_REAL  (const CN_USINT *buffer, CN_REAL *val)
         *p-- = *buffer++;
         *p   = *buffer++;
     }
-    return buffer + 4;
+    return buffer;
 }
 
 /* Format: like pack, but uppercase characters
  * are skipped in buffer, no result is assigned
  */
-static const CN_USINT *unpack  (const CN_USINT *buffer,
-                                const char *format, ...)
+static const CN_USINT *unpack(const CN_USINT *buffer,
+                              const char *format, ...)
 {
     va_list  ap;
     CN_USINT *vs;
@@ -150,21 +150,21 @@ static const CN_USINT *unpack  (const CN_USINT *buffer,
                 break;
             case 'i':
                 vi = va_arg(ap, CN_UINT *);
-                buffer = unpack_UINT (buffer, vi);
+                buffer = unpack_UINT(buffer, vi);
                 break;
             case 'I':
                 buffer += 2;
                 break;
             case 'd':
                 vd = va_arg(ap, CN_UDINT *);
-                buffer = unpack_UDINT (buffer, vd);
+                buffer = unpack_UDINT(buffer, vd);
                 break;
             case 'D':
                 buffer += 4;
                 break;
             case 'r':
                 vr = va_arg(ap, CN_REAL *);
-                buffer = unpack_REAL (buffer, vr);
+                buffer = unpack_REAL(buffer, vr);
                 break;
             case 'R':
                 buffer += 4;
@@ -183,17 +183,17 @@ static const CN_USINT *unpack  (const CN_USINT *buffer,
 int EIP_verbosity = 10;
 
 /* printf with EIP_verbosity check */
-void EIP_printf (int level, const char *format, ...)
+void EIP_printf(int level, const char *format, ...)
 {
     va_list ap;
     if (level > EIP_verbosity)
         return;
     va_start(ap, format);
-    vfprintf (stderr, format, ap);
+    vfprintf(stderr, format, ap);
     va_end(ap);              
 }
 
-void EIP_hexdump (const void *_data, int len)
+void EIP_hexdump(const void *_data, int len)
 {
     const char *data = _data;
     int offset = 0;
@@ -202,21 +202,23 @@ void EIP_hexdump (const void *_data, int len)
 
     while (offset < len)
     {
-        EIP_printf (0, "%08X ", offset);
+        EIP_printf(0, "%08X ", offset);
         for (i=0; i<NUM; ++i)
+        {
             if ((i+offset)<len)
-                EIP_printf (0, "%02X ", data[i] & 0xFF);
+                EIP_printf(0, "%02X ", data[i] & 0xFF);
             else
-                EIP_printf (0, "   ");
-
-        EIP_printf (0, "- ");
+                EIP_printf(0, "   ");
+        }
+        EIP_printf(0, "- ");
         for (i=0; i<NUM  &&  (i+offset)<len; ++i)
-            if (isprint(data[i]))
-                EIP_printf (0, "%c", data[i]);
+        {
+            if (isprint((int)data[i]))
+                EIP_printf(0, "%c", data[i]);
             else
-                EIP_printf (0, ".");
-        EIP_printf (0, "\n");
-
+                EIP_printf(0, ".");
+        }
+        EIP_printf(0, "\n");
         offset += NUM;
         data += NUM;
     }
@@ -227,9 +229,9 @@ void EIP_hexdump (const void *_data, int len)
  * Message Router: Path
  ********************************************************/
 
-static const char *EIP_class_name (CN_Classes c)
+static const char *EIP_class_name(CN_Classes c)
 {
-    switch (c)
+    switch(c)
     {
     case C_Identity:            return "Itentity";
     case C_MessageRouter:       return "MessageRouter";
@@ -239,25 +241,25 @@ static const char *EIP_class_name (CN_Classes c)
 }
 
 /* port path: currently supports only ports 0..14 ! */
-static size_t port_path_size (CN_USINT port, CN_USINT link)
+static size_t port_path_size(CN_USINT port, CN_USINT link)
 {
     return 1; /* this would change for >14 ! */
 }
 
-static void make_port_path (CN_USINT *path, CN_USINT port, CN_USINT link)
+static void make_port_path(CN_USINT *path, CN_USINT port, CN_USINT link)
 {
     path[0] = port;
     path[1] = link;
 }
 
 /* Build path from Class, Instance, Attribute (0 for no attr.) */
-static size_t CIA_path_size (CN_Classes cls, CN_USINT instance, CN_USINT attr)
+static size_t CIA_path_size(CN_Classes cls, CN_USINT instance, CN_USINT attr)
 {   /* In Words */
     return attr ? 3 : 2;
 }
 
 /* Fill path buffer with path, return following location */
-static CN_USINT *make_CIA_path (CN_USINT *path,
+static CN_USINT *make_CIA_path(CN_USINT *path,
                                 CN_Classes cls, CN_USINT instance,
                                 CN_USINT attr)
 {
@@ -276,23 +278,23 @@ static CN_USINT *make_CIA_path (CN_USINT *path,
 /* A tad like the original strdup (not available for vxWorks),
  * but frees the original string if occupied
  * -> has to be 0-initialized */
-bool EIP_strdup (char **ptr, const char *text, size_t len)
+bool EIP_strdup(char **ptr, const char *text, size_t len)
 {
     if (*ptr)
-        free (*ptr);
-    *ptr = malloc (len+1);
+        free(*ptr);
+    *ptr = malloc(len+1);
     if (! *ptr)
     {
-        EIP_printf (0, "no mem in EIP_strdup (%d bytes)\n", len);
+        EIP_printf(0, "no mem in EIP_strdup (%d bytes)\n", len);
         return false;
     }
-    memcpy (*ptr, text, len);
+    memcpy(*ptr, text, len);
     (*ptr)[len] = '\0';
     return true;
 }
 
 /* Append new node to ParsedTag */
-static void append_tag (ParsedTag **tl, ParsedTag *node)
+static void append_tag(ParsedTag **tl, ParsedTag *node)
 {
     while (*tl)
         tl = & (*tl)->next;
@@ -300,7 +302,7 @@ static void append_tag (ParsedTag **tl, ParsedTag *node)
 }
 
 /* Turn tag string into ParsedTag-list */
-ParsedTag *EIP_parse_tag (const char *tag)
+ParsedTag *EIP_parse_tag(const char *tag)
 {
     ParsedTag *tl = 0;  /* Tag list, initially empty */
     ParsedTag *node;
@@ -308,17 +310,17 @@ ParsedTag *EIP_parse_tag (const char *tag)
 
     while (tag)
     {
-        len = strcspn (tag, ".[");
+        len = strcspn(tag, ".[");
         if (len <= 0)
             break;
 
-        node = calloc (sizeof (ParsedTag), 1);
+        node = calloc(sizeof(ParsedTag), 1);
         if (! node)
             return 0;
         node->type = te_name;
-        if (! EIP_strdup (&node->value.name, tag, len))
+        if (! EIP_strdup(&node->value.name, tag, len))
             return 0;
-        append_tag (&tl, node);
+        append_tag(&tl, node);
 
         switch (tag[len])
         {
@@ -328,13 +330,13 @@ ParsedTag *EIP_parse_tag (const char *tag)
             tag += len+1;
             break;
         case '[':
-            node = calloc (sizeof (ParsedTag), 1);
+            node = calloc(sizeof(ParsedTag), 1);
             if (! node)
                 return 0;
             node->type = te_element;
-            node->value.element = atol (tag+len+1);
-            append_tag (&tl, node);
-            tag = strchr (tag+len+1, ']');
+            node->value.element = atol(tag+len+1);
+            append_tag(&tl, node);
+            tag = strchr(tag+len+1, ']');
             if (tag)
                 ++tag;
             else
@@ -345,7 +347,7 @@ ParsedTag *EIP_parse_tag (const char *tag)
     return tl;
 }
 
-void EIP_dump_ParsedTag (const ParsedTag *tag)
+void EIP_dump_ParsedTag(const ParsedTag *tag)
 {
     bool did_first = false;
     while (tag)
@@ -353,34 +355,34 @@ void EIP_dump_ParsedTag (const ParsedTag *tag)
         switch (tag->type)
         {
         case te_name:    if (did_first)
-                             printf (".");
-                         printf ("%s", tag->value.name);
+                             printf(".");
+                         printf("%s", tag->value.name);
                          break;
-        case te_element: printf ("[%d]", tag->value.element);
+        case te_element: printf("[%d]", tag->value.element);
                          break;
         }
         tag = tag->next;
         did_first = true;
     }
-    printf ("\n");
+    printf("\n");
 }
 
-void EIP_free_ParsedTag (ParsedTag *tag)
+void EIP_free_ParsedTag(ParsedTag *tag)
 {
     ParsedTag *tmp;
 
     while (tag)
     {
         if (tag->type == te_name)
-           free (tag->value.name);
+           free(tag->value.name);
         tmp = tag;
         tag = tag->next;
-        free (tmp);
+        free(tmp);
     }
 }
 
 /* Word-size of path for ControlLogix tag */
-static size_t tag_path_size (const ParsedTag *tag)
+static size_t tag_path_size(const ParsedTag *tag)
 {
     size_t bytes = 0, slen;
     
@@ -409,7 +411,7 @@ static size_t tag_path_size (const ParsedTag *tag)
 }
 
 /* build path for ControlLogix tag */
-static CN_USINT *make_tag_path (CN_USINT *path, const ParsedTag *tag)
+static CN_USINT *make_tag_path(CN_USINT *path, const ParsedTag *tag)
 {   
     size_t slen;
 
@@ -422,7 +424,7 @@ static CN_USINT *make_tag_path (CN_USINT *path, const ParsedTag *tag)
 
             path[0] = 0x91; /* spec 4 p.21: "ANSI extended symbol segment" */
             path[1] = (CN_USINT)slen;
-            memcpy (& path[2],  tag->value.name, slen);
+            memcpy(& path[2],  tag->value.name, slen);
             if (slen % 2) /* pad */
                 path[2+slen] = 0;
             path += 2 + slen + slen%2;
@@ -458,7 +460,7 @@ static CN_USINT *make_tag_path (CN_USINT *path, const ParsedTag *tag)
     return path;
 }
 
-static const CN_USINT *dump_raw_path (CN_USINT size, const CN_USINT *path)
+static const CN_USINT *dump_raw_path(CN_USINT size, const CN_USINT *path)
 {
     size_t i;
     CN_UINT  vi;
@@ -472,31 +474,31 @@ static const CN_USINT *dump_raw_path (CN_USINT size, const CN_USINT *path)
             case 0x01: case 0x02: case 0x03: case 0x04: case 0x05:
             case 0x06: case 0x07: case 0x08: case 0x09: case 0x0A:
             case 0x0B: case 0x0C: case 0x0D: case 0x0E:
-                EIP_printf (0, "Port %d, link %d ", path[0], path[1]);
+                EIP_printf(0, "Port %d, link %d ", path[0], path[1]);
                 path += 2;
                 size -= 2;
                 break;
             case 0x20:
-                EIP_printf (0, "Class 0x%02X (%s) ",
-                            path[1], EIP_class_name (path[1]));
+                EIP_printf(0, "Class 0x%02X (%s) ",
+                            path[1], EIP_class_name(path[1]));
                 path += 2;
                 size -= 2;
                 break;
             case 0x24:
-                EIP_printf (0, "Inst. %d ", path[1]);
+                EIP_printf(0, "Inst. %d ", path[1]);
                 path += 2;
                 size -= 2;
                 break;
             case 0x30:
-                EIP_printf (0, "Attr. %d ", path[1]);
+                EIP_printf(0, "Attr. %d ", path[1]);
                 path += 2;
                 size -= 2;
                 break;
             case 0x91:
-                EIP_printf (0, "'");
+                EIP_printf(0, "'");
                 for (i=0; i<path[1]; ++i)
-                    EIP_printf (0, "%c", path[2+i]);
-                EIP_printf (0, "'");
+                    EIP_printf(0, "%c", path[2+i]);
+                EIP_printf(0, "'");
                 i = 2+path[1]; /* taglen */
                 if (i%2)
                     ++i;
@@ -504,28 +506,28 @@ static const CN_USINT *dump_raw_path (CN_USINT size, const CN_USINT *path)
                 size -= i;
                 break;
             case 0x28:
-                EIP_printf (0, "Element %d", path[1]);
+                EIP_printf(0, "Element %d", path[1]);
                 path += 2;
                 size -= 2;
                 break;
             case 0x29:
-                unpack_UINT (path+2, &vi);
-                EIP_printf (0, "Element %d", vi);
+                unpack_UINT(path+2, &vi);
+                EIP_printf(0, "Element %d", vi);
                 path += 4;
                 size -= 4;
                 break;
             case 0x2A:
-                unpack_UDINT (path+2, &vd);
-                EIP_printf (0, "Element %d", vd);
+                unpack_UDINT(path+2, &vd);
+                EIP_printf(0, "Element %d", vd);
                 path += 6;
                 size -= 6;
                 break;
             default:
-                EIP_printf (0, "<unknown>");
+                EIP_printf(0, "<unknown>");
                 size = 0;
         }
     }
-    EIP_printf (0, "\n");
+    EIP_printf(0, "\n");
 
     return path;
 }
@@ -534,7 +536,7 @@ static const CN_USINT *dump_raw_path (CN_USINT size, const CN_USINT *path)
  * Message Router: PDU (Protocol Data Unit)
  ********************************************************/
 
-static const char *service_name (CN_Services service)
+static const char *service_name(CN_Services service)
 {
     switch (service)
     {
@@ -549,7 +551,7 @@ static const char *service_name (CN_Services service)
     }
 }
 
-static const char *CN_error_text (CN_USINT status)
+static const char *CN_error_text(CN_USINT status)
 {
     /* Spec 4, p.46 and 1756-RM005A-EN-E */
     switch (status)
@@ -568,38 +570,38 @@ static const char *CN_error_text (CN_USINT status)
     return "<unknown>";
 }
 
-static size_t MR_Request_size (size_t path_size /* in words */) 
+static size_t MR_Request_size(size_t path_size /* in words */) 
 {   /* In Bytes */
     return 2*sizeof(CN_USINT) + path_size*2;
 }
 
 /* Setup packed MR_Request, return location of path in there */
-static CN_USINT *make_MR_Request (CN_USINT *buf,
+static CN_USINT *make_MR_Request(CN_USINT *buf,
                                   CN_USINT service, CN_USINT path_size)
 {
-    buf = pack_USINT (buf, service);
-    return pack_USINT (buf, path_size);
+    buf = pack_USINT(buf, service);
+    return pack_USINT(buf, path_size);
 }
 
 /* Get pointer to data section of raw MR_Request
  * (stuff that follows the path) */
-static CN_USINT *raw_MR_Request_data (CN_USINT *request)
+static CN_USINT *raw_MR_Request_data(CN_USINT *request)
 {
     return request + 2 + /*path_size */ request[1] * 2;
 }
 
-static const CN_USINT *dump_raw_MR_Request (const CN_USINT *request)
+static const CN_USINT *dump_raw_MR_Request(const CN_USINT *request)
 {
     CN_USINT        service   = request[0];
     CN_USINT        path_size = request[1];
     const CN_USINT *path      = request+2;
     
-    EIP_printf (0, "MR_Request\n");
-    EIP_printf (0, "    USINT service   = 0x%02X = %s\n",
+    EIP_printf(0, "MR_Request\n");
+    EIP_printf(0, "    USINT service   = 0x%02X = %s\n",
                 service, service_name(service));
-    EIP_printf (0, "    USINT path_size = %d\n", path_size);
-    EIP_printf (0, "          path      = ");
-    return dump_raw_path (path_size, path);
+    EIP_printf(0, "    USINT path_size = %d\n", path_size);
+    EIP_printf(0, "          path      = ");
+    return dump_raw_path(path_size, path);
 }
 
 /* MR_Response has fixed portion followed by (maybe) an extended
@@ -610,7 +612,7 @@ static const CN_USINT *dump_raw_MR_Request (const CN_USINT *request)
  * If data_len==0, the result is still the location immediately
  * after this response
  */
-CN_USINT *EIP_raw_MR_Response_data (const CN_USINT *response,
+CN_USINT *EIP_raw_MR_Response_data(const CN_USINT *response,
                                     size_t response_size,
                                     size_t *data_size)
 {
@@ -633,7 +635,7 @@ CN_USINT *EIP_raw_MR_Response_data (const CN_USINT *response,
     return (CN_USINT *)data;
 }
 
-static const CN_USINT *dump_raw_MR_Response (const CN_USINT *response,
+static const CN_USINT *dump_raw_MR_Response(const CN_USINT *response,
                                              size_t response_size)
 {
     size_t         data_len;
@@ -647,35 +649,35 @@ static const CN_USINT *dump_raw_MR_Response (const CN_USINT *response,
     extended_status_size = response[3];
     ext_buf              = response+4;
                       
-    EIP_printf (0, "MR_Response:\n");
-    EIP_printf (0, "    USINT service         = 0x%02X = Response to %s\n",
+    EIP_printf(0, "MR_Response:\n");
+    EIP_printf(0, "    USINT service         = 0x%02X = Response to %s\n",
                 service, service_name(service & 0x7F));
-    EIP_printf (0, "    USINT reserved        = 0x%02X\n", reserved);
-    EIP_printf (0, "    USINT status          = 0x%02X (%s)\n",
-                general_status,	CN_error_text (general_status));
-    EIP_printf (0, "    USINT ext. stat. size = %d\n", extended_status_size);
+    EIP_printf(0, "    USINT reserved        = 0x%02X\n", reserved);
+    EIP_printf(0, "    USINT status          = 0x%02X (%s)\n",
+                general_status,	CN_error_text(general_status));
+    EIP_printf(0, "    USINT ext. stat. size = %d\n", extended_status_size);
     while (extended_status_size > 0)
     {
-        unpack_UINT (ext_buf, &ext);
-        EIP_printf (0, "    ext. status           = 0x%04X\n", ext);
+        unpack_UINT(ext_buf, &ext);
+        EIP_printf(0, "    ext. status           = 0x%04X\n", ext);
         if (general_status == 0xFF)
         {
             switch (ext)
             {
                 case 0x2105:
-                    EIP_printf (0, "    (Access beyond end of object, "
+                    EIP_printf(0, "    (Access beyond end of object, "
                                 "wrong array index)\n");
                     break;
                 case 0x2107:
-                    EIP_printf (0, "    (CIP type does not match "
+                    EIP_printf(0, "    (CIP type does not match "
                                 "object type)\n");
                     break;
                 case 0x2104:
-                    EIP_printf (0, "    (Beginning offset beyond end "
+                    EIP_printf(0, "    (Beginning offset beyond end "
                                 "of template)\n");
                     break;
                 case 0x0107:
-                    EIP_printf (0, "    (Connection not found)\n");
+                    EIP_printf(0, "    (Connection not found)\n");
                     break;
             }
         }
@@ -683,17 +685,17 @@ static const CN_USINT *dump_raw_MR_Response (const CN_USINT *response,
     }
     /* Could get data pointer from ext. status handling,
      * but this way we debug EIP_MR_Response_data(): */
-    data = EIP_raw_MR_Response_data (response, response_size, &data_len);
+    data = EIP_raw_MR_Response_data(response, response_size, &data_len);
     if (data_len > 0)
     {
-        EIP_printf (0, "    data (net format) =\n    ");
-        EIP_hexdump (data, data_len);
+        EIP_printf(0, "    data (net format) =\n    ");
+        EIP_hexdump(data, data_len);
     }
 
     return data + data_len;
 }
 
-static bool is_raw_MRResponse_ok (const CN_USINT *response,
+static bool is_raw_MRResponse_ok(const CN_USINT *response,
                                   size_t response_size)
 {
     CN_USINT general_status = response[2]; /* needn't unpack USINT */
@@ -701,7 +703,7 @@ static bool is_raw_MRResponse_ok (const CN_USINT *response,
         return true;
 
     if (EIP_verbosity >= 2)
-        dump_raw_MR_Response (response, response_size);
+        dump_raw_MR_Response(response, response_size);
 
     return false;
 }
@@ -714,7 +716,7 @@ static bool is_raw_MRResponse_ok (const CN_USINT *response,
  * into time-per-tick value
  * and number of ticks (see Spec 4 p. 30,31)
  */
-static bool calc_tick_time (size_t millisec, CN_USINT *tick_time, CN_USINT *ticks)
+static bool calc_tick_time(size_t millisec, CN_USINT *tick_time, CN_USINT *ticks)
 {
     if (millisec > 8355840)
         return false;
@@ -738,12 +740,12 @@ static bool calc_tick_time (size_t millisec, CN_USINT *tick_time, CN_USINT *tick
  * Spec 4, p 41,  EMail from Pyramid solutions
  ********************************************************/
 
-size_t CM_Unconnected_Send_size (size_t message_size)
+size_t CM_Unconnected_Send_size(size_t message_size)
 {
-    return MR_Request_size (CIA_path_size (C_ConnectionManager, 1, 0))
-    + sizeof (CN_USINT)                /* priority_and_tick */
-    + sizeof (CN_USINT)                /* connection_timeout_ticks */
-    + sizeof (CN_UINT)                 /* message_size */
+    return MR_Request_size(CIA_path_size(C_ConnectionManager, 1, 0))
+    + sizeof(CN_USINT)                /* priority_and_tick */
+    + sizeof(CN_USINT)                /* connection_timeout_ticks */
+    + sizeof(CN_UINT)                 /* message_size */
     + message_size + message_size % 2  /* padded */
     + 4;                               /* complete path to PLC */
 }
@@ -904,8 +906,8 @@ void dump_raw_CIP_data (const CN_USINT *raw_type_and_data, size_t elements)
     printf ("\n");
 }
 
-bool get_CIP_double (const CN_USINT *raw_type_and_data,
-                     size_t element, double *result)
+bool get_CIP_double(const CN_USINT *raw_type_and_data,
+                    size_t element, double *result)
 {
     CN_UINT        type;
     const CN_USINT *buf;
@@ -917,7 +919,7 @@ bool get_CIP_double (const CN_USINT *raw_type_and_data,
     buf = unpack_UINT (raw_type_and_data, &type);
     /* buf now on first, skip to given element */
     if (element > 0)
-        buf += element*CIP_Type_size (type);
+        buf += element*CIP_Type_size(type);
     switch (type)
     {
         case T_CIP_BOOL:
@@ -926,24 +928,25 @@ bool get_CIP_double (const CN_USINT *raw_type_and_data,
             *result = (double) vs;
             return true;
         case T_CIP_INT:
-            unpack_UINT (buf, &vi);
+            unpack_UINT(buf, &vi);
             *result = (double) vi;
             return true;
         case T_CIP_DINT:
         case T_CIP_BITS:
-            unpack_UDINT (buf, &vd);
+            unpack_UDINT(buf, &vd);
             *result = (double) vd;
             return true;
         case T_CIP_REAL:
-            unpack_REAL (buf, &vr);
+            unpack_REAL(buf, &vr);
             *result = (double) vr;
             return true;
     }
+    EIP_printf(1, "EIP get_CIP_double: unknown type %d\n", (int) type);
     return false;
 }
 
-bool get_CIP_UDINT (const CN_USINT *raw_type_and_data,
-                    size_t element, CN_UDINT *result)
+bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
+                   size_t element, CN_UDINT *result)
 {
     CN_UINT        type;
     const CN_USINT *buf;
@@ -951,8 +954,8 @@ bool get_CIP_UDINT (const CN_USINT *raw_type_and_data,
     CN_UINT        vi;
     CN_REAL        vr;
 
-    buf = unpack_UINT (raw_type_and_data, &type);
-    buf += element*CIP_Type_size (type);
+    buf = unpack_UINT(raw_type_and_data, &type);
+    buf += element*CIP_Type_size(type);
     switch (type)
     {
         case T_CIP_BOOL:
@@ -961,95 +964,95 @@ bool get_CIP_UDINT (const CN_USINT *raw_type_and_data,
             *result = (CN_UDINT) vs;
             return true;
         case T_CIP_INT:
-            unpack_UINT (buf, &vi);
+            unpack_UINT(buf, &vi);
             *result = (CN_UDINT) vi;
             return true;
         case T_CIP_DINT: 
         case T_CIP_BITS:
-            unpack_UDINT (buf, result);
+            unpack_UDINT(buf, result);
             return true;
         case T_CIP_REAL:
-            unpack_REAL (buf, &vr);
+            unpack_REAL(buf, &vr);
             *result = (CN_UDINT) vr;
             return true;
     }
+    EIP_printf(1, "EIP get_CIP_UDINT: unknown type %d\n", (int) type);
     return false;
 }
 
-bool put_CIP_double (const CN_USINT *raw_type_and_data,
-                     size_t element, double value)
+bool put_CIP_double(const CN_USINT *raw_type_and_data,
+                    size_t element, double value)
 {
     CN_UINT   type;
     CN_USINT *buf;
 
-    buf = (CN_USINT *) unpack_UINT (raw_type_and_data, &type);
+    buf = (CN_USINT *) unpack_UINT(raw_type_and_data, &type);
     /* buf now on first, skip to given element */
     if (element > 0)
-        buf += element*CIP_Type_size (type);
+        buf += element*CIP_Type_size(type);
     switch (type)
     {
         case T_CIP_BOOL:
         case T_CIP_SINT:
-            pack_USINT (buf, (CN_USINT) value);
+            pack_USINT(buf, (CN_USINT) value);
             return true;
         case T_CIP_INT:
-            pack_UINT (buf, (CN_INT) value);
+            pack_UINT(buf, (CN_INT) value);
             return true;
         case T_CIP_DINT:
         case T_CIP_BITS:
-            pack_UDINT (buf, (CN_DINT) value);
+            pack_UDINT(buf, (CN_DINT) value);
             return true;
         case T_CIP_REAL:
-            pack_REAL (buf, (CN_REAL) value);
+            pack_REAL(buf, (CN_REAL) value);
             return true;
     }
+    EIP_printf(1, "EIP put_CIP_double: unknown type %d\n", (int) type);
     return false;
 }
 
-bool put_CIP_UDINT (const CN_USINT *raw_type_and_data,
-                    size_t element, CN_UDINT value)
+bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
+                   size_t element, CN_UDINT value)
 {
     CN_UINT   type;
     CN_USINT *buf;
 
-    EIP_printf (8, "put_CIP_UDINT 0x%0X @ %d\n",
-                value, element);
-    
-    buf = (CN_USINT *) unpack_UINT (raw_type_and_data, &type);
+    buf = (CN_USINT *) unpack_UINT(raw_type_and_data, &type);
     /* buf now on first, skip to given element */
     if (element > 0)
-        buf += element*CIP_Type_size (type);
+        buf += element*CIP_Type_size(type);
     switch (type)
     {
         case T_CIP_BOOL:
         case T_CIP_SINT:
-            pack_USINT (buf, (CN_USINT) value);
+            pack_USINT(buf, (CN_USINT) value);
             return true;
         case T_CIP_INT:
-            pack_UINT (buf, (CN_UINT) value);
+            pack_UINT(buf, (CN_UINT) value);
             return true;
         case T_CIP_DINT:
         case T_CIP_BITS:
-            pack_UDINT (buf, value);
+            pack_UDINT(buf, value);
             return true;
         case T_CIP_REAL:
-            pack_REAL (buf, (CN_REAL) value);
+            pack_REAL(buf, (CN_REAL) value);
             return true;
     }
+    EIP_printf(1, "EIP put_CIP_double: unknown type %d\n", (int) type);
     return false;
 }
 
 
 /* Test CIP_ReadData response, returns data and fills data_size if so */
-const CN_USINT *check_CIP_ReadData_Response (const CN_USINT *response,
-                                             size_t response_size,
-                                             size_t *data_size)
+const CN_USINT *check_CIP_ReadData_Response(const CN_USINT *response,
+                                            size_t response_size,
+                                            size_t *data_size)
 {
     CN_USINT service = response[0];
     
     if ((service & 0x7F) == S_CIP_ReadData &&
-        is_raw_MRResponse_ok (response, response_size))
-        return EIP_raw_MR_Response_data (response, response_size, data_size);
+        is_raw_MRResponse_ok(response, response_size))
+        return EIP_raw_MR_Response_data(response, response_size, data_size);
     return 0;
 }
 
@@ -1422,40 +1425,40 @@ bool EIP_reserve_buffer (void **buffer, size_t *size, size_t requested)
     return true;
 }
 
-bool EIP_send_connection_buffer (EIPConnection *c)
+bool EIP_send_connection_buffer(EIPConnection *c)
 {
     CN_UINT length;
     int     len;
     
-    unpack_UINT (c->buffer+2, &length);
+    unpack_UINT(c->buffer+2, &length);
     len = sizeof_EncapsulationHeader + length;
-    return send (c->sock, (void *)c->buffer, len, 0) == len;
+    return send(c->sock, (void *)c->buffer, len, 0) == len;
 }
 
-bool EIP_read_connection_buffer (EIPConnection *c)
+bool EIP_read_connection_buffer(EIPConnection *c)
 {
     int got = 0;
     bool checked = false;
     bool ok = true;
-    int part, needed;
+    int part, needed=0;
     fd_set fds;
     struct timeval timeout;
     CN_UINT length;
     
-    set_nonblock (c->sock, 1);
+    set_nonblock(c->sock, 1);
     timeout.tv_sec = c->millisec_timeout/1000;
     timeout.tv_usec = (c->millisec_timeout - timeout.tv_sec*1000)*1000;
     do
     {
-        FD_ZERO (&fds);
-        FD_SET (c->sock, &fds);
-        if (select (c->sock+1, &fds, 0, 0, &timeout) <= 0)
+        FD_ZERO(&fds);
+        FD_SET(c->sock, &fds);
+        if (select(c->sock+1, &fds, 0, 0, &timeout) <= 0)
         {
             ok = false;
             break;
         }
         
-        part = recv (c->sock, ((char *)c->buffer + got), c->size - got, 0);
+        part = recv(c->sock, ((char *)c->buffer + got), c->size - got, 0);
         if (part == SOCKET_ERROR  || part == 0)
         {
             ok = false;
@@ -1464,9 +1467,9 @@ bool EIP_read_connection_buffer (EIPConnection *c)
         got += part;
 
         /* check for room for complete message */
-        if (got >= sizeof (EncapsulationHeader) && !checked)
+        if (got >= sizeof(EncapsulationHeader) && !checked)
         {
-            unpack_UINT (c->buffer+2, &length);
+            unpack_UINT(c->buffer+2, &length);
             needed = sizeof_EncapsulationHeader + length;
             if (needed > c->size  &&
                 !EIP_reserve_buffer ((void**)&c->buffer, &c->size, needed))

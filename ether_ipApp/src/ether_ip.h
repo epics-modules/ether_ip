@@ -307,6 +307,7 @@ struct __ParsedTag
 
 /* (Abbreviated) type codes for CIP data
  * ENET p. 11
+ * There are no 'unsigned' designators.
  */
 typedef enum
 {

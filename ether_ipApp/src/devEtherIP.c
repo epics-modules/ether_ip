@@ -86,28 +86,28 @@ typedef struct
 }   DevicePrivate;
 
 /* Call to this routine can be triggered via TPRO field */
-static void dump_DevicePrivate (const dbCommon *rec)
+static void dump_DevicePrivate(const dbCommon *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
 
     if (!pvt)
     {
-        printf ("   Device Private = 0\n");
+        printf("   Device Private = 0\n");
         return;
     }
-    printf ("   link_text  : '%s'\n",  pvt->link_text);
-    printf ("   PLC_name   : '%s'\n",  pvt->PLC_name);
-    printf ("   string_tag : '%s'\n",  pvt->string_tag);
-    printf ("   element    : %d\n",    pvt->element);
-    printf ("   mask       : 0x%0X\n", (unsigned int)pvt->mask);
-    printf ("   special    : %d\n",    pvt->special);
-    printf ("   plc        : 0x%0X\n", (unsigned int)pvt->plc);
-    printf ("   tag        : 0x%0X\n", (unsigned int)pvt->tag);
+    printf("   link_text  : '%s'\n",  pvt->link_text);
+    printf("   PLC_name   : '%s'\n",  pvt->PLC_name);
+    printf("   string_tag : '%s'\n",  pvt->string_tag);
+    printf("   element    : %d\n",    pvt->element);
+    printf("   mask       : 0x%0X\n", (unsigned int)pvt->mask);
+    printf("   spec. opts.: %d\n",    pvt->special);
+    printf("   plc        : 0x%0X\n", (unsigned int)pvt->plc);
+    printf("   tag        : 0x%0X\n", (unsigned int)pvt->tag);
 }
 
 /* Helper: check for valid DevicePrivate, lock data
  * and see if it's valid */
-static bool lock_data (const dbCommon *rec)
+static bool lock_data(const dbCommon *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     if (!pvt ||
@@ -115,16 +115,16 @@ static bool lock_data (const dbCommon *rec)
         !pvt->tag ||
         !pvt->tag->scanlist)
         return false;
-    if (semTake (pvt->tag->data_lock, sysClkRateGet()) != OK)
+    if (semTake(pvt->tag->data_lock, sysClkRateGet()) != OK)
     {
         if (rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
-            errlogPrintf ("devEtherIP (%s): no data_lock\n", rec->name);
+            errlogPrintf("devEtherIP (%s): no data_lock\n", rec->name);
         return false;
     }
     if (pvt->tag->valid_data_size <= 0  ||
         pvt->tag->elements <= pvt->element)
     {
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
         return false;
     }
     return true;
@@ -1008,7 +1008,7 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
     return 0;
 }
 
-static long ao_write (aoRecord *rec)
+static long ao_write(aoRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
@@ -1018,41 +1018,41 @@ static long ao_write (aoRecord *rec)
 
     rec->pact = TRUE;
     if (rec->tpro)
-        dump_DevicePrivate ((dbCommon *)rec);
-    status = check_link ((dbCommon *)rec, check_ao_callback, &rec->out, 0);
+        dump_DevicePrivate((dbCommon *)rec);
+    status = check_link((dbCommon *)rec, check_ao_callback, &rec->out, 0);
     if (status)
     {
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
         return status;
     }
 
-    if (lock_data ((dbCommon *)rec))
+    if (lock_data((dbCommon *)rec))
     {
         /* Check if record's (R)VAL is current */
         if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
         {
-            if (get_CIP_double (pvt->tag->data, pvt->element, &dbl) &&
+            if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
                 rec->val != dbl)
             {
-                EIP_printf (5, "rec '%s': write %g!\n",
-                            rec->name, rec->val);
-                ok = put_CIP_double (pvt->tag->data, pvt->element, rec->val);
+                EIP_printf(5, "rec '%s': write %g!\n",
+                           rec->name, rec->val);
+                ok = put_CIP_double(pvt->tag->data, pvt->element, rec->val);
                 pvt->tag->do_write = true;
             }
         }
         else
         {
-            if (get_CIP_UDINT (pvt->tag->data, pvt->element, &udint) &&
+            if (get_CIP_UDINT(pvt->tag->data, pvt->element, &udint) &&
                 rec->rval != udint)
             {
                 if (rec->tpro)
-                    printf ("rec '%s': write %lu!\n",
-                            rec->name, rec->rval);
-                ok = put_CIP_UDINT (pvt->tag->data,pvt->element,rec->rval);
+                    printf("rec '%s': write %lu!\n",
+                           rec->name, rec->rval);
+                ok = put_CIP_UDINT(pvt->tag->data, pvt->element, rec->rval);
                 pvt->tag->do_write = true;
             }
         }
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
     }
     else
         ok = false;

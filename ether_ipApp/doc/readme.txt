@@ -4,7 +4,6 @@
 
 ** doc
 ** Check timeout choices in semTake calls
-** Test on PPC
 ** make Unix/Win32 cmd tools more useful?
 
 * EtherNet/IP
@@ -18,19 +17,11 @@ and a driver/device for EPICS IOCs.
 
 * Files
 
-Makefile	 Unix (Linux) makefile
-Makefile.Vx	 vxWorks makefile
-ether_ip.dsp/dsw MS VC project files
 ether_ip.[ch]	 EtherNet/IP protocol
-main.c		 main for Unix/Win32
+dl_list*         Double-linked list, used by the following
 drvEtherIP*	 vxWorks driver
 devEtherIP*      EPICS device support
-
-Test Setup (dbd, IOC Database, startup-script, dm2k displays):
-dbd/* 
-db/*
-dm2k/*
-startups/*
+ether_ip_test.c  main for Unix/Win32
 
 * Supported Record types
 
@@ -47,9 +38,12 @@ startups/*
 ** Analog output
    Similar to analog input, no special flags are supported.
 
-** Binary input, output, MBBI, MBBIDirect
+** Binary input, output, MBB[IO], MBB[IO]Direct
    These expect to be connected to a BOOL or BOOL[].
    Note the comments on CIP data below.
+   You can connect an MBB* to a _single_ DINT or REAL,
+   but not array elements. Only BOOL arrays
+   are allowed.
 
 * Installation, Setup for EPICS
 
@@ -68,7 +62,7 @@ startups/*
      The ether_ipApp creates a library "ether_ipLib"
      which contains only the driver code.
 
-     The testether_ipApp combines that library with EPICS base
+     The seperate testether_ipApp combines that library with EPICS base
      objects into "testether_ip".
      The example in iocBoot/iocether_ip/st.cmd loads that library.
 
@@ -224,7 +218,10 @@ startups/*
       one by one.
 
 ** Flags
-   The "E" flag was already mentioned.
+   The "E" flag was already mentioned:
+      tag[5] E
+   means that the driver really only transfers tag[5],
+   this won't be combined with other array tags.
 
 *** Scan Flag
    The time format is in seconds, like the SCAN field,
