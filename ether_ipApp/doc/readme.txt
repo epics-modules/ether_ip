@@ -117,6 +117,38 @@ have this:
 in your application DBD file and then in the vxWorks startup script,
 "dbLoadDatabase" loads the single application DBD file which
 includes the EtherIP DBD file.
+
+* EPICS records: Guidelines
+The EtherIP driver was designed in order to optimize the tag
+transfers. When multiple records are attached to the same tag, the
+driver will transfer the tag only once, using the highest scan rate of
+the attached records. When records refer to different elements of an
+array, the driver will transfer the array as a whole. Tags are
+arranged according to PLC and scan rate. In order to not disturb
+processing of the EPICS database, the driver has one separate task per
+PLC. 
+
+You should try to benefit from the driver optimization by arranging
+tags in arrays. You can have alias tags on the PLC, so that a
+meaningful alias like "InputFlow" is used in the ladder logic while
+the data is also held in an array element "xfer[5]" which the EPICS
+record can use for the network transfer.
+Arrays should be one-directional: Use separate "EPICS to PLC" and "PLC
+to EPICS" arrays. Because of PLC buffer limitations, the array size is
+unfortunately limited to about BOOL[352] and REAL[40]. While you can
+define bigger arrays, those cannot be transferred over the network
+with EtherIP. Consequently you might end up with several transfer arrays.
+
+You should also understand that the network transfer can be delayed or
+even fail because of network problems. Consequently you must not
+depend on "output" records to write to the PLC within milliseconds. If
+e.g. an output on the PLC has to be "on" for a certain amount of time,
+have the PLC ladder logic implement this critical timing. The EPICS
+record can then write to a "start" tag on the PLC, the PLC handles the
+exact timing in response to the command. When done, the PLC signals
+success or failure via another "status" tag.
+This way, network delays in the transfer of "start" and "status" tags
+will not harm the critical timing.
                 
 * EPICS records: Generic fields
 ** DTYP: Device type
@@ -135,6 +167,35 @@ The driver scans the PLC at the same rate.
 The record simply reads the most recent value.
 Note: The scan tasks of the driver and the EPICS database
 are not synchronized.
+
+*** Note on multiple records attached to the same tag
+When multiple records refer to the same tag, the driver
+will scan that tag at the highest scan rate.
+Example:
+record(ai, "A")
+{
+    field(INP, "@plc1 fred")
+    field(SCAN, "1 second")
+    ...
+}
+
+record(ai, "B")
+{
+    field(INP, "@plc1 fred")
+    field(SCAN, ".1 second")
+    ...
+}
+
+
+-> The driver will scan the tag "fred" at 10 Hz.
+
+This also applies to arrays:
+Since requests to array elements my_array[0], my_array[2],
+my_array[5],... are combined into a SINGLE transfer of the
+tag my_array, the rate of that transfer is the fastes rate
+requested for any of the array elements.
+(Unless you request single element requests with the 'E'
+flag which you should try to avoid).
 
 *** SCAN Passive
 Output records are often passive:
@@ -239,6 +300,17 @@ has to match
     c) Binary record types (bi, bo, mbbi, ...) with a non-BOOL array
        element. See the binary record details below.
 
+    Unless you absolutely have to use the "E" flag for these reasons,
+    don't use it.
+    It is no problem to have one "BOOL[352]" tag for IOC->PLC
+    communication and another "BOOL[352]" array for PLC->IOC
+    communication, both at 10Hz. The result is a low and constant
+    network load, the transfers are almost predictable even though
+    Ethernet is not "deterministic". If instead you use several "E"
+    flags, each of those tags ends up being a separate transfer,
+    leading to more network load and possible collisions and delays.
+  
+
 * ai, Analog Input Record
 By default the tag itself is read:
 
@@ -340,7 +412,7 @@ specify new values and then the WHOLE ARRAY is written as one unit.
 
 Writing the values that didn't change doesn't matter because
 a) the transfer time for a single tag and an array is almost
-   the same. Transfering an array where many items didn't change
+   the same. Transferring an array where many items didn't change
    is not costly, transferring two separate tags that did change
    would take longer.
 b) the PLC doesn't care if tags are written. There is no
