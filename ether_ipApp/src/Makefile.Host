@@ -4,8 +4,7 @@ include $(TOP)/config/CONFIG_APP
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 
-DBDEXPAND = ether_ipInclude.dbd
-DBDNAME = ether_ip_test.dbd
+
 DBDINSTALL += ether_ip.dbd
 
 #USR_CFLAGS += 

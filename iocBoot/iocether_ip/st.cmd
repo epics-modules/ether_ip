@@ -9,7 +9,7 @@
 
 cd appbin
 ld < iocCore
-ld < ether_ipLib
+ld < testether_ip
 # Initialize EtherIP driver, define PLCs
 # -------------------------------------
 drvEtherIP_init

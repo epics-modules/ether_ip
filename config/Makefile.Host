@@ -17,4 +17,4 @@ endif
 
 CONFIG_APP_INCLUDE: $(TOP)/config/RELEASE $(TOP)/config/CONFIG_APP
 	$(RM) $@
-	@$(PERL) $(TOP)/config/makeConfigAppInclude.pl $(T_A) $@ $(TOP)
+	$(PERL) $(TOP)/config/makeConfigAppInclude.pl $(T_A) $@ $(TOP)

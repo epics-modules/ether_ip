@@ -14,10 +14,9 @@ LIBOBJS += ether_ip.o
 LIBOBJS += drvEtherIP.o
 LIBOBJS += devEtherIP.o
 
-include ../baseLIBOBJS
+
 
 LIBNAME = ether_ipLib
-INSTALLS += iocCore
 
 #Note that the command line that builds the
 #library $(LIBNAME) may be HUGE (>3kB)
