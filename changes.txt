@@ -1,5 +1,8 @@
 -*- outline -*-
 
+* 2002, 10/02/2002 V1.9
+Support for stringin record and STRING type tags
+
 * 2002, 09/24 V1.8
 Better handling of disconnects and re-connects for output
 records.

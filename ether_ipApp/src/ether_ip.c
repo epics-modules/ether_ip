@@ -897,12 +897,12 @@ CN_USINT *make_CIP_ReadData(CN_USINT *request,
     return pack_UINT(buf, elements);
 }
 
-/* MR_Response for S_CIP_ReadData:
+/* dump CIP data, type and data are in raw format
+ *
+ * MR_Response for S_CIP_ReadData:
  *  MR_Response
  *  CN_USINT   abbreviated type, data
  */
-
-/* dump CIP data, type and data are in raw format */
 void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
 {
     CN_UINT        type, len;
@@ -1096,6 +1096,38 @@ bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
     }
     EIP_printf(1, "EIP get_CIP_UDINT: unknown type %d\n", (int) type);
     return false;
+}
+
+/* Fill buffer with up to 'size' characters (incl. ending '\0').
+ * Return true for success */
+bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
+                    char *buffer, size_t size)
+{
+    CN_UINT        type, subtype, len, no_idea_what_this_is;
+    const CN_USINT *buf;
+
+    buf = unpack_UINT(raw_type_and_data, &type);
+    if (type != T_CIP_STRUCT)
+    {
+        EIP_printf(1, "EIP get_CIP_STRING: unknown type %d\n", (int) type);
+        return false;
+    }
+    buf = unpack_UINT(buf, &subtype);
+    if (subtype != T_CIP_STRUCT_STRING)
+    {
+        EIP_printf(1, "EIP get_CIP_STRING: unknown subtype %d\n",
+                   (int) subtype);
+        return false;
+    }
+    buf = unpack_UINT(buf, &len);
+    buf = unpack_UINT(buf, &no_idea_what_this_is);
+    
+    if (len >= size)
+        len = size-1;
+    memcpy(buffer, buf, len);
+    *(buffer+len) = '\0';
+    
+    return true;
 }
 
 bool put_CIP_double(const CN_USINT *raw_type_and_data,

@@ -116,6 +116,7 @@ ether_ip.dbd looks like this:
      device(bi,         INST_IO, devBiEtherIP,         "EtherIP")
      device(mbbi,       INST_IO, devMbbiEtherIP,       "EtherIP")
      device(mbbiDirect, INST_IO, devMbbiDirectEtherIP, "EtherIP")
+     device(stringin,   INST_IO, devSiEtherIP,         "EtherIP")
      device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
      device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
      device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")
@@ -555,6 +556,24 @@ element 5, bit 1:
         field(NOBT, "2")
 But this feature is merely a side effect, it's safer to read
 within one INT/DINT. Or use BOOL arrays.
+
+* stringin Strin Input Records
+String input records can be connected to STRING tags
+on the PLC:
+
+        field(DTYP, "EtherIP")
+        field(INP,  "@$(PLC) text_tag")
+        field(SCAN, "1 second")
+
+The stringin record works only with STRING tags. Any other tag
+type will result in errors.
+Likewise, only stringin records must be used with STRING tags.
+Any other record type will fail with STRING tags.
+
+Note: The STRING tag data type was not documented!
+To the driver, a STRING tag looks like a "CIP structure" and the
+location of the string length and character data in there were
+determined from tests.
 
 * bo, mbbo, mbboDirect Binary Output Records
 The output records use the same OUT configurations as the

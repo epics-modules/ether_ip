@@ -408,6 +408,10 @@ bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT *result);
 bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
                   size_t element, CN_DINT *result);
+/* Fill buffer with up to 'size' characters (incl. ending '\0').
+ * Return true for success */
+bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
+                    char *buffer, size_t size);
 bool put_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double value);
 bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,

@@ -27,6 +27,7 @@
 #include <biRecord.h>
 #include <mbbiRecord.h>
 #include <mbbiDirectRecord.h>
+#include <stringinRecord.h>
 #include <aoRecord.h>
 #include <boRecord.h>
 #include <mbboRecord.h>
@@ -964,6 +965,13 @@ static long mbbi_direct_init_record(mbbiDirectRecord *rec)
     return status;
 }
 
+static long si_init_record(stringinRecord *rec)
+{
+    long status = init_record((dbCommon *)rec, scan_callback,
+                              &rec->inp, 0);
+    return status;
+}
+
 static long ao_init_record(aoRecord *rec)
 {
     long status = init_record((dbCommon *)rec, check_ao_callback,
@@ -1194,6 +1202,36 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
     
     return 0;
+}
+
+static long si_read(stringinRecord *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    long status;
+    bool ok;
+
+    if (rec->tpro)
+        dump_DevicePrivate((dbCommon *)rec);
+    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 0);
+    if (status)
+    {
+        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
+        return status;
+    }
+    if (lock_data((dbCommon *)rec))
+    {
+        ok = get_CIP_STRING(pvt->tag->data, &rec->val[0], MAX_STRING_SIZE);
+        semGive (pvt->tag->data_lock);
+    }
+    else
+        ok = false;
+    
+    if (ok)
+        rec->udf = FALSE;
+    else
+        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
+    
+    return status;
 }
 
 static long ao_write(aoRecord *rec)
@@ -1470,6 +1508,16 @@ DSET devMbbiDirectEtherIP =
     get_ioint_info,
     mbbi_direct_read,
     NULL
+};
+
+DSET devSiEtherIP =
+{
+    5,
+    NULL,
+    init,
+    si_init_record,
+    get_ioint_info,
+    si_read
 };
 
 DSET devAoEtherIP =
