@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stddef.h>
+#include <time.h>
 #include "ether_ip.c"
 #ifdef _WIN32
 #include "Win32Timer.h"
@@ -316,7 +317,12 @@ int main (int argc, const char *argv[])
     size_t          i;
     CN_REAL         writeval;
     bool            write = false;
-
+    size_t          test_runs = 0;
+#ifndef _WIN32    
+    struct timeval  now;
+#endif
+    double          start, end, duration;
+ 
 #ifdef _WIN32
     /* Win32 socket init. */
     WORD wVersionRequested;
@@ -339,7 +345,7 @@ int main (int argc, const char *argv[])
             {
             case 'v':
             GETARG
-                EIP_verbosity = atoi (arg);
+                EIP_verbosity = atoi(arg);
                 break;
             case 'i':
             GETARG
@@ -347,20 +353,24 @@ int main (int argc, const char *argv[])
                 break;
             case 'p':
             GETARG
-                port = (unsigned short) strtol (arg, 0, 0);
+                port = (unsigned short) strtol(arg, 0, 0);
                 break;
             case 'a':
             GETARG
-                elements = atoi (arg);
+                elements = atoi(arg);
                 break;
             case 't':
             GETARG
-                timeout_ms = atol (arg);
+                timeout_ms = atol(arg);
                 break;
             case 'w':
             GETARG
-                writeval = strtod (arg, NULL);
+                writeval = strtod(arg, NULL);
                 write = true;
+                break;
+            case 'T':
+            GETARG
+                test_runs = atol(arg);
                 break;
             default:
                 usage (argv[0]);
@@ -389,7 +399,32 @@ int main (int argc, const char *argv[])
             EIP_write_tag (&c, tag, T_CIP_REAL, 1,(CN_USINT*) &writeval, 0, 0);
         else
         {
-            data = EIP_read_tag (&c, tag, elements, &data_len, 0, 0);
+            if (test_runs > 0)
+            {
+#ifdef _WIN32    
+                start = (double) time(0);
+#else
+                gettimeofday(&now, NULL);
+                start = now.tv_sec + now.tv_usec/1000000.0;
+#endif
+                for (i=0; i<test_runs; ++i)
+                {
+                    data = EIP_read_tag (&c, tag, elements, &data_len, 0, 0);
+                }
+#ifdef _WIN32    
+                end = (double) time(0);
+#else
+                gettimeofday(&now, NULL);
+                end = now.tv_sec + now.tv_usec/1000000.0;
+#endif
+                duration = (double)(end - start);
+                printf("%d test runs, %g seconds -> %lf ms / tag\n",
+                       test_runs,
+                       duration,
+                       duration / test_runs * 1000.0);
+            }
+            else
+                data = EIP_read_tag (&c, tag, elements, &data_len, 0, 0);
             if (data)
                 dump_raw_CIP_data (data, elements);
         }
