@@ -146,7 +146,9 @@ static TagInfo *new_TagInfo(const char *string_tag, size_t elements)
 
     return info;
 }
-    
+
+#if 0
+/* We never remove a tag */
 static void free_TagInfo(TagInfo *info)
 {
     EIP_free_ParsedTag(info->tag);
@@ -156,6 +158,7 @@ static void free_TagInfo(TagInfo *info)
     semDelete(info->data_lock);
     free (info);
 }
+#endif
 
 /* ------------------------------------------------------------
  * ScanList
@@ -220,6 +223,8 @@ static ScanList *new_ScanList(PLC *plc, double period)
     return list;
 }
 
+#if 0
+/* We never remove a scan list */
 static void free_ScanList(ScanList *scanlist)
 {
     TagInfo *info;
@@ -227,6 +232,7 @@ static void free_ScanList(ScanList *scanlist)
         free_TagInfo(info);
     free(scanlist);
 }
+#endif
 
 /* Find tag by name, returns 0 for "not found" */
 static TagInfo *find_ScanList_Tag (const ScanList *scanlist,
@@ -286,6 +292,9 @@ static PLC *new_PLC(const char *name)
     return plc;
 }
 
+#if 0
+/* We never really remove a PLC from the list,
+ * but this is how it could be done. Maybe. */
 static void free_PLC(PLC *plc)
 {
     ScanList *list;
@@ -297,6 +306,7 @@ static void free_PLC(PLC *plc)
         free_ScanList(list);
     free(plc);
 }
+#endif
 
 /* After TagInfos are defined (tag & elements are set),
  * fill rest of TagInfo: request/response size.
@@ -460,12 +470,12 @@ static size_t determine_MultiRequest_count (size_t limit,
  * even if the read requests for the tags
  * returned no data.
  */
-static bool process_ScanList (EIPConnection *c, ScanList *scanlist)
+static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
 {
     TagInfo             *info, *info_position;
     size_t              count, requests_size, responses_size;
     size_t              multi_request_size, multi_response_size;
-    size_t              send_size, i;
+    size_t              send_size, i, elements;
     CN_USINT            *send_request, *multi_request, *request;
     const CN_USINT      *response, *single_response, *data;
     EncapsulationRRData rr_data;
@@ -473,21 +483,23 @@ static bool process_ScanList (EIPConnection *c, ScanList *scanlist)
     TagCallback         *cb;
     bool                ok;
 
-    info = DLL_first (TagInfo, &scanlist->taginfos);
+    info = DLL_first(TagInfo, &scanlist->taginfos);
     while (info)
     {
         info_position = info; /* keep position, we'll loop several times */
         /* See how many transfers can be packed together */
-        count = determine_MultiRequest_count (c->transfer_buffer_limit,
-                                              info,
-                                              &requests_size,
-                                              &responses_size,
-                                              &multi_request_size,
-                                              &multi_response_size);
+        count = determine_MultiRequest_count(c->transfer_buffer_limit,
+                                             info,
+                                             &requests_size,
+                                             &responses_size,
+                                             &multi_request_size,
+                                             &multi_response_size);
         if (count == 0)
             return true;
         /* send <count> requests */
-        send_size = CM_Unconnected_Send_size (multi_request_size);
+        send_size = CM_Unconnected_Send_size(multi_request_size);
+
+        EIP_printf(10, " ------------------- New Request ------------\n");
         send_request =EIP_make_SendRRData(c, send_size);
         if (!send_request)
             return false;
@@ -505,27 +517,27 @@ static bool process_ScanList (EIPConnection *c, ScanList *scanlist)
             if (info->is_writing)
             {
                 info->do_write = false; /* ack. */
-                request = CIP_MultiRequest_item (multi_request,
-                                                 i, info->cip_w_request_size);
+                request = CIP_MultiRequest_item(multi_request,
+                                                i, info->cip_w_request_size);
                 if (!request ||
-                    semTake (info->data_lock, sysClkRateGet()) != OK)
+                    semTake(info->data_lock, sysClkRateGet()) != OK)
                     return false;
-                ok = make_CIP_WriteData (request, info->tag,
-                                         (CIP_Type)
-                                         get_CIP_typecode(info->data),
-                                         info->elements,
-                                         info->data + CIP_Typecode_size)
+                ok = make_CIP_WriteData(request, info->tag,
+                                        (CIP_Type)
+                                        get_CIP_typecode(info->data),
+                                        info->elements,
+                                        info->data + CIP_Typecode_size)
                     != NULL;
-                semGive (info->data_lock);
+                semGive(info->data_lock);
                 if (!ok)
                     return false;
             }
             else
             {   /* reading, !is_writing */
-                request = CIP_MultiRequest_item (multi_request,
-                                                 i, info->cip_r_request_size);
+                request = CIP_MultiRequest_item(multi_request,
+                                                i, info->cip_r_request_size);
                 if (!request ||
-                    !make_CIP_ReadData (request, info->tag, info->elements))
+                    !make_CIP_ReadData(request, info->tag, info->elements))
                     return false;
             }
             ++i; /* increment here, not in for() -> skip empty tags */
@@ -542,7 +554,8 @@ static bool process_ScanList (EIPConnection *c, ScanList *scanlist)
         transfer_ticktime = tickGet() - transfer_ticktime;
         
         response = EIP_unpack_RRData(c->buffer, &rr_data);
-        if (! check_CIP_MultiRequest_Response(response))
+        if (! check_CIP_MultiRequest_Response(response,
+                                              rr_data.data_length))
         {
             EIP_printf(2, "EIP process_ScanList: Error in response\n");
             if (EIP_verbosity >= 2)
@@ -560,30 +573,53 @@ static bool process_ScanList (EIPConnection *c, ScanList *scanlist)
                                               i, &single_response_size);
             if (! single_response)
                 return false;
+            if (EIP_verbosity >= 10)
+            {
+                EIP_printf(10, "Response #%d:\n", i);
+                EIP_dump_raw_MR_Response(single_response, 0);
+            }
             if (info->is_writing)
             {
-                /* Could call check_CIP_WriteData_Response, but then what ?
-                 * User will see error in the next read when old value pops
-                 * up again. */
+                if (!check_CIP_WriteData_Response(single_response,
+                                                  single_response_size))
+                {
+                    EIP_printf(0, "EIP: CIPWrite failed for '%s'\n",
+                               info->string_tag);
+                }
                 info->is_writing = false;
             }
             else
             {
-                data = check_CIP_ReadData_Response (single_response,
-                                                    single_response_size,
-                                                    &data_size);
-                if (semTake (info->data_lock, sysClkRateGet()) != OK)
+                data = check_CIP_ReadData_Response(single_response,
+                                                   single_response_size,
+                                                   &data_size);
+                if (semTake(info->data_lock, sysClkRateGet()) != OK)
                     return false;
                 if (data_size > 0  &&
-                    EIP_reserve_buffer ((void **)&info->data,
-                                        &info->data_size, data_size))
+                    EIP_reserve_buffer((void **)&info->data,
+                                       &info->data_size, data_size))
                 {
-                    memcpy (info->data, data, data_size);
+                    memcpy(info->data, data, data_size);
                     info->valid_data_size = data_size;
+
+                    if (EIP_verbosity >= 10)
+                    {
+                        elements = CIP_Type_size(get_CIP_typecode(data));
+                        if (elements > 0)
+                        {
+                            elements = data_size / elements;
+                            dump_raw_CIP_data(data, elements);
+                        }
+                        else
+                        {
+                            EIP_printf(10, "Unknown Data type:\n");
+                            EIP_hexdump(10, data, data_size);
+                        }
+                    }
                 }
                 else
                     info->valid_data_size = 0;
-                semGive (info->data_lock);
+                semGive(info->data_lock);
                 /* Call all registered callback for this tag */
                 for (cb = DLL_first(TagCallback,&info->callbacks);
                      cb; cb=DLL_next(TagCallback,cb))
@@ -925,44 +961,44 @@ PLC *drvEtherIP_find_PLC (const char *PLC_name)
 /* After the PLC is defined with drvEtherIP_define_PLC,
  * tags can be added
  */
-TagInfo *drvEtherIP_add_tag (PLC *plc, double period,
-                             const char *string_tag, size_t elements)
+TagInfo *drvEtherIP_add_tag(PLC *plc, double period,
+                            const char *string_tag, size_t elements)
 {
     ScanList *list;
     TagInfo  *info;
 
-    semTake (plc->lock, WAIT_FOREVER);
-    if (find_PLC_tag (plc, string_tag, &list, &info))
+    semTake(plc->lock, WAIT_FOREVER);
+    if (find_PLC_tag(plc, string_tag, &list, &info))
     {   /* check if period is OK */
         if (list->period > period)
         {   /* current scanlist is too slow */
-            remove_ScanList_TagInfo (list, info);
-            list = get_PLC_ScanList (plc, period, true);
+            remove_ScanList_TagInfo(list, info);
+            list = get_PLC_ScanList(plc, period, true);
             if (!list)
             {
-                semGive (plc->lock);
-                EIP_printf (2, "drvEtherIP: cannot create list at %g secs"
-                            "for tag '%s'\n", period, string_tag);
+                semGive(plc->lock);
+                EIP_printf(2, "drvEtherIP: cannot create list at %g secs"
+                           "for tag '%s'\n", period, string_tag);
                 return 0;
             }
-            add_ScanList_TagInfo (list, info);
+            add_ScanList_TagInfo(list, info);
         }
         if (info->elements < elements)  /* maximize element count */
             info->elements = elements;
     }
     else
     {   /* new tag */
-        list = get_PLC_ScanList (plc, period, true);
+        list = get_PLC_ScanList(plc, period, true);
         if (list)
-            info = add_ScanList_Tag (list, string_tag, elements);
+            info = add_ScanList_Tag(list, string_tag, elements);
         else
         {
-            EIP_printf (2, "drvEtherIP: cannot create list at %g secs"
-                        "for tag '%s'\n", period, string_tag);
+            EIP_printf(2, "drvEtherIP: cannot create list at %g secs"
+                       "for tag '%s'\n", period, string_tag);
             info = 0;
         }
     }
-    semGive (plc->lock);
+    semGive(plc->lock);
     
     return info;
 }

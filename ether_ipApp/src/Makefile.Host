@@ -6,6 +6,9 @@ include $(TOP)/config/CONFIG_APP
 
 DBDINSTALL += ether_ip.dbd
 
+# No optimization, we want debugging info:
+HOST_OPT=NO
+
 #USR_CFLAGS += 
 #PROD_LIBS	+= ca
 #PROD_LIBS	+= Db

@@ -25,6 +25,9 @@
 #include <mbboDirectRecord.h>
 #include "drvEtherIP.h"
 
+/* #define CATCH_MISSED_WRITE */
+
+
 /* Flags that pick special values instead of the tag's "value" */
 typedef enum
 {
@@ -364,6 +367,20 @@ static void check_bo_callback(void *arg)
                 if (rec->tpro)
                     printf("BO '%s': will re-write record's value %u\n",
                            rec->name, (unsigned int)rec->val);
+
+
+
+
+#ifdef CATCH_MISSED_WRITE
+                EIP_verbosity = 5;
+#endif
+
+
+
+
+
+
+                
             }
             else
             {
@@ -1182,6 +1199,15 @@ static long bo_write(boRecord *rec)
         {
             if (rec->tpro)
                 printf ("rec '%s': write %lu\n", rec->name, rec->rval);
+
+#ifdef CATCH_MISSED_WRITE
+            if (rec->rval)
+                EIP_verbosity = 10;
+            else
+                EIP_verbosity = 5;
+#endif
+            
+            
             ok = put_bits((dbCommon *)rec, 1, rec->rval);
         }
         semGive(pvt->tag->data_lock);

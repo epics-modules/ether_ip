@@ -163,6 +163,10 @@ typedef struct
     CN_USINT   response[5];  /* depends on service */
 }   MR_Response;
 
+/* Dump a raw (net format) MR Response */
+const CN_USINT *EIP_dump_raw_MR_Response(const CN_USINT *response,
+                                         size_t response_size);
+
 /* MR_Response has fixed portion followed by (maybe) an extended
  * status and then (maybe) data.
  * Get pointer to data, fill data_size
@@ -355,17 +359,20 @@ CN_USINT *make_CIP_WriteData (CN_USINT *buf, const ParsedTag *tag,
                               CIP_Type type, size_t elements,
                               CN_USINT *raw_data);
 void dump_CIP_WriteRequest (const CN_USINT *request);
+/* Test CIP_WriteData response: If not OK, report error */
+bool check_CIP_WriteData_Response (const CN_USINT *response,
+                                   size_t response_size);
 
 size_t CIP_MultiRequest_size (size_t count, size_t requests_size);
 size_t CIP_MultiResponse_size (size_t count, size_t responses_size);
 bool prepare_CIP_MultiRequest (CN_USINT *request, size_t count);
 
-CN_USINT *CIP_MultiRequest_item (CN_USINT *request,
-                                 size_t request_no,
-                                 size_t single_request_size);
+CN_USINT *CIP_MultiRequest_item(CN_USINT *request,
+                                size_t request_no,
+                                size_t single_request_size);
 
-
-bool check_CIP_MultiRequest_Response (const CN_USINT *response);
+bool check_CIP_MultiRequest_Response(const CN_USINT *response,
+                                     size_t response_size);
 void dump_CIP_MultiRequest_Response_Error(const CN_USINT *response,
                                           size_t response_size);
 const CN_USINT *get_CIP_MultiRequest_Response (const CN_USINT *response,

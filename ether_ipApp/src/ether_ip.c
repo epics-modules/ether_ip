@@ -236,7 +236,7 @@ static const char *EIP_class_name(CN_Classes c)
 {
     switch(c)
     {
-    case C_Identity:            return "Itentity";
+    case C_Identity:            return "Identity";
     case C_MessageRouter:       return "MessageRouter";
     case C_ConnectionManager:   return "ConnectionManager";
     default:                    return "<unknown>";
@@ -253,6 +253,7 @@ static void make_port_path(CN_USINT *path, CN_USINT port, CN_USINT link)
 {
     path[0] = port;
     path[1] = link;
+    EIP_printf(10, "    Path: Port %d, link %d\n", port, link);
 }
 
 /* Build path from Class, Instance, Attribute (0 for no attr.) */
@@ -359,22 +360,22 @@ ParsedTag *EIP_parse_tag(const char *tag)
 void EIP_dump_ParsedTag(const ParsedTag *tag)
 {
     bool did_first = false;
-    EIP_printf(10, "    Path: '");
+    EIP_printf(0, "'");
     while (tag)
     {
         switch (tag->type)
         {
         case te_name:    if (did_first)
-                             EIP_printf(10, ".");
-                         EIP_printf(10, "%s", tag->value.name);
+                             EIP_printf(0, ".");
+                         EIP_printf(0, "%s", tag->value.name);
                          break;
-        case te_element: EIP_printf(10, "[%d]", tag->value.element);
+        case te_element: EIP_printf(0, "[%d]", tag->value.element);
                          break;
         }
         tag = tag->next;
         did_first = true;
     }
-    EIP_printf(10, "'\n");
+    EIP_printf(0, "'\n");
 }
 
 void EIP_free_ParsedTag(ParsedTag *tag)
@@ -600,9 +601,9 @@ static CN_USINT *make_MR_Request(CN_USINT *buf,
                                   CN_USINT service, CN_USINT path_size)
 {
     EIP_printf(10, "MR Request\n");
-    EIP_printf(10, "    USINT service 0x%X (%s)\n",
+    EIP_printf(10, "    USINT service   = 0x%X (%s)\n",
                service, service_name(service));
-    EIP_printf(10, "    USINT path size %d words\n", path_size);
+    EIP_printf(10, "    USINT path size = %d words\n", path_size);
     buf = pack_USINT(buf, service);
     return pack_USINT(buf, path_size);
 }
@@ -621,7 +622,7 @@ static const CN_USINT *dump_raw_MR_Request(const CN_USINT *request)
     const CN_USINT *path      = request+2;
     
     EIP_printf(0, "MR_Request\n");
-    EIP_printf(0, "    USINT service   = 0x%02X = %s\n",
+    EIP_printf(0, "    USINT service   = 0x%02X (%s)\n",
                 service, service_name(service));
     EIP_printf(0, "    USINT path_size = %d\n", path_size);
     EIP_printf(0, "          path      = ");
@@ -633,20 +634,19 @@ static const CN_USINT *dump_raw_MR_Request(const CN_USINT *request)
  * This routine takes the raw MR_Response (as in the receive buffer),
  * gets pointer to data & fills data_size.
  *
- * If data_len==0, the result is still the location immediately
+ * If data_size==0, the result is still the location immediately
  * after this response
  */
 CN_USINT *EIP_raw_MR_Response_data(const CN_USINT *response,
-                                    size_t response_size,
-                                    size_t *data_size)
+                                   size_t response_size,
+                                   size_t *data_size)
 {
     CN_UINT *data = (CN_UINT *) (response + 4);
     size_t  non_data;
-
+    
     /* extended_status_size is CN_USINT, no need to unpack: */
     if (response[3] > 0)
         data += response[3]; /* word ptr ! */
-
     if (data_size)
     {
         non_data = (char *)data - (char *)response;
@@ -659,8 +659,8 @@ CN_USINT *EIP_raw_MR_Response_data(const CN_USINT *response,
     return (CN_USINT *)data;
 }
 
-static const CN_USINT *dump_raw_MR_Response(const CN_USINT *response,
-                                             size_t response_size)
+const CN_USINT *EIP_dump_raw_MR_Response(const CN_USINT *response,
+                                     size_t response_size)
 {
     size_t         data_len;
     CN_UINT        ext;
@@ -674,7 +674,7 @@ static const CN_USINT *dump_raw_MR_Response(const CN_USINT *response,
     ext_buf              = response+4;
                       
     EIP_printf(0, "MR_Response:\n");
-    EIP_printf(0, "    USINT service         = 0x%02X = Response to %s\n",
+    EIP_printf(0, "    USINT service         = 0x%02X (Response to %s)\n",
                 service, service_name(service & 0x7F));
     EIP_printf(0, "    USINT reserved        = 0x%02X\n", reserved);
     EIP_printf(0, "    USINT status          = 0x%02X (%s)\n",
@@ -720,7 +720,7 @@ static const CN_USINT *dump_raw_MR_Response(const CN_USINT *response,
     data = EIP_raw_MR_Response_data(response, response_size, &data_len);
     if (data_len > 0)
     {
-        EIP_printf(0, "    data (net format) =\n    ");
+        EIP_printf(0, "    Data (net format) =\n    ");
         EIP_hexdump(0, data, data_len);
     }
 
@@ -735,7 +735,7 @@ static bool is_raw_MRResponse_ok(const CN_USINT *response,
         return true;
 
     if (EIP_verbosity >= 2)
-        dump_raw_MR_Response(response, response_size);
+        EIP_dump_raw_MR_Response(response, response_size);
 
     return false;
 }
@@ -792,8 +792,10 @@ CN_USINT *make_CM_Unconnected_Send(CN_USINT *request,
                                    int slot)
 {
     CN_USINT *buf, *nested_request;
-    CN_USINT tick_time, ticks;
+    CN_USINT tick_time, ticks, path_size;
 
+    /* Took this strange time from an example,
+     * no clue if it's a good value */
     calc_tick_time (245760, &tick_time, &ticks);
     
     buf = make_MR_Request (request,
@@ -804,12 +806,23 @@ CN_USINT *make_CM_Unconnected_Send(CN_USINT *request,
     buf = pack_USINT (buf, tick_time);
     buf = pack_USINT (buf, ticks);
     buf = pack_UINT  (buf, message_size);
+    EIP_printf(10, "    USINT tick time   = %d\n", tick_time);
+    EIP_printf(10, "    USINT ticks       = %d\n", ticks);
+    EIP_printf(10, "    UINT message size = %d\n", message_size);
+    EIP_printf(10, "    ... (embedded message of %d bytes)\n",
+               message_size);
+    
     nested_request = buf;
     buf += message_size + message_size%2;
-    buf = pack_USINT (buf, port_path_size (1, 0));
+    path_size = port_path_size (1, slot);
+    buf = pack_USINT (buf, path_size);
     buf = pack_USINT (buf, 0 /* reserved */);
+    EIP_printf(10, "    USINT path_size   = %d words\n", path_size);
+    EIP_printf(10, "    USINT reserved    = 0x%X\n", 0);
     make_port_path (buf, 1, slot); /* Port 1 = backplane, link=slot) */
 
+    EIP_printf(10, "Embedded Message:\n");
+    
     return nested_request;
 }
 
@@ -820,7 +833,7 @@ CN_USINT *make_CM_Unconnected_Send(CN_USINT *request,
  ********************************************************/
 
 /* Determine byte size of CIP_Type */
-size_t CIP_Type_size (CIP_Type type)
+size_t CIP_Type_size(CIP_Type type)
 {
     switch (type)
     {
@@ -840,7 +853,7 @@ size_t CIP_Type_size (CIP_Type type)
  *   CN_UINT    elements;   // number of array elements
  */
 
-static size_t CIP_ReadData_size (const ParsedTag *tag)
+size_t CIP_ReadData_size(const ParsedTag *tag)
 {
     return   2                          /* service, path_size */
            + 2 * tag_path_size (tag)    /* IOI path is in words */
@@ -852,24 +865,14 @@ CN_USINT *make_CIP_ReadData(CN_USINT *request,
 {
     CN_USINT *buf = make_MR_Request(request, S_CIP_ReadData,
                                     tag_path_size(tag));
+    EIP_printf(10, "    Path: Tag ");
     buf = make_tag_path(buf, tag);
     if (EIP_verbosity >= 10)
     {
         EIP_dump_ParsedTag(tag);
-        EIP_printf(10, "    UINT elements %d\n", elements);
+        EIP_printf(10, "    UINT elements = %d\n", elements);
     }
     return pack_UINT(buf, elements);
-}
-
-static const CN_USINT *dump_raw_CIP_ReadDataRequest (const CN_USINT *request)
-{
-    const CN_USINT *buf;
-    CN_UINT  els;
-    EIP_printf (0, "CIP ReadData, ");
-    buf = dump_raw_MR_Request (request);
-    buf = unpack_UINT (buf, &els);
-    EIP_printf (0, "    UINT elements = %d\n", els);
-    return buf;
 }
 
 /* MR_Response for S_CIP_ReadData:
@@ -878,7 +881,7 @@ static const CN_USINT *dump_raw_CIP_ReadDataRequest (const CN_USINT *request)
  */
 
 /* dump CIP data, type and data are in raw format */
-void dump_raw_CIP_data (const CN_USINT *raw_type_and_data, size_t elements)
+void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
 {
     CN_UINT        type;
     const CN_USINT *buf;
@@ -888,63 +891,63 @@ void dump_raw_CIP_data (const CN_USINT *raw_type_and_data, size_t elements)
     CN_UDINT       vd;
     CN_REAL        vr;
 
-    buf = unpack_UINT (raw_type_and_data, &type);
+    buf = unpack_UINT(raw_type_and_data, &type);
     switch (type)
     {
         case T_CIP_BOOL:
-            printf ("BOOL");
+            EIP_printf(0, "BOOL");
             for (i=0; i<elements; ++i)
             {
                 vs = *(buf++);
-                printf (" %d", (int)vs);
+                EIP_printf(0, " %d", (int)vs);
             }
             break;
         case T_CIP_SINT:
-            printf ("SINT");
+            EIP_printf(0, "SINT");
             for (i=0; i<elements; ++i)
             {
                 vs = *(buf++);
-                printf (" %d", (int)vs);
+                EIP_printf(0, " %d", (int)vs);
             }
             break;
         case T_CIP_INT:
-            printf ("INT");
+            EIP_printf(0, "INT");
             for (i=0; i<elements; ++i)
             {
-                buf = unpack_UINT (buf, &vi);
-                printf (" %d", (int)vi);
+                buf = unpack_UINT(buf, &vi);
+                EIP_printf(0, " %d", (int)vi);
             }
             break;
         case T_CIP_DINT:
-            printf ("DINT");
+            EIP_printf(0, "DINT");
             for (i=0; i<elements; ++i)
             {
-                buf = unpack_UDINT (buf, &vd);
-                printf (" %d", (int)vd);
+                buf = unpack_UDINT(buf, &vd);
+                EIP_printf(0, " %d", (int)vd);
             }
             break;
         case T_CIP_REAL:
-            printf ("REAL");
+            EIP_printf(0, "REAL");
             for (i=0; i<elements; ++i)
             {
-                buf = unpack_REAL (buf, &vr);
-                printf (" %f", (double)vr);
+                buf = unpack_REAL(buf, &vr);
+                EIP_printf(0, " %f", (double)vr);
             }
             break;
         case T_CIP_BITS:
-            printf ("BITS");
+            EIP_printf(0, "BITS");
             for (i=0; i<elements; ++i)
             {
-                buf = unpack_UDINT (buf, &vd);
-                printf (" 0x%08X", (unsigned int)vd);
+                buf = unpack_UDINT(buf, &vd);
+                EIP_printf(0, " 0x%08X", (unsigned int)vd);
             }
             break;
         default:
-            printf ("raw CIP data, unknown type 0x%04X: ",
+            EIP_printf(0, "raw CIP data, unknown type 0x%04X: ",
                     type);
-            EIP_hexdump(0, buf, elements*CIP_Type_size (type));
+            EIP_hexdump(0, buf, elements*CIP_Type_size(type));
     }
-    printf ("\n");
+    EIP_printf(0, "\n");
 }
 
 bool get_CIP_double(const CN_USINT *raw_type_and_data,
@@ -1083,7 +1086,6 @@ bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
     return false;
 }
 
-
 /* Test CIP_ReadData response, returns data and fills data_size if so */
 const CN_USINT *check_CIP_ReadData_Response(const CN_USINT *response,
                                             size_t response_size,
@@ -1125,6 +1127,17 @@ CN_USINT *make_CIP_WriteData (CN_USINT *buf, const ParsedTag *tag,
     buf = pack_UINT (buf, type);
     buf = pack_UINT (buf, elements);
     memcpy (buf, raw_data, data_size);
+
+    if (EIP_verbosity >= 10)
+    {
+        EIP_printf(10, "    Path: Tag ");
+        EIP_dump_ParsedTag(tag);
+        EIP_printf(10, "    UINT type     = 0x%X\n", type);
+        EIP_printf(10, "    UINT elements = %d\n", elements);
+        EIP_printf(10, "    Data: ");
+        EIP_hexdump(10, raw_data, data_size);
+    }
+    
     return buf + data_size;
 }
 
@@ -1143,12 +1156,21 @@ void dump_CIP_WriteRequest (const CN_USINT *request)
 }
 
 /* Test CIP_WriteData response: If not OK, report error */
-static bool check_CIP_WriteData_Response (const CN_USINT *response,
-                                          size_t response_size)
+bool check_CIP_WriteData_Response (const CN_USINT *response,
+                                   size_t response_size)
 {
     CN_USINT service = response[0];
-    return (service & 0x7F) == S_CIP_WriteData &&
-        is_raw_MRResponse_ok (response, response_size);
+    if ((service & 0x7F) != S_CIP_WriteData)
+    {
+        if (EIP_verbosity >= 2)
+        {
+            EIP_printf(2, "EIP: Expected Response to CIP_WriteData, got:\n");
+            EIP_dump_raw_MR_Response(response, response_size);
+        }
+        return false;
+    }
+    
+    return is_raw_MRResponse_ok(response, response_size);
 }
 
 /* CIP_MultiRequest:
@@ -1185,7 +1207,7 @@ bool prepare_CIP_MultiRequest (CN_USINT *request, size_t count)
     buf = make_MR_Request (request, S_CIP_MultiRequest,
                            CIA_path_size (C_MessageRouter, 1, 0));
     buf = make_CIA_path (buf, C_MessageRouter, 1, 0);
-    EIP_printf(10, "        UINT count %d\n", count);
+    EIP_printf(10, "    UINT count %d\n", count);
     buf = pack_UINT (buf, count);
     
     /* offset is from "count" field, 2 bytes per word ! */
@@ -1251,11 +1273,23 @@ size_t CIP_MultiResponse_size (size_t count, size_t responses_size)
 }
 
 /* Check if response is valid for a S_CIP_MultiRequest */
-bool check_CIP_MultiRequest_Response (const CN_USINT *response)
+bool check_CIP_MultiRequest_Response (const CN_USINT *response,
+                                          size_t response_size)
 {
     CN_USINT service        = response[0];
     CN_USINT general_status = response[2];
-    return service == (S_CIP_MultiRequest|0x80)  &&  general_status == 0;
+    if (service == (S_CIP_MultiRequest|0x80)  &&  general_status == 0)
+    {
+        if (EIP_verbosity >= 10)
+        {
+            /* 0 -> show only MR_Response header, not embedded data */
+            EIP_dump_raw_MR_Response(response, 0); 
+            EIP_printf(0, "    %d subreplies:\n", response[4]);
+        }
+        return true;
+    }
+
+    return false;
 }
 
 void dump_CIP_MultiRequest_Response_Error(const CN_USINT *response,
@@ -1515,7 +1549,7 @@ bool EIP_send_connection_buffer(EIPConnection *c)
     len = sizeof_EncapsulationHeader + length;
     ok = send(c->sock, (void *)c->buffer, len, 0) == len;
 
-    EIP_printf(10, "Data sent:\n");
+    EIP_printf(10, "Data sent (%d bytes):\n", len);
     EIP_hexdump(10, c->buffer, len);
     
     return ok;
@@ -1571,7 +1605,7 @@ bool EIP_read_connection_buffer(EIPConnection *c)
     while (got < sizeof_EncapsulationHeader  ||  got < needed);
     set_nonblock (c->sock, 0);
 
-    EIP_printf(10, "Data Received (%d bytes(:\n", got);
+    EIP_printf(10, "Data Received (%d bytes):\n", got);
     EIP_hexdump(10, c->buffer, got);
 
     return ok;
@@ -1582,54 +1616,60 @@ bool EIP_read_connection_buffer(EIPConnection *c)
  * Spec 4. pp 154
  ********************************************************/
 
+/* Decode EncapsulationHeader command (host format) into text */
+const char *EncapsulationHeader_command(CN_UINT command)
+{
+    switch (command)
+    {
+        case EC_Nop:
+            return "Nop\n";
+        case EC_ListInterfaces:
+            return "ListInterfaces";
+        case EC_RegisterSession:
+            return "RegisterSession";
+        case EC_UnRegisterSession:
+            return "UnRegisterSession";
+        case EC_ListServices:
+            return "ListServices";
+        case EC_SendRRData:
+            return "SendRRData";
+        case EC_SendUnitData:
+            return "SendUnitData";
+    }
+    return "<unknown>";
+}
+
+/* Decode EncapsulationHeader status (host format) into text
+ * page 165 of spec 4
+ */
+const char *EncapsulationHeader_status(CN_UDINT status)
+{
+    switch (status)
+    {
+    case 0x00:  return "OK";
+    case 0x01:  return "invalid/unsupported command";
+    case 0x02:  return "no memory on target";
+    case 0x03:  return "malformed data in request";
+    case 0x64:  return "invalid session ID";
+    case 0x65:  return "invalid data length";
+    case 0x69:  return "unsupported protocol revision";
+    }
+    return "<unknown>";
+}
+
 /* has to be in host format */
 static void dump_EncapsulationHeader(const EncapsulationHeader *header)
 {
     
-    EIP_printf(10, "EncapsulationHeader:\n");
-    EIP_printf(10, "    UINT  command   = 0x%02X", header->command);
-    switch (header->command)
-    {
-        case EC_Nop:
-            EIP_printf(10, " (Nop)\n");                break;
-        case EC_ListInterfaces:
-            EIP_printf(10, " (ListInterfaces)\n");     break;
-        case EC_RegisterSession:
-            EIP_printf(10, " (RegisterSession)\n");    break;
-        case EC_UnRegisterSession:
-            EIP_printf(10, " (UnRegisterSession)\n");  break;
-        case EC_ListServices:
-            EIP_printf(10, " (ListServices)\n");       break;
-        case EC_SendRRData:
-            EIP_printf(10, " (SendRRData)\n");         break;
-        case EC_SendUnitData:
-            EIP_printf(10, " (SendUnitData)\n");       break;
-        default:
-            EIP_printf(10, "\n");
-    }
-    EIP_printf(10, "    UINT  length    = %d \n",    header->length);
-    EIP_printf(10, "    UDINT session   = 0x%08X\n", header->session);
-    EIP_printf(10, "    UDINT status    = 0x%08X: ", header->status);
-    switch (header->status)
-    {
-    case 0x00:  EIP_printf(10, "OK\n");
-                break;
-    case 0x01:  EIP_printf(10, "invalid/unsupported command\n");
-                break;
-    case 0x02:  EIP_printf(10, "no memory on target\n");
-                break;
-    case 0x03:  EIP_printf(10, "malformed data in request\n");
-                break;
-    case 0x64:  EIP_printf(10, "invalid session ID\n");
-                break;
-    case 0x65:  EIP_printf(10, "invalid data length\n");
-                break;
-    case 0x69:  EIP_printf(10, "unsupported protocol revision\n");
-                break;
-    default:    EIP_printf(10, "unknown, see page 165 of spec 4\n");
-    }
-    EIP_printf(10, "    USINT context[8]= '%s'\n",   header->server_context);
-    EIP_printf(10, "    UDINT options   = 0x%08X\n", header->options);
+    EIP_printf(0, "EncapsulationHeader:\n");
+    EIP_printf(0, "    UINT  command   = 0x%02X (%s)\n",
+               header->command, EncapsulationHeader_command(header->command));
+    EIP_printf(0, "    UINT  length    = %d \n",    header->length);
+    EIP_printf(0, "    UDINT session   = 0x%08X\n", header->session);
+    EIP_printf(0, "    UDINT status    = 0x%08X  (%s)\n",
+               header->status, EncapsulationHeader_status(header->status));
+    EIP_printf(0, "    USINT context[8]= '%s'\n",   header->server_context);
+    EIP_printf(0, "    UDINT options   = 0x%08X\n", header->options);
 }
 
 /* Fill EncapsulationHeader of connection with
@@ -1640,6 +1680,7 @@ static void dump_EncapsulationHeader(const EncapsulationHeader *header)
 static CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
                                           CN_UINT length, CN_UDINT options)
 {
+    const EncapsulationHeader *header;
     CN_USINT *buf;
     
     if (! EIP_reserve_buffer((void **)&c->buffer, &c->size,
@@ -1655,17 +1696,28 @@ static CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
     buf = pack_UINT(buf, length);
     buf = pack_UDINT(buf, c->session);
     buf = pack_UDINT(buf, 0);
-    buf = pack_USINT(buf, 'A');
-    buf = pack_USINT(buf, 'I');
-    buf = pack_USINT(buf, 'R');
-    buf = pack_USINT(buf, 'P');
-    buf = pack_USINT(buf, 'L');
-    buf = pack_USINT(buf, 'A');
-    buf = pack_USINT(buf, 'N');
-    buf = pack_USINT(buf, 'E');
+    buf = pack_USINT(buf, 'F');
+    buf = pack_USINT(buf, 'u');
+    buf = pack_USINT(buf, 'n');
+    buf = pack_USINT(buf, 's');
+    buf = pack_USINT(buf, 't');
+    buf = pack_USINT(buf, 'u');
+    buf = pack_USINT(buf, 'f');
+    buf = pack_USINT(buf, 'f');
     buf = pack_UDINT(buf, options);
-    if (EIP_verbosity <= 10)
-        dump_EncapsulationHeader((const EncapsulationHeader *)c->buffer);
+    if (EIP_verbosity >= 10)
+    {   /* 'header' used to get offset to server_context */
+        header = (const EncapsulationHeader *)c->buffer;
+        EIP_printf(0, "EncapsulationHeader:\n");
+        EIP_printf(0, "    UINT  command   = 0x%02X (%s)\n",
+                   command, EncapsulationHeader_command(command));
+        EIP_printf(0, "    UINT  length    = %d \n",    length);
+        EIP_printf(0, "    UDINT session   = 0x%08X\n", c->session);
+        EIP_printf(0, "    UDINT status    = 0x%08X (%s)\n",
+                   0, EncapsulationHeader_status(0));
+        EIP_printf(0, "    USINT context[8]= '%s'\n", header->server_context);
+        EIP_printf(0, "    UDINT options   = 0x%08X\n", options);
+    }
 
     return buf;
 }
@@ -1674,7 +1726,8 @@ static CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
 static const CN_USINT *unpack_EncapsulationHeader(const CN_USINT *buf,
                                                   EncapsulationHeader *header)
 {
-    return unpack(buf, "iiddssssssssd",
+    const CN_USINT *next;
+    next = unpack(buf, "iiddssssssssd",
                   &header->command,
                   &header->length,
                   &header->session,
@@ -1688,42 +1741,40 @@ static const CN_USINT *unpack_EncapsulationHeader(const CN_USINT *buf,
                   &header->server_context[6],
                   &header->server_context[7],
                   &header->options);
+    if (EIP_verbosity >= 10)
+        dump_EncapsulationHeader(header);
+
+    return next;
 }
 
 
 /* Encapsulation Command "ListServices".
  * Check if CIP is supported.
  */
-static bool EIP_list_services (EIPConnection *c)
+static bool EIP_list_services(EIPConnection *c)
 {
     const CN_USINT *buf;
     ListServicesReply reply;
     int i;
     bool ok = true;
 
-    if (make_EncapsulationHeader (c, EC_ListServices,
-                                  0, 0 /* length, options */) == 0)
+    EIP_printf(10, "EIP sending ListServices encapsulation command\n");
+    if (make_EncapsulationHeader(c, EC_ListServices,
+                                 0, 0 /* length, options */) == 0)
         return false;
-    if (! EIP_send_connection_buffer (c))
+    if (! EIP_send_connection_buffer(c))
     {
-        EIP_printf (2, "EIP list_services: send failed\n");
-        return false;
-    }
-
-    if (EIP_verbosity >= 10)
-    {
-        EIP_printf (10, "EIP sending ListServices encapsulation command:\n");
-        unpack_EncapsulationHeader ((CN_USINT *)c->buffer, &reply.header);
-        dump_EncapsulationHeader (&reply.header);
-    }
-
-    if (! EIP_read_connection_buffer (c))
-    {
-        EIP_printf (2, "EIP list_services: No response\n");
+        EIP_printf(2, "EIP list_services: send failed\n");
         return false;
     }
 
-    buf = unpack_EncapsulationHeader ((CN_USINT *) c->buffer, &reply.header);
+    if (! EIP_read_connection_buffer(c))
+    {
+        EIP_printf(2, "EIP list_services: No response\n");
+        return false;
+    }
+
+    buf = unpack_EncapsulationHeader((CN_USINT *) c->buffer, &reply.header);
     if (reply.header.command != EC_ListServices  ||
         reply.header.status != 0x0)
     {
@@ -1734,7 +1785,7 @@ static bool EIP_list_services (EIPConnection *c)
 
     /* Check response(s) for "CIP PDU" support.   Spec 4 p 170  */
     buf = unpack_UINT (buf, &reply.count);
-    EIP_printf (10, "ListServices reply:\n");
+    EIP_printf (10, "ListServices reply\n");
     EIP_printf (10, "    UINT count     = %d\n", reply.count);
     for (i=0; i<reply.count; ++i)
     {
@@ -1779,77 +1830,73 @@ static bool EIP_list_services (EIPConnection *c)
 }
 
 /* Encapsulation Command "Register Session" */
-static bool EIP_register_session (EIPConnection *c)
+static bool EIP_register_session(EIPConnection *c)
 {
     CN_USINT *sbuf;
-    const CN_USINT *rbuf;
     RegisterSessionData data;
 
-    sbuf = make_EncapsulationHeader (c, EC_RegisterSession,
-                                     sizeof_RegisterSessionData
-                                     - sizeof_EncapsulationHeader,
-                                     0 /* options */);
+    EIP_printf(10, "EIP sending RegisterSession encapsulation command\n");
+    sbuf = make_EncapsulationHeader(c, EC_RegisterSession,
+                                    sizeof_RegisterSessionData
+                                    - sizeof_EncapsulationHeader,
+                                    0 /* options */);
     if (! sbuf)
         return false;
-    sbuf = pack_UINT (sbuf, /* protocol_version */ 1);
-    pack_UINT (sbuf, /* options */ 0);
-
-    if (! EIP_send_connection_buffer (c))
+    sbuf = pack_UINT(sbuf, /* protocol_version */ 1);
+    pack_UINT(sbuf, /* options */ 0);
+    EIP_printf(10, "    UINT  protocol  = %d \n", 1);
+    EIP_printf(10, "    UINT  options   = %d \n", 0);
+    if (! EIP_send_connection_buffer(c))
     {
-        EIP_printf (2, "EIP register_session: send failed\n");
+        EIP_printf(2, "EIP register_session: send failed\n");
         return false;
     }
-    if (EIP_verbosity >= 10)
+    if (! EIP_read_connection_buffer(c))
     {
-        rbuf = unpack_EncapsulationHeader (c->buffer, &data.header);
-        unpack (rbuf, "ii", &data.protocol_version, &data.options);
-        EIP_printf (10, "EIP register_session sends:\n");
-        dump_EncapsulationHeader (&data.header);
-        EIP_printf (10, "    UINT  protocol  = %d \n",
-                    data.protocol_version);
-        EIP_printf (10, "    UINT  options   = %d \n",
-                    data.options);
-    }
-    if (! EIP_read_connection_buffer (c))
-    {
-        EIP_printf (2, "EIP register_session: no response\n");
+        EIP_printf(2, "EIP register_session: no response\n");
         return false;
     }
-    unpack_EncapsulationHeader ((CN_USINT *)c->buffer, &data.header);
+    unpack_EncapsulationHeader((CN_USINT *)c->buffer, &data.header);
     if (data.header.command != EC_RegisterSession  ||
         data.header.status  != 0)
     {
-        EIP_printf (2, "EIP register_session received error\n");
+        EIP_printf(2, "EIP register_session received error\n");
         if (EIP_verbosity >= 3)
-            dump_EncapsulationHeader (&data.header);
+            dump_EncapsulationHeader(&data.header);
         return false;
     }
     c->session = data.header.session; /* keep session ID that target sent */
-    EIP_printf (9, "EIP registered session 0x%08X\n", c->session);
     
     return true;
 }
 
 /* Encapsulation Command "UnRegister Session" */
-static bool EIP_unregister_session (EIPConnection *c)
+static bool EIP_unregister_session(EIPConnection *c)
 {
-    EncapsulationHeader header;
-    
-    if (! make_EncapsulationHeader (c, EC_UnRegisterSession,
-                                    0, 0 /*length, options*/))
-        return false;
+    EIP_printf(9, "EIP sending UnRegisterSession encapsulation command,"
+               " session ID 0x%08X\n", c->session);
+    return make_EncapsulationHeader(c, EC_UnRegisterSession,
+                                    0, 0 /*length, options*/)
+        && EIP_send_connection_buffer(c);
+}
 
-    EIP_printf (9, "EIP unregister session 0x%08X\n", c->session);
-    if (EIP_verbosity >= 10)
+/* Decode IDs for "Common Packet Type"
+ * (address and data IDs)
+ * Spec, 8.9.1
+ */
+static const char *CPF_ID(CN_UINT id)
+{
+    switch (id)
     {
-        EIP_printf (10, "sending UnRegisterSession encapsulation command:\n");
-        unpack_EncapsulationHeader ((CN_USINT *)c->buffer, &header);
-        dump_EncapsulationHeader (&header);
+        case 0x0000: return "UCMM";
+        case 0x00A1: return "connection based";
+        case 0x8000: return "sockaddr, orig->tgt.";
+        case 0x8001: return "sockaddr, tgt.->orig";
+        case 0x8002: return "sequenced address";
+        case 0x00B1: return "Connected PDU";
+        case 0x00B2: return "Unconnected Message";
     }
-    if (! EIP_send_connection_buffer (c))
-        return false;
-
-    return true;
+    return "<unknown>";
 }
 
 /* Setup encapsulation buffer for SendRRData,
@@ -1875,13 +1922,13 @@ CN_USINT *EIP_make_SendRRData(EIPConnection *c, size_t length)
     buf = pack_UINT (buf, /* data_length */                   length);
 
     EIP_printf(10, "Send RR Data\n");
-    EIP_printf(10, "    UDINT interface handle               0\n");
-    EIP_printf(10, "    UINT timeout                         0\n");
-    EIP_printf(10, "    UINT count (addr., data)             2\n");
-    EIP_printf(10, "    UINT address_type UCMM               0x00\n");
-    EIP_printf(10, "    UINT address_length                  0\n");
-    EIP_printf(10, "    UINT data_type (unconnected message) 0xB2\n");
-    EIP_printf(10, "    UINT data_length                     %d\n", length);
+    EIP_printf(10, "    UDINT interface handle   0\n");
+    EIP_printf(10, "    UINT timeout             0\n");
+    EIP_printf(10, "    UINT count (addr., data) 2\n");
+    EIP_printf(10, "    UINT address_type        0x00 (%s)\n", CPF_ID(0));
+    EIP_printf(10, "    UINT address_length      0\n");
+    EIP_printf(10, "    UINT data_type           0xB2 (%s)\n", CPF_ID(0xB2));
+    EIP_printf(10, "    UINT data_length         %d\n", length);
 
     return buf;
 }
@@ -1893,10 +1940,12 @@ CN_USINT *EIP_make_SendRRData(EIPConnection *c, size_t length)
 const CN_USINT *EIP_unpack_RRData (const CN_USINT *buf,
                                    EncapsulationRRData *data)
 {
-    buf = unpack_EncapsulationHeader (buf, &data->header);
-    if (! buf)
+    const CN_USINT *next;
+    
+    next = unpack_EncapsulationHeader (buf, &data->header);
+    if (! next)
         return 0;
-    return unpack (buf, "diiiiii",
+    next = unpack (next, "diiiiii",
                    &data->interface_handle,
                    &data->timeout,
                    &data->count,
@@ -1904,6 +1953,19 @@ const CN_USINT *EIP_unpack_RRData (const CN_USINT *buf,
                    &data->address_length,
                    &data->data_type,
                    &data->data_length);
+
+    EIP_printf(10, "Received RR Data\n");
+    EIP_printf(10, "    UDINT interface handle  %d\n", data->interface_handle);
+    EIP_printf(10, "    UINT timeout            %d\n", data->timeout);
+    EIP_printf(10, "    UINT count (addr+data)  %d\n", data->count);
+    EIP_printf(10, "    UINT address_type       0x%X (%s)\n",
+               data->address_type, CPF_ID(data->address_type));
+    EIP_printf(10, "    UINT address_length     %d\n", data->address_length);
+    EIP_printf(10, "    UINT data_type          0x%X (%s)\n",
+               data->data_type, CPF_ID(data->data_type));
+    EIP_printf(10, "    UINT data_length        %d\n", data->data_length);
+    
+    return next;
 }
 
 /* Send unconnected GetAttributeSingle service request to class/instance/attr
@@ -1911,45 +1973,51 @@ const CN_USINT *EIP_unpack_RRData (const CN_USINT *buf,
  * Result: ptr to data or 0,
  * len is set to length of data
  */
-void *EIP_Get_Attribute_Single (EIPConnection *c,
-                                CN_Classes cls, CN_USINT instance,
-                                CN_USINT attr, size_t *len)
+void *EIP_Get_Attribute_Single(EIPConnection *c,
+                               CN_Classes cls, CN_USINT instance,
+                               CN_USINT attr, size_t *len)
 {
     EncapsulationRRData data;
-    size_t         path_size = CIA_path_size (cls, instance, attr);
-    size_t         request_size = MR_Request_size (path_size);
-    CN_USINT       *request = EIP_make_SendRRData (c, request_size);
-    CN_USINT       *path;
+    size_t         path_size, request_size;
+    CN_USINT       *request, *path;
     const CN_USINT *response;
-    CN_USINT       service;
-    CN_USINT       general_status;
+    CN_USINT       service, general_status;
+    void           *attrib;
 
+    EIP_printf(10, "EIP Reading attribute\n");
+    path_size = CIA_path_size(cls, instance, attr);
+    request_size = MR_Request_size(path_size);
+    request = EIP_make_SendRRData(c, request_size);
     if (! request)
         return 0;
-    path = make_MR_Request (request, S_Get_Attribute_Single, path_size);
-    make_CIA_path (path, cls, instance, attr);
-    if (! EIP_send_connection_buffer (c))
+    path = make_MR_Request(request, S_Get_Attribute_Single, path_size);
+    make_CIA_path(path, cls, instance, attr);
+    if (! EIP_send_connection_buffer(c))
     {
-        EIP_printf (2, "EIP_Get_Attribute_Single: send failed\n");
+        EIP_printf(2, "EIP_Get_Attribute_Single: send failed\n");
         return 0;
     }
-    if (! EIP_read_connection_buffer (c))
+    if (! EIP_read_connection_buffer(c))
     {
-        EIP_printf (2, "EIP_Get_Attribute_Single: No response\n");
+        EIP_printf(2, "EIP_Get_Attribute_Single: No response\n");
         return 0;
     }
 
-    response = EIP_unpack_RRData ((CN_USINT *)c->buffer, &data);
-    unpack (response, "sSs", &service, &general_status);
+    response = EIP_unpack_RRData((CN_USINT *)c->buffer, &data);
+    unpack(response, "sSs", &service, &general_status);
     if (service != (S_Get_Attribute_Single | 0x80)  ||
         general_status != 0)
     {
-        EIP_printf (2, "EIP_Get_Attribute_Single: error in response\n");
+        EIP_printf(2, "EIP_Get_Attribute_Single: error in response\n");
         if (EIP_verbosity >= 3)
-            dump_raw_MR_Response (response, data.data_length);
+            EIP_dump_raw_MR_Response(response, data.data_length);
+        return 0;
     }
 
-    return EIP_raw_MR_Response_data (response, data.data_length, len);
+    attrib = EIP_raw_MR_Response_data(response, data.data_length, len);
+    if (EIP_verbosity >= 10)
+        EIP_dump_raw_MR_Response(response, data.data_length);
+    return attrib;
 }
 
 static bool EIP_check_interface(EIPConnection *c)
@@ -1959,19 +2027,19 @@ static bool EIP_check_interface(EIPConnection *c)
     size_t len;
 
     data = EIP_Get_Attribute_Single(c, C_Identity, 1, 1, &len);
-    if (data && len == sizeof (CN_UINT))
+    if (data && len == sizeof(CN_UINT))
         info->vendor = *((CN_UINT *) data);
     else return false;
     data = EIP_Get_Attribute_Single(c, C_Identity, 1, 2, &len);
-    if (data && len == sizeof (CN_UINT))
+    if (data && len == sizeof(CN_UINT))
         info->device_type = *((CN_UINT *) data);
     else return false;
     data = EIP_Get_Attribute_Single(c, C_Identity, 1, 4, &len);
-    if (data && len == sizeof (CN_UINT))
+    if (data && len == sizeof(CN_UINT))
         info->revision = *((CN_UINT *) data);
     else return false;
     data = EIP_Get_Attribute_Single(c, C_Identity, 1, 6, &len);
-    if (data && len == sizeof (CN_UDINT))
+    if (data && len == sizeof(CN_UDINT))
         info->serial_number = *((CN_UDINT *) data);
     else return false;
     data = EIP_Get_Attribute_Single(c, C_Identity, 1, 7, &len);
@@ -1982,12 +2050,14 @@ static bool EIP_check_interface(EIPConnection *c)
         info->name[len] = '\0';
     }
     else return false;
+    EIP_printf(9, "------------------------------\n");
     EIP_printf(9, "Identity information of target:\n");
     EIP_printf(9, "    UINT vendor         = 0x%04X\n", info->vendor);
     EIP_printf(9, "    UINT device_type    = 0x%04X\n", info->device_type);
     EIP_printf(9, "    UINT revision       = 0x%04X\n", info->revision);
     EIP_printf(9, "    UDINT serial_number = 0x%08X\n", info->serial_number);
     EIP_printf(9, "    USINT name          = '%s'\n", info->name);
+    EIP_printf(9, "------------------------------\n");
     return true;
 }
 
@@ -2243,13 +2313,13 @@ static void dump_CM_Forward_Open_Response (const MR_Response *response,
     {
         EIP_printf (2, "Error in dump_CM_Forward_Open_Response:\n");
         if (EIP_verbosity >= 2)
-            dump_raw_MR_Response (response, response_size);
+            EIP_dump_raw_MR_Response (response, response_size);
         return;
     }
 
     if (EIP_verbosity >= 10)
     {
-        dump_raw_MR_Response (response, offsetof (MR_Response, response));
+        EIP_dump_raw_MR_Response (response, offsetof (MR_Response, response));
         data = (CM_Forward_Open_Good_Response *)
                EIP_MR_Response_data (response, response_size, 0);
         EIP_printf (10, "Forward_Open_Response:\n");
@@ -2369,6 +2439,7 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
      * Send CM_Unconnected_Send request with a CIP read inside.
      * Result is the pure CIP read response
      */
+    EIP_printf(10, "EIP read tag\n");
     if (request_size)
         *request_size = msg_size;
     send_request = EIP_make_SendRRData(c, send_size);
@@ -2380,13 +2451,6 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
         return 0;
     if (! make_CIP_ReadData(msg_request, tag, elements))
         return 0;
-    if (EIP_verbosity >= 9)
-    {
-        EIP_printf(10, "EIP read tag ");
-        EIP_dump_ParsedTag(tag);
-        if (EIP_verbosity >= 10)
-            dump_raw_CIP_ReadDataRequest(msg_request);
-    }
     if (! EIP_send_connection_buffer(c))
     {
         EIP_printf(1, "EIP_read_tag: send failed\n");
@@ -2400,7 +2464,7 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
 
     response = EIP_unpack_RRData((CN_USINT *)c->buffer, &rr_data);
     if (EIP_verbosity >= 10)
-        dump_raw_MR_Response(response, rr_data.data_length);
+        EIP_dump_raw_MR_Response(response, rr_data.data_length);
     data = check_CIP_ReadData_Response(response, rr_data.data_length,
                                        data_size);
     if (response_size)
@@ -2415,7 +2479,12 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
         }
         return 0;
     }
-
+    if (EIP_verbosity >= 10)
+    {
+        EIP_printf(10, "    Data =  ");
+        dump_raw_CIP_data(data, elements);
+    }
+    
     return data;
 }
 
@@ -2445,13 +2514,6 @@ bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
         return 0;
     if (! make_CIP_WriteData(msg_request, tag, type, elements, data))
         return 0;
-    if (EIP_verbosity >= 9)
-    {
-        EIP_printf(10, "EIP write tag ");
-        EIP_dump_ParsedTag(tag);
-        if (EIP_verbosity >= 10)
-            dump_raw_MR_Request(msg_request);
-    }
     if (! EIP_send_connection_buffer(c))
     {
         EIP_printf(1, "EIP_write_tag: send failed\n");
@@ -2465,7 +2527,7 @@ bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
 
     response = EIP_unpack_RRData((CN_USINT *)c->buffer, &rr_data);
     if (EIP_verbosity >= 10)
-        dump_raw_MR_Response(response, rr_data.data_length);
+        EIP_dump_raw_MR_Response(response, rr_data.data_length);
 
     if (!check_CIP_WriteData_Response(response, rr_data.data_length))
     {
