@@ -12,7 +12,7 @@ DBD += example.dbd
 
 #=============================
 
-PROD_HOST = example
+PROD_IOC = example
 
 # <name>_registerRecordDeviceDriver.cpp will be created from <name>.dbd
 example_SRCS += example_registerRecordDeviceDriver.cpp
