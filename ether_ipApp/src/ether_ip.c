@@ -19,7 +19,11 @@ static const CN_UINT __endian_test = 0x0001;
 #define is_little_endian (*((const CN_USINT*)&__endian_test))
 
 /* Works for VxWorks' gcc, Linux and MS VC: */
+#if 0
 #define INLINE  __inline
+#else
+#define INLINE  /* */
+#endif
 
 /* Pack binary data in ControlNet format (little endian)
  *

@@ -16,7 +16,6 @@ ca_DIR  = $(EPICS_BASE_LIB)
 Db_DIR  = $(EPICS_BASE_LIB)
 Com_DIR = $(EPICS_BASE_LIB)
 
-PROD += ether_ip_test
 
 include $(TOP)/config/RULES.Host
 #----------------------------------------

@@ -12,4 +12,4 @@
 TEMPLATE_TOP=/cs/epics/ADE/R3.13.3/support/R3-13-3-SNS1/templates/makeBaseApp/top
 #SHARE=
 EPICS_BASE=/cs/epics/ADE/R3.13.3/support/R3-13-3-SNS1
-ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/0-2
+ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/0-3

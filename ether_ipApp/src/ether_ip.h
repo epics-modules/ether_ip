@@ -72,6 +72,12 @@ typedef int                     SOCKET;
 #define socket_close(S)         close(S)
 #define SOCK_EWOULDBLOCK  EWOULDBLOCK                 
 #define SOCK_EINPROGRESS  EINPROGRESS
+
+#ifdef SOLARIS
+#include <sys/file.h>
+#define INADDR_NONE (-1)
+#endif
+
 /* end of Unix settings */
 #endif
 #endif
