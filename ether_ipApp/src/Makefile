@@ -20,6 +20,7 @@ ether_ip_test_LIBS += Com
 DBD = ether_ip.dbd
 
 LIBRARY_IOC = ether_ip
+LIB_LIBS += $(EPICS_BASE_IOC_LIBS)
 DLL_LIBS = ca Com
 SYS_DLL_LIBS = wsock32
 ether_ip_RCS_WIN32 = ether_ip.rc
