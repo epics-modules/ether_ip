@@ -7,6 +7,6 @@
 
 # EPICS_BASE usually appears last so other apps can override stuff:
 EPICS_BASE=$(EPICS_BASE_RELEASE)
-ETHER_IP=$(SHARE)/ether_ip-2-8
+ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-8
 
 MSI=$(EPICS_EXTENSIONS)/bin/$(EPICS_HOST_ARCH)/msi
