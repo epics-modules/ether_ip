@@ -1,0 +1,36 @@
+Sniffed from communication between RSLogix and PLC
+when "online":
+
+0A 02 20 02 24 01 - multi request
+
+06 00 - 6 items
+
+0E00 = 14 - offset to service #1
+1800 = 24 - offset to service #2
+2200 = 34 - offset to service #3
+3600 = 54 - offset to service #4
+4200 = 66 - offset to service #5
+4C00 = 76 - offset to service #6
+
+Service 1 @ count + 14
+03 02 20 01 24 01   - GetAttributeList Class 1, instance 1
+01 00 05 00         - Get attribute 5
+
+Service 2
+03 02 20 69 24 00   - ...  Class 0x69
+01 00 0B 00
+
+03 02 20 AC 24 01   - ...  Class 0xAC
+06 00
+01 00 02 00 03 00   - Attribs 1, 2, 3, 5, 7, 9
+05 00 07 00 09 00
+
+03 02 20 8E 24 01
+02 00
+03 00 08 00
+
+03 02 20 69 24 00
+01 00 09 00
+
+03 03 20 69 25 00 04 D8
+01 00 04 00
