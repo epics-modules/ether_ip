@@ -123,10 +123,10 @@ struct __TagInfo
     size_t     cip_r_response_size;/* byte-size of read response */
     size_t     cip_w_request_size; /* byte-size of write request */
     size_t     cip_w_response_size;/* byte-size of write response */
-    SEM_ID     data_lock;          /* see "locking" */
+    SEM_ID     data_lock;          /* see "locking" in drvEtherIP.c */
     size_t     data_size;          /* total size of data buffer */
     size_t     valid_data_size;    /* used portion of data, 0 for "invalid" */
-    bool       do_write;           /* set by device, cause driver to write */
+    bool       do_write;           /* set by device, causes driver to write */
     bool       is_writing;         /* set by driver when handling a write */
     CN_USINT   *data;              /* CIP data (type, raw data) */
     size_t     transfer_ticktime;  /* ticks needed for last transfer */
@@ -146,6 +146,9 @@ PLC *drvEtherIP_find_PLC(const char *PLC_name);
 
 TagInfo *drvEtherIP_add_tag(PLC *plc, double period,
                             const char *string_tag, size_t elements);
+/* Note: The data is already locked (data_lock taken)
+ * when the callback is called!
+ */
 void drvEtherIP_add_callback(PLC *plc, TagInfo *tag,
                              EIPCallback callback, void *arg);
 void drvEtherIP_remove_callback(PLC *plc, TagInfo *tag,

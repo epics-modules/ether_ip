@@ -100,6 +100,10 @@ typedef int bool;
  *  0: keep quiet
  */
 extern int EIP_verbosity;
+/* Should output go onto console
+ * or into mem_string_file ?
+ */
+extern bool EIP_use_mem_string_file;
 
 /* print if EIP_verbosity >= level */
 void EIP_printf(int level, const char *format, ...);

@@ -26,6 +26,9 @@
 #include "drvEtherIP.h"
 
 /* #define CATCH_MISSED_WRITE */
+#ifdef CATCH_MISSED_WRITE
+#include"mem_string_file.h"
+#endif
 
 
 /* Flags that pick special values instead of the tag's "value" */
@@ -135,6 +138,17 @@ static bool lock_data(const dbCommon *rec)
     return true;
 }
 
+/* Like lock_data, but w/o the lock
+ * (data_lock is already taken in callbacks)
+ */
+static bool check_data(const dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    return pvt && pvt->plc && pvt->tag && pvt->tag->scanlist &&
+        pvt->tag->valid_data_size > 0  &&
+        pvt->tag->elements > pvt->element;
+}
+
 /* Helper for (multi-bit) binary type records:
  * Get bits from driver, pack them into rval
  *
@@ -148,38 +162,38 @@ static bool lock_data(const dbCommon *rec)
 static bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
-    bool           ok;
-    size_t         i, element;
-    CN_UDINT       value, mask;
+    size_t         i, element = pvt->element;
+    CN_UDINT       value, mask = pvt->mask;
     
-    element = pvt->element;
-    mask    = pvt->mask;
     *rval   = 0;
-    ok = get_CIP_UDINT(pvt->tag->data, element, &value);
-    if (ok)
+    if (!get_CIP_UDINT(pvt->tag->data, element, &value))
     {
-        /* Fetch bits from BOOL array.
-         * First one directly (faster for BI case),
-         * rest in loop */
-        if (value & mask)
-            *rval = 1;
-        for (i=1/*!*/; i<bits; ++i)
-        {
-            mask <<= 1;
-            if (mask == 0) /* end of current UDINT ? */
-            {
-                mask = 1;
-                ++element;
-                ok = get_CIP_UDINT(pvt->tag->data, element, &value);
-                if (! ok)
-                    break;
-            }
-            if (value & mask)
-                *rval |= (unsigned long)1 << i;
-        }
+        EIP_printf(0, "EIP get_bits(%s), element %d failed\n",
+                   rec->name, element);
+        return false;
     }
-
-    return ok;
+    /* Fetch bits from BOOL array.
+     * #1 directly (faster for BI case), rest in loop */
+    if (value & mask)
+        *rval = 1;
+    for (i=1/*!*/; i<bits; ++i)
+    {
+        mask <<= 1;
+        if (mask == 0) /* end of current UDINT ? */
+        {
+            mask = 1;
+            ++element;
+            if (!get_CIP_UDINT(pvt->tag->data, element, &value))
+            {
+                EIP_printf(0, "EIP get_bits(%s), element %d failed\n",
+                           rec->name, element);
+                return false;
+            }
+        }
+        if (value & mask)
+            *rval |= (unsigned long)1 << i;
+    }
+    return true;
 }
 
 /* Pendant to get_bits */
@@ -264,82 +278,80 @@ static void check_ao_callback(void *arg)
     bool          process = false;
 
     /* Check if record's (R)VAL is current */
-    if (lock_data((dbCommon *)rec))
+    if (!check_data((dbCommon *)rec))
+        return;
+    if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
     {
-        if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
+        if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
+            (rec->udf || rec->val != dbl))
         {
-            if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
-                (rec->udf || rec->val != dbl))
+            if (rec->tpro)
+                printf("AO '%s': got %g from driver\n", rec->name, dbl);
+            if (pvt->special & SPCO_FORCE)
             {
                 if (rec->tpro)
-                    printf("AO '%s': got %g from driver\n", rec->name, dbl);
-                if (pvt->special & SPCO_FORCE)
-                {
-                    if (rec->tpro)
-                        printf("AO '%s': will re-write record's value %g\n",
-                               rec->name, rec->val);
-                }
-                else
-                {
-                    rec->val = rec->pval = dbl;
-                    rec->udf = false;
-                    if (rec->tpro)
-                        printf("AO '%s': updated record's value %g\n",
-                               rec->name, rec->val);
-                }
+                    printf("AO '%s': will re-write record's value %g\n",
+                           rec->name, rec->val);
+            }
+            else
+            {
+                rec->val = rec->pval = dbl;
+                rec->udf = false;
+                if (rec->tpro)
+                    printf("AO '%s': updated record's value %g\n",
+                           rec->name, rec->val);
+            }
+            process = true;
+        }
+    }
+    else
+    {
+        if (get_CIP_UDINT(pvt->tag->data, pvt->element, &udint) &&
+            (rec->udf || rec->rval != udint))
+        {
+            if (rec->tpro)
+                printf("AO '%s': got %lu from driver\n", rec->name, udint);
+            if (pvt->special & SPCO_FORCE)
+            {
+                if (rec->tpro)
+                    printf("AO '%s': will re-write record's rval 0x%X\n",
+                           rec->name, (unsigned int)rec->rval);
                 process = true;
             }
-        }
-        else
-        {
-            if (get_CIP_UDINT(pvt->tag->data, pvt->element, &udint) &&
-                (rec->udf || rec->rval != udint))
+            else
             {
+                /* back-convert raw value into val (copied from ao init) */
+                dbl = (double)udint + (double)rec->roff;
+                if (rec->aslo!=0.0)
+                    dbl *= rec->aslo;
+                dbl += rec->aoff;
+                switch (rec->linr)
+                {
+                    case menuConvertNO_CONVERSION:
+                        rec->val = rec->pval = dbl;
+                        rec->udf = false;
+                        process = true;
+                        break;
+                    case menuConvertLINEAR:
+                        dbl = dbl*rec->eslo + rec->eoff;
+                        rec->val = rec->pval = dbl;
+                        rec->udf = false;
+                        process = true;
+                        break;
+                    default:
+                        if (cvtRawToEngBpt(&dbl,rec->linr,rec->init,
+                                           (void *)&rec->pbrk,
+                                           &rec->lbrk)!=0)
+                            break; /* cannot back-convert */
+                        rec->val = rec->pval = dbl;
+                        rec->udf = false;
+                        process = true;
+                }
                 if (rec->tpro)
-                    printf("AO '%s': got %lu from driver\n", rec->name, udint);
-                if (pvt->special & SPCO_FORCE)
-                {
-                    if (rec->tpro)
-                        printf("AO '%s': will re-write record's rval 0x%X\n",
-                               rec->name, (unsigned int)rec->rval);
-                    process = true;
-                }
-                else
-                {
-                    /* back-convert raw value into val (copied from ao init) */
-                    dbl = (double)udint + (double)rec->roff;
-                    if (rec->aslo!=0.0)
-                        dbl *= rec->aslo;
-                    dbl += rec->aoff;
-                    switch (rec->linr)
-                    {
-                        case menuConvertNO_CONVERSION:
-                            rec->val = rec->pval = dbl;
-                            rec->udf = false;
-                            process = true;
-                            break;
-                        case menuConvertLINEAR:
-                            dbl = dbl*rec->eslo + rec->eoff;
-                            rec->val = rec->pval = dbl;
-                            rec->udf = false;
-                            process = true;
-                            break;
-                        default:
-                            if (cvtRawToEngBpt(&dbl,rec->linr,rec->init,
-                                               (void *)&rec->pbrk,
-                                               &rec->lbrk)!=0)
-                                break; /* cannot back-convert */
-                            rec->val = rec->pval = dbl;
-                            rec->udf = false;
-                            process = true;
-                    }
-                    if (rec->tpro)
-                        printf("--> val = %g\n", rec->val);
-                }
-                
+                    printf("--> val = %g\n", rec->val);
             }
+            
         }
-        semGive(pvt->tag->data_lock);
     }
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
@@ -355,46 +367,41 @@ static void check_bo_callback(void *arg)
     bool          process = false;
 
     /* Check if record's (R)VAL is current */
-    if (lock_data((dbCommon *) rec))
+    if (!check_data((dbCommon *) rec))
     {
-        if (get_bits((dbCommon *)rec, 1, &rval) &&
-            (rec->udf || rec->rval != rval))
+        EIP_printf(0, "check_bo_callback(%s): no data?\n", rec->name);
+        return;
+    }
+    if (get_bits((dbCommon *)rec, 1, &rval) &&
+        (rec->udf || rec->rval != rval))
+    {
+        if (rec->tpro)
+            printf("BO '%s': got %lu from driver\n", rec->name, rval);
+        if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
-            if (rec->tpro)
-                printf("BO '%s': got %lu from driver\n", rec->name, rval);
-            if (pvt->special & SPCO_FORCE)
-            {
-                if (rec->tpro)
-                    printf("BO '%s': will re-write record's value %u\n",
-                           rec->name, (unsigned int)rec->val);
-
-
-
-
 #ifdef CATCH_MISSED_WRITE
-                EIP_verbosity = 5;
+            printf("BO '%s': Caught an ignored write, stopping the log\n",
+                   rec->name);
+            msfPrintf("BO '%s': Caught an ignored write, stopping the log\n",
+                      rec->name);
+            msfPrintf("Record's value: %lu, tag's value: %lu\n",
+                      rec->rval, rval);
+            EIP_verbosity = 1;
 #endif
-
-
-
-
-
-
-                
-            }
-            else
-            {
-                /* back-convert rval into val */
-                rec->rval = rval;
-                rec->val  = (rec->rval==0) ? 0 : 1;
-                rec->udf = false;
-                if (rec->tpro)
-                    printf("BO '%s': updated record to tag, val = %u\n",
-                           rec->name, (unsigned int)rec->val);
-            }
-            process = true;
+            if (rec->tpro)
+                printf("BO '%s': will re-write record's value %u\n",
+                       rec->name, (unsigned int)rec->val);
         }
-        semGive(pvt->tag->data_lock);
+        else
+        {   /* back-convert rval into val */
+            rec->rval = rval;
+            rec->val  = (rec->rval==0) ? 0 : 1;
+            rec->udf = false;
+            if (rec->tpro)
+                printf("BO '%s': updated record to tag, val = %u\n",
+                       rec->name, (unsigned int)rec->val);
+        }
+        process = true;
     }
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
@@ -411,48 +418,47 @@ static void check_mbbo_callback(void *arg)
     bool          process = false;
 
     /* Check if record's (R)VAL is current */
-    if (lock_data ((dbCommon *) rec))
+    if (!check_data ((dbCommon *) rec))
+        return;
+    
+    if (get_bits ((dbCommon *)rec, rec->nobt, &rval) &&
+        (rec->udf || rec->rval != rval))
     {
-        if (get_bits ((dbCommon *)rec, rec->nobt, &rval) &&
-            (rec->udf || rec->rval != rval))
+        if (rec->tpro)
+            printf("MBBO '%s': got %lu from driver\n", rec->name, rval);
+        if (pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
-                printf("MBBO '%s': got %lu from driver\n", rec->name, rval);
-            if (pvt->special & SPCO_FORCE)
+                printf("MBBO '%s': will re-write record's rval 0x%X\n",
+                       rec->name, (unsigned int)rec->rval);
+        }
+        else
+        {   /* back-convert rval into val */
+            if (rec->sdef)
             {
-                if (rec->tpro)
-                    printf("MBBO '%s': will re-write record's rval 0x%X\n",
-                           rec->name, (unsigned int)rec->rval);
+                rec->val  = 65535;  /* initalize to unknown state*/
+                state_val = &rec->zrvl;
+                for (i=0; i<16; ++i)
+                {
+                    if (*state_val == rval)
+                    {
+                        rec->val = i;
+                        break;
+                    }
+                    state_val++;
+                }
+                rec->udf = false;
             }
             else
-            {   /* back-convert rval into val */
-                if (rec->sdef)
-                {
-                    rec->val  = 65535;  /* initalize to unknown state*/
-                    state_val = &rec->zrvl;
-                    for (i=0; i<16; ++i)
-                    {
-                        if (*state_val == rval)
-                        {
-                            rec->val = i;
-                            break;
-                        }
-                        state_val++;
-                    }
-                    rec->udf = false;
-                }
-                else
-                {
-                    /* the raw value is the desired val */
-                    rec->val = (unsigned short)rval;
-                    rec->udf = false;
-                }
-                if (rec->tpro)
-                    printf("--> val = %u\n", (unsigned int)rec->val);
+            {
+                /* the raw value is the desired val */
+                rec->val = (unsigned short)rval;
+                rec->udf = false;
             }
-            process = true;
+            if (rec->tpro)
+                printf("--> val = %u\n", (unsigned int)rec->val);
         }
-        semGive(pvt->tag->data_lock);
+        process = true;
     }
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
@@ -468,29 +474,28 @@ static void check_mbbo_direct_callback(void *arg)
     bool             process = false;
 
     /* Check if record's (R)VAL is current */
-    if (lock_data((dbCommon *) rec))
+    if (!check_data((dbCommon *) rec))
+        return;
+    
+    if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
+        (rec->udf || rec->rval != rval))
     {
-        if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
-            (rec->udf || rec->rval != rval))
+        if (rec->tpro)
+            printf("MBBODirect '%s': got %lu from driver\n",
+                   rec->name, rval);
+        if (pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
-                printf("MBBODirect '%s': got %lu from driver\n",
-                       rec->name, rval);
-            if (pvt->special & SPCO_FORCE)
-            {
-                if (rec->tpro)
-                    printf("MBBODirect '%s': re-write record's rval 0x%X\n",
-                           rec->name, (unsigned int)rec->rval);
-            }
-            else
-            {
-                rec->rval= rval;
-                rec->val = (unsigned int) rval;
-                rec->udf = false;
-            }
-            process = true;
+                printf("MBBODirect '%s': re-write record's rval 0x%X\n",
+                       rec->name, (unsigned int)rec->rval);
         }
-        semGive(pvt->tag->data_lock);
+        else
+        {
+            rec->rval= rval;
+            rec->val = (unsigned int) rval;
+            rec->udf = false;
+        }
+        process = true;
     }
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
@@ -1191,30 +1196,21 @@ static long bo_write(boRecord *rec)
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
         return status;
     }
-
     if (lock_data((dbCommon *)rec))
     {
-        if (get_bits((dbCommon *)rec, 1, &rval) &&
-            rec->rval != rval)
+        if (get_bits((dbCommon *)rec, 1, &rval)  &&  rec->rval != rval)
         {
             if (rec->tpro)
                 printf ("rec '%s': write %lu\n", rec->name, rec->rval);
-
-#ifdef CATCH_MISSED_WRITE
-            if (rec->rval)
-                EIP_verbosity = 10;
-            else
-                EIP_verbosity = 5;
-#endif
-            
-            
             ok = put_bits((dbCommon *)rec, 1, rec->rval);
         }
         semGive(pvt->tag->data_lock);
     }
     else
+    {
+        EIP_printf(0, "bo_write(%s): lock_data failed\n", rec->name);
         ok = false;
-    
+    }
     if (ok)
         rec->udf = FALSE;
     else

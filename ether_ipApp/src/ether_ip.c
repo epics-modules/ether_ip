@@ -14,6 +14,7 @@
 #ifndef vxWorks
 #include <memory.h>
 #endif
+#include"mem_string_file.h"
 
 static const CN_UINT __endian_test = 0x0001;
 #define is_little_endian (*((const CN_USINT*)&__endian_test))
@@ -181,6 +182,7 @@ static const CN_USINT *unpack(const CN_USINT *buffer,
 }
 
 int EIP_verbosity = 10;
+bool EIP_use_mem_string_file=0;
 
 /* printf with EIP_verbosity check */
 void EIP_printf(int level, const char *format, ...)
@@ -189,7 +191,10 @@ void EIP_printf(int level, const char *format, ...)
     if (level > EIP_verbosity)
         return;
     va_start(ap, format);
-    vfprintf(stderr, format, ap);
+    if (EIP_use_mem_string_file)
+        msfPrint(format, ap);
+    else
+        vfprintf(stderr, format, ap);
     va_end(ap);              
 }
 

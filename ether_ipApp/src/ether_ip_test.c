@@ -7,16 +7,16 @@
  * kasemir@lanl.gov
  */
 
-#include <memory.h>
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <time.h>
-#include "ether_ip.c"
+#include<memory.h>
+#include<stdio.h>
+#include<string.h>
+#include<stddef.h>
+#include<time.h>
+#include"ether_ip.c"
+#include"mem_string_file.c"
 //#ifdef _WIN32
 //#include "Win32Timer.h"
 //#endif
-
 
 #ifdef DEFINE_CONNECTED_METHODS
 
