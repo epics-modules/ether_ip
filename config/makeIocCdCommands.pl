@@ -40,8 +40,11 @@ if (-r "$release") {
             ($prefix,$post) = /(.*)\s*=\s*(.*)/;
         } else {
             $base = $applications{$macro};
+	    if ($base eq "") {
+		$base=$ENV{$macro};
+            }
             if ($base eq "") {
-                print "error: $macro was not previously defined\n";
+                die "error: $macro was not previously defined\n";
             } else {
                 $post = $base . $post;
             }

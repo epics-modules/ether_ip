@@ -4,6 +4,7 @@ eval 'exec perl -S $0 ${1+"$@"}'  # -*- Mode: perl -*-
     if $running_under_some_shell; # makeConfigAppInclude.pl
 
 use Cwd;
+use English;
 
 $arch = $ARGV[0];
 $outfile = $ARGV[1];
@@ -33,8 +34,11 @@ foreach $file (@files) {
             ($prefix,$post) = /(.*)\s*=\s*(.*)/;
         } else {
             $base = $applications{$macro};
+	    # If macro was defined in file-> use it
+	    # Else: try environment
+	    $base = $ENV{$macro} unless (length($base) > 0);
             if ($base eq "") {
-                #print "error: $macro was not previously defined\n";
+                print "error: $macro was not previously defined\n";
             } else {
                 $post = $base . $post;
             }
