@@ -1,5 +1,17 @@
 -*- outline -*-
 
+* 2002, 02-19 V1.3
+
+** Added "FORCE" option to output records
+Per default, output records scan when they are
+not writing a new value.
+If they notice that the PLC has a different value
+for the tag, teh record will adapt the tag's value.
+
+With the new force option, the output record will
+try to re-write until the PLC tag matches the
+value of the record.
+
 * 2001, 10-01 V1.2
 
 ** New driver option "drvEtherIP_default_rate"

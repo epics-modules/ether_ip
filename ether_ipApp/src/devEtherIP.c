@@ -25,22 +25,22 @@
 #include <mbboDirectRecord.h>
 #include "drvEtherIP.h"
 
-/* flags that pick special values instead of the tag's "value" */
+/* Flags that pick special values instead of the tag's "value" */
 typedef enum
 {
-    SPCO_VALUE, /* default */
-    SPCO_READ_SINGLE_ELEMENT,
-    SPCO_SCAN_PERIOD,
-    SPCO_BIT,
-    SPCO_PLC_ERRORS,
-    SPCO_PLC_TASK_SLOW,
-    SPCO_LIST_ERRORS,
-    SPCO_LIST_TICKS,
-    SPCO_LIST_SCAN_TIME,
-    SPCO_LIST_MIN_SCAN_TIME,
-    SPCO_LIST_MAX_SCAN_TIME,
-    SPCO_TAG_TRANSFER_TIME,
-    SPCO_INVALID
+    SPCO_READ_SINGLE_ELEMENT = (1<<0),
+    SPCO_SCAN_PERIOD         = (1<<1),
+    SPCO_BIT                 = (1<<2),
+    SPCO_FORCE               = (1<<3),
+    SPCO_PLC_ERRORS          = (1<<4),
+    SPCO_PLC_TASK_SLOW       = (1<<5),
+    SPCO_LIST_ERRORS         = (1<<6),
+    SPCO_LIST_TICKS          = (1<<7),
+    SPCO_LIST_SCAN_TIME      = (1<<8),
+    SPCO_LIST_MIN_SCAN_TIME  = (1<<9),
+    SPCO_LIST_MAX_SCAN_TIME  = (1<<10),
+    SPCO_TAG_TRANSFER_TIME   = (1<<11),
+    SPCO_INVALID             = (1<<12)
 } SpecialOptions;
 
 static struct
@@ -49,10 +49,10 @@ static struct
     size_t      len;
 } special_options[] =
 {
-  { "VALUE",               5 },
   { "E",                   1 },
   { "S ",                  2 }, /* note <space> */
   { "B ",                  2 }, /* note <space> */
+  { "FORCE",               5 }, /* Force output records to write when!=tag */
   { "PLC_ERRORS",         10 }, /* Connection error count for tag's PLC */
   { "PLC_TASK_SLOW",      13 }, /* How often scan task had no time to wait */
   { "LIST_ERRORS",        11 }, /* Error count for tag's list */
@@ -270,8 +270,20 @@ static void check_ao_callback(void *arg)
             {
                 if (rec->tpro)
                     printf("AO '%s': got %g from driver\n", rec->name, dbl);
-                rec->val = rec->pval = dbl;
-                rec->udf = false;
+                if (pvt->special & SPCO_FORCE)
+                {
+                    if (rec->tpro)
+                        printf("AO '%s': will re-write record's value %g\n",
+                               rec->name, rec->val);
+                }
+                else
+                {
+                    rec->val = rec->pval = dbl;
+                    rec->udf = false;
+                    if (rec->tpro)
+                        printf("AO '%s': updated record's value %g\n",
+                               rec->name, rec->val);
+                }
                 process = true;
             }
         }
@@ -282,34 +294,46 @@ static void check_ao_callback(void *arg)
             {
                 if (rec->tpro)
                     printf("AO '%s': got %lu from driver\n", rec->name, udint);
-                /* back-convert raw value into val (copied from ao init) */
-                dbl = (double)udint + (double)rec->roff;
-                if (rec->aslo!=0.0)
-                    dbl *= rec->aslo;
-                dbl += rec->aoff;
-                switch (rec->linr)
+                if (pvt->special & SPCO_FORCE)
                 {
-                    case menuConvertNO_CONVERSION:
-                        rec->val = rec->pval = dbl;
-                        rec->udf = false;
-                        process = true;
-                        break;
-                    case menuConvertLINEAR:
-                        dbl = dbl*rec->eslo + rec->eoff;
-                        rec->val = rec->pval = dbl;
-                        rec->udf = false;
-                        process = true;
-                        break;
-                    default:
-                        if (cvtRawToEngBpt(&dbl,rec->linr,rec->init,
-                                           (void *)&rec->pbrk,&rec->lbrk)!=0)
-                            break; /* cannot back-convert */
-                        rec->val = rec->pval = dbl;
-                        rec->udf = false;
-                        process = true;
+                    if (rec->tpro)
+                        printf("AO '%s': will re-write record's rval 0x%X\n",
+                               rec->name, (unsigned int)rec->rval);
+                    process = true;
                 }
-                if (rec->tpro)
-                    printf("--> val = %g\n", rec->val);
+                else
+                {
+                    /* back-convert raw value into val (copied from ao init) */
+                    dbl = (double)udint + (double)rec->roff;
+                    if (rec->aslo!=0.0)
+                        dbl *= rec->aslo;
+                    dbl += rec->aoff;
+                    switch (rec->linr)
+                    {
+                        case menuConvertNO_CONVERSION:
+                            rec->val = rec->pval = dbl;
+                            rec->udf = false;
+                            process = true;
+                            break;
+                        case menuConvertLINEAR:
+                            dbl = dbl*rec->eslo + rec->eoff;
+                            rec->val = rec->pval = dbl;
+                            rec->udf = false;
+                            process = true;
+                            break;
+                        default:
+                            if (cvtRawToEngBpt(&dbl,rec->linr,rec->init,
+                                               (void *)&rec->pbrk,
+                                               &rec->lbrk)!=0)
+                                break; /* cannot back-convert */
+                            rec->val = rec->pval = dbl;
+                            rec->udf = false;
+                            process = true;
+                    }
+                    if (rec->tpro)
+                        printf("--> val = %g\n", rec->val);
+                }
+                
             }
         }
         semGive(pvt->tag->data_lock);
@@ -335,12 +359,22 @@ static void check_bo_callback(void *arg)
         {
             if (rec->tpro)
                 printf("BO '%s': got %lu from driver\n", rec->name, rval);
-            /* back-convert rval into val */
-            rec->rval = rval;
-            rec->val  = (rec->rval==0) ? 0 : 1;
-            rec->udf = false;
-            if (rec->tpro)
-                printf("--> val = %u\n", (unsigned int)rec->val);
+            if (pvt->special & SPCO_FORCE)
+            {
+                if (rec->tpro)
+                    printf("BO '%s': will re-write record's value %u\n",
+                           rec->name, (unsigned int)rec->val);
+            }
+            else
+            {
+                /* back-convert rval into val */
+                rec->rval = rval;
+                rec->val  = (rec->rval==0) ? 0 : 1;
+                rec->udf = false;
+                if (rec->tpro)
+                    printf("BO '%s': updated record to tag, val = %u\n",
+                           rec->name, (unsigned int)rec->val);
+            }
             process = true;
         }
         semGive(pvt->tag->data_lock);
@@ -367,30 +401,38 @@ static void check_mbbo_callback(void *arg)
         {
             if (rec->tpro)
                 printf("MBBO '%s': got %lu from driver\n", rec->name, rval);
-            /* back-convert rval into val */
-            if (rec->sdef)
+            if (pvt->special & SPCO_FORCE)
             {
-                rec->val  = 65535;  /* initalize to unknown state*/
-                state_val = &rec->zrvl;
-                for (i=0; i<16; ++i)
-                {
-                    if (*state_val == rval)
-                    {
-                        rec->val = i;
-                        break;
-                    }
-                    state_val++;
-                }
-                rec->udf = false;
+                if (rec->tpro)
+                    printf("MBBO '%s': will re-write record's rval 0x%X\n",
+                           rec->name, (unsigned int)rec->rval);
             }
             else
-            {
-                /* the raw value is the desired val */
-                rec->val = (unsigned short)rval;
-                rec->udf = false;
+            {   /* back-convert rval into val */
+                if (rec->sdef)
+                {
+                    rec->val  = 65535;  /* initalize to unknown state*/
+                    state_val = &rec->zrvl;
+                    for (i=0; i<16; ++i)
+                    {
+                        if (*state_val == rval)
+                        {
+                            rec->val = i;
+                            break;
+                        }
+                        state_val++;
+                    }
+                    rec->udf = false;
+                }
+                else
+                {
+                    /* the raw value is the desired val */
+                    rec->val = (unsigned short)rval;
+                    rec->udf = false;
+                }
+                if (rec->tpro)
+                    printf("--> val = %u\n", (unsigned int)rec->val);
             }
-            if (rec->tpro)
-                printf("--> val = %u\n", (unsigned int)rec->val);
             process = true;
         }
         semGive(pvt->tag->data_lock);
@@ -417,9 +459,18 @@ static void check_mbbo_direct_callback(void *arg)
             if (rec->tpro)
                 printf("MBBODirect '%s': got %lu from driver\n",
                        rec->name, rval);
-            rec->rval= rval;
-            rec->val = (unsigned int) rval;
-            rec->udf = false;
+            if (pvt->special & SPCO_FORCE)
+            {
+                if (rec->tpro)
+                    printf("MBBODirect '%s': re-write record's rval 0x%X\n",
+                           rec->name, (unsigned int)rec->rval);
+            }
+            else
+            {
+                rec->rval= rval;
+                rec->val = (unsigned int) rval;
+                rec->udf = false;
+            }
             process = true;
         }
         semGive(pvt->tag->data_lock);
@@ -516,9 +567,10 @@ static long analyze_link(dbCommon *rec,
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     char           *p, *end;
     size_t         i, tag_len, last_element, bit=0;
+    unsigned long  mask;
     double         period = 0.0;
     bool           single_element = false;
-    SpecialOptions special = SPCO_VALUE;
+    SpecialOptions special = 0;
     
     if (! EIP_strdup(&pvt->link_text, link->value.instio.string,
                      strlen (link->value.instio.string)))
@@ -558,15 +610,18 @@ static long analyze_link(dbCommon *rec,
     /* Check for more flags */
     while ((p = find_token(end, &end)))
     {
-        for (i=1; i<SPCO_INVALID; ++i)
+        for (i=0, mask=1;
+             mask < SPCO_INVALID;
+             ++i, mask=mask<<1)
         {
             if (strncmp(p,
                         special_options[i].text,
                         special_options[i].len) == 0)
             {
-                if (i==SPCO_READ_SINGLE_ELEMENT)
-                        single_element = true;
-                else if (i==SPCO_SCAN_PERIOD)
+                special |= mask;
+                if (mask==SPCO_READ_SINGLE_ELEMENT)
+                    single_element = true;
+                else if (mask==SPCO_SCAN_PERIOD)
                 {
                     period = strtod(p+2, &end);
                     if (end==p || period==HUGE_VAL || period==-HUGE_VAL)
@@ -577,10 +632,9 @@ static long analyze_link(dbCommon *rec,
                         return S_db_badField;
                     }
                 }
-                else if (i==SPCO_BIT)
+                else if (mask==SPCO_BIT)
                 {
                     bit = strtod(p+2, &end);
-                    special = SPCO_BIT;
                     if (end==p || period==HUGE_VAL || period==-HUGE_VAL)
                     {
                         errlogPrintf("devEtherIP (%s): "
@@ -589,12 +643,10 @@ static long analyze_link(dbCommon *rec,
                         return S_db_badField;
                     }
                 }
-                else
-                    special = i;
                 break;
             }
         }
-        if (i == SPCO_INVALID)
+        if (mask >= SPCO_INVALID)
         {
             errlogPrintf("devEtherIP (%s): Invalid flag '%s' in link '%s'\n",
                          rec->name, p, pvt->link_text);
@@ -663,7 +715,7 @@ static long analyze_link(dbCommon *rec,
      * a) assume BOOL array (default)
      * b) non-BOOL, SPCO_BIT selected a bit in INT, DINT, ...
      */
-    if (bits>0 && special != SPCO_BIT)
+    if (bits>0 && !(special & SPCO_BIT))
     {
         /* For element>0, assume that it's a BOOL array,
          * so the data is packed into UDINTs (CIP "BITS").
@@ -856,18 +908,12 @@ static long ai_read(aiRecord *rec)
     ok = pvt && pvt->plc && pvt->tag && pvt->tag->scanlist;
     if (ok)
     {
-        switch (pvt->special)
-        {
-            case SPCO_VALUE:
-            case SPCO_READ_SINGLE_ELEMENT:
-                if (semTake(pvt->tag->data_lock, sysClkRateGet()) != OK)
-                {
-                    if (rec->sevr != INVALID_ALARM)
-                        errlogPrintf("devEtherIP (%s): no data_lock\n",
-                                     rec->name);
-                    ok = false;
-                    break;
-                }
+        /* Most common case: ai reads a tag from PLC */
+        if (pvt->special == 0  ||
+            pvt->special & SPCO_READ_SINGLE_ELEMENT)
+        {   
+            if (semTake(pvt->tag->data_lock, sysClkRateGet()) == OK)
+            {
                 if (pvt->tag->valid_data_size > 0 &&
                     pvt->tag->elements > pvt->element)
                 {
@@ -887,46 +933,62 @@ static long ai_read(aiRecord *rec)
                 else
                     ok = false;
                 semGive (pvt->tag->data_lock);
-                break;
-            case SPCO_PLC_ERRORS:
-                rec->val = (double) pvt->plc->plc_errors;
-                status = 2;
-                break;
-            case SPCO_PLC_TASK_SLOW:
-                rec->val = (double) pvt->plc->slow_scans;
-                status = 2;
-                break;
-            case SPCO_LIST_ERRORS:
-                rec->val = (double) pvt->tag->scanlist->list_errors;
-                status = 2;
-                break;
-            case SPCO_LIST_TICKS:
-                rec->val = (double) pvt->tag->scanlist->scan_ticktime;
-                status = 2;
-                break;
-            case SPCO_LIST_SCAN_TIME:
-                rec->val = (double) pvt->tag->scanlist->last_scan_ticks
-                           / sysClkRateGet();
-                status = 2;
-                break;
-            case SPCO_LIST_MIN_SCAN_TIME:
-                rec->val = (double) pvt->tag->scanlist->min_scan_ticks
-                            / sysClkRateGet();
-                status = 2;
-                break;
-            case SPCO_LIST_MAX_SCAN_TIME:
-                rec->val = (double) pvt->tag->scanlist->max_scan_ticks
-                            / sysClkRateGet();
-                status = 2;
-                break;
-            case SPCO_TAG_TRANSFER_TIME:
-                rec->val = (double) pvt->tag->transfer_ticktime
-                            / sysClkRateGet();
-                status = 2;
-                break;
-            default:
+            }
+            else
+            {
+                if (rec->sevr != INVALID_ALARM)
+                    errlogPrintf("devEtherIP (%s): no data_lock\n",
+                                 rec->name);
                 ok = false;
+            }
         }
+        /* special cases: ai reads driver stats */
+        else if (pvt->special & SPCO_PLC_ERRORS)
+        {
+            rec->val = (double) pvt->plc->plc_errors;
+            status = 2;
+        }
+        else if (pvt->special & SPCO_PLC_TASK_SLOW)
+        {
+            rec->val = (double) pvt->plc->slow_scans;
+            status = 2;
+        }
+        else if (pvt->special & SPCO_LIST_ERRORS)
+        {
+            rec->val = (double) pvt->tag->scanlist->list_errors;
+            status = 2;
+        }
+        else if (pvt->special & SPCO_LIST_TICKS)
+        {
+            rec->val = (double) pvt->tag->scanlist->scan_ticktime;
+            status = 2;
+        }
+        else if (pvt->special & SPCO_LIST_SCAN_TIME)
+        {
+            rec->val = (double) pvt->tag->scanlist->last_scan_ticks
+                / sysClkRateGet();
+            status = 2;
+        }
+        else if (pvt->special & SPCO_LIST_MIN_SCAN_TIME)
+        {
+            rec->val = (double) pvt->tag->scanlist->min_scan_ticks
+                / sysClkRateGet();
+            status = 2;
+        }
+        else if (pvt->special & SPCO_LIST_MAX_SCAN_TIME)
+        {
+            rec->val = (double) pvt->tag->scanlist->max_scan_ticks
+                / sysClkRateGet();
+            status = 2;
+        }
+        else if (pvt->special & SPCO_TAG_TRANSFER_TIME)
+        {
+            rec->val = (double) pvt->tag->transfer_ticktime
+                / sysClkRateGet();
+            status = 2;
+        }
+        else
+            ok = false;
     }
     
     if (ok)

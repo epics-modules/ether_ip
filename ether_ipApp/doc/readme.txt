@@ -401,6 +401,70 @@ the driver thread will notice the "update" flag and write to the PLC.
 Consequently you adjust the write latency when you specify the scan
 rate of the driver thread.
 
+*** Dropped messages
+The EtherIP driver uses TCP. So unless the TCP layer reports
+errors, all messages to the PLC should eventually reach the PLC.
+And unless the PLC reports an error in response to a write request,
+the write request should actually change the affected PLC tag.
+
+In practice, Herb Strong and Pam Gurd (ORNL) noticed that
+some write requests do not reach the PLC.
+It is unclear, when this starts to happen
+(certain number of network packages per second?).
+The cause seems to be between the ControlLogix ENET module
+and the ControlLogix Controller. Both use ControlNet
+to communication via the ControlLogix backplane.
+Though TCP shows no errors and ControlNet is supposed to
+be reliable and deterministic, some write requests
+get dropped on the way from ENET to the controller.
+
+There is no error message for the driver to notice this,
+and no known threshold that causes this to happen.
+
+*** "FORCE" Flag
+Whenever an output record is processed, it will
+update the driver's copy of a tag and mark it for "write".
+When the record is not processed, the driver will read the
+tag from the PLC and update the record whenever there is
+a discrepency between the tag read from the PLC
+and the record.
+This way, both the IOC and e.g. a PanelView display
+can change the same PLC tag. Changes from "one" source
+are reflected on the respective "other" side.
+
+In theory. In practice, some of the write requests seem
+to get lost because of the "dropped messages" syndrome (see above).
+When you set the "TPRO" flag of the record, a write
+request might end up like this:
+	rec 'Test_HPRF:Xmtr1:FilOff_Cmd': write 1
+	BO 'Test_HPRF:Xmtr1:FilOff_Cmd': got 0 from driver
+Even though we just wrote "1", the tag still reflects "0".
+With the default behavior, the record will change back to "0"
+which is very confusing with e.g. command push buttons:
+Operator presses button, button immediately pops back.
+
+The "FORCE" flag will change this behavior:
+When the driver notices a discrepency, it will NOT
+change the record but simply re-process it.
+This causes the IOC to write to the tag on the PLC
+again and again until the tag on the PLC matches
+the value of the record. The record tries to "force"
+its value into the tag.
+With TPRO, it looks like this:
+     rec 'Test_HPRF:Xmtr1:FilOff_Cmd': write 1
+     BO 'Test_HPRF:Xmtr1:FilOff_Cmd': got 0 from driver
+     --> will re-write record's value 1                  
+
+Again: In theory, this flag should not be necessary.
+When the driver sends a write command to the PLC
+and there is no TCP error, the PLC should get the
+command and change the tag as per the write command.
+In reality, the PLC has been known to not comply:
+Even though there is no TCP communication error,
+so the write command reached at least the ControlLogix
+ENET module, the tag on the PLC might not change.
+The FORCE flag is a hack for this situation.
+
 *** Arrays
 When writing array tags, a single ao record (or bo, mbbo, ...)
 is connected to a single element of the array.
