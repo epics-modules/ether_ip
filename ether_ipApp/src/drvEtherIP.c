@@ -706,9 +706,6 @@ static void PLC_scan_task(PLC *plc)
     eip_bool          transfer_ok, reset_next_schedule;
     
     quantum = epicsThreadSleepQuantum();
-
-printf("Quantum: %g secs\n", quantum);
-
     timeout = (double)plc->connection.millisec_timeout / 1000.0;
     if (timeout < EIP_MIN_CONN_TIMEOUT)
         timeout = EIP_MIN_CONN_TIMEOUT;    

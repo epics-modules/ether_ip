@@ -24,15 +24,15 @@ Symptoms include:
   PLC, which kept the network load within 1% in a test
   in my office.
  
-The CPU usage of the driver thread is now back to 0%
-for test.db.
-The "scan task slow" messages are almost completly gone
-under vxWorks w/ R3.13.9, where the "epicsTimeStamp" emulation
-uses VX ticks.
+The CPU usage of the driver thread in the "spy" report
+is now back to 0% for test.db, sometimes going up to 3%.
+The "scan task slow" messages are almost completely gone
+under vxWorks w/ R3.13.9, where the "epicsTimeStamp" compatibility
+routines use VX ticks.
 Under R3.14, the epicsTime.. and epicsThreadSleep.. routines
 end up converting between VX ticks, the wallclock, and back.
 As a result, the scheduling isn't that perfect. Even after
-condering the epicsThreadSleepQuantum, the "scan thread slow"
+considering the epicsThreadSleepQuantum, the "scan thread slow"
 count can increment every few minutes.
 All that means is that a scan list has been due for 1 or two
 VX ticks (typically 0 ... 0.03 secs) and the driver overslept.
