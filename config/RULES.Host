@@ -1,0 +1,3 @@
+#RULES.Host
+
+include $(EPICS_BASE)/config/RULES.Host
