@@ -29,6 +29,7 @@ double epicsTimeDiffInSeconds(epicsTimeStamp *B, epicsTimeStamp *A);
 int epicsTimeLessThan(epicsTimeStamp *A, epicsTimeStamp *B);
 int epicsTimeLessThanEqual(epicsTimeStamp *A, epicsTimeStamp *B);
 void epicsTimeAddSeconds(epicsTimeStamp *T, double secs);
+double epicsThreadSleepQuantum();
 void epicsThreadSleep(double secs);
 
 /* For event and mutex */ 

@@ -8,19 +8,36 @@ so that you can see the current version at runtime via
 drvEtherIP_report.
 
 * 2004, 3/17 V2.5
-Timing was wrong under R3.13, keeping the driver thread
-from sleeping.
-Symptoms when using the "test.db" included with the driver
-(9 tags, some of them arrays, connected to 28 records,
- one scan list for 1 sec and one for 0.1 secs):
+The timing was wrong under R3.13, keeping the driver thread
+from sleeping. The code always uses the R3.14-type epicsTimeStamp,
+epicsTimeGetCurrent, epicsThreadSleep etc.  When running under
+R3.13, compatibility code implements the missing R3.14 routines.
+Those compatibility routines contained a pretty dumb error after the
+deadlock-fix from V2.4.
+
+Symptoms include:
 - driver thread used a lot of CPU in the "spy" report.
-  It required about 14%, now it's back to 0%.
-- Continuous "scan task slow" messages with
-  EIP_verbosity >= 8, "scan thread slow count" in
-  "drvEtherIP_report 3" would increment all the time.
-  Now it's back to hardly any under vxWorks w/ R3.13.9.
-- Possible side effects include "Transmit error!"
-  messages from the kernel.
+- The "scan thread slow" count in the drvEtherIP_report
+  would increment by hundreds per second.
+- All that kept the driver thread from using 100% of the
+  CPU and flooding the network was the slow response of the
+  PLC, which kept the network load within 1% in a test
+  in my office.
+ 
+The CPU usage of the driver thread is now back to 0%
+for test.db.
+The "scan task slow" messages are almost completly gone
+under vxWorks w/ R3.13.9, where the "epicsTimeStamp" emulation
+uses VX ticks.
+Under R3.14, the epicsTime.. and epicsThreadSleep.. routines
+end up converting between VX ticks, the wallclock, and back.
+As a result, the scheduling isn't that perfect. Even after
+condering the epicsThreadSleepQuantum, the "scan thread slow"
+count can increment every few minutes.
+All that means is that a scan list has been due for 1 or two
+VX ticks (typically 0 ... 0.03 secs) and the driver overslept.
+Compared to the network delays of talking to the PLC, that's
+neglectable and not worth reverting to vxWorks-only code.
 
 * 2004, 3/2 V2.4
 Review of the R3.14 changes.

@@ -29,6 +29,11 @@ void epicsTimeAddSeconds(epicsTimeStamp *T, double secs)
     *T += secs * sysClkRateGet();
 }
 
+double epicsThreadSleepQuantum()
+{
+    return 1.0/sysClkRateGet();
+}
+
 void epicsThreadSleep(double secs)
 {
     taskDelay((int)(secs * sysClkRateGet()));

@@ -702,9 +702,13 @@ static void PLC_scan_task(PLC *plc)
 {
     ScanList *list;
     epicsTimeStamp    next_schedule, start_time, end_time;
-    double            timeout, delay;
+    double            timeout, delay, quantum;
     eip_bool          transfer_ok, reset_next_schedule;
     
+    quantum = epicsThreadSleepQuantum();
+
+printf("Quantum: %g secs\n", quantum);
+
     timeout = (double)plc->connection.millisec_timeout / 1000.0;
     if (timeout < EIP_MIN_CONN_TIMEOUT)
         timeout = EIP_MIN_CONN_TIMEOUT;    
@@ -775,14 +779,10 @@ static void PLC_scan_task(PLC *plc)
         epicsTimeGetCurrent(&start_time);
         delay = epicsTimeDiffInSeconds(&next_schedule, &start_time);
     }    
-    /* Sleep until next turn.
-     * On Unix, the timing isn't that exact.
-     * On vxWorks, the default Ticks are quite coarse, too.
-     * So ignore delay==0, but report when we're getting behind.
-     */
+    /* Sleep until next turn. */
     if (delay > 0.0)
         epicsThreadSleep(delay);
-    else if (delay < 0.0)
+    else if (delay <= -quantum)
     {
         EIP_printf(8, "drvEtherIP scan task slow, %g sec delay\n", delay);
         ++plc->slow_scans; /* hmm, "plc" not locked... */
