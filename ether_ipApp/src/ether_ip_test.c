@@ -306,7 +306,7 @@ void usage(const char *progname)
 int main (int argc, const char *argv[])
 {
     EIPConnection   c;
-    const char      *ip = "snsioc1";
+    const char      *ip = "192.168.0.50";
     unsigned short  port = 0xAF12;
     int             slot = 0;
     size_t          timeout_ms  = 5000;

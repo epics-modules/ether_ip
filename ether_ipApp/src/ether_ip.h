@@ -16,11 +16,12 @@
 #ifndef NO_EPICS
 #include"epicsVersion.h"
 #endif
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
-#include "osdSock.h"
-#else
-/* begin 3.13 settings */
 
+
+/* The socket compatibility stuff is stolen from R3.13 osiSock.h.
+ * The R3.14 osiSock is a tad different, so we use neither "as is"
+ * but have it all in here.
+ */
 /* sys-independ. socket stuff, basically stolen from osiSock.h  */
 #ifdef _WIN32
 #include <winsock2.h>
@@ -76,6 +77,7 @@ typedef int               SOCKET;
 #include <unistd.h>
 #include <errno.h>    
 #include <netinet/in.h>    
+#include <netinet/tcp.h>
 #include <arpa/inet.h>    
 #include <netdb.h>    
 typedef int               SOCKET;
@@ -94,8 +96,6 @@ typedef int               SOCKET;
 
 /* end of Unix settings */
 #endif
-#endif
-/* end 3.13 settings */
 #endif
 
 typedef int eip_bool;
