@@ -1,7 +1,12 @@
-record(calc, "ramp") {
-     field (SCAN, "1 second")
-     field(CALC,"A>=B?0:A+1")
-     field(INPA,"ramp.VAL")
+record(calc, "$(user):ramp")
+{
+     field(DESC, "Random Number")
+     field(SCAN, ".1 second")
+     field(EGU,"flueps")
+     field(CALC,"A>=B?0:A+0.5*RNDM")
+     field(INPA,"$(user):ramp.VAL")
      field(INPB,"10")
-     field(HOPR,"10")
+     field(PREC,"4")
+     field(LOPR,"0.0")
+     field(HOPR,"10.0")
 }

@@ -1,0 +1,87 @@
+
+record(ao, "$(user):test1")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@plc1 DINTs[1] S 1")
+	field(HOPR, "10.0")
+	field(LOPR, "0.0")
+}
+
+record(ao, "$(user):test2")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@plc1 DINTs[2] S 1")
+	field(HOPR, "10.0")
+	field(LOPR, "0.0")
+}
+
+record(ao, "$(user):test9")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@plc1 DINTs[9] S 1")
+	field(HOPR, "10.0")
+	field(LOPR, "0.0")
+}
+
+record(ai, "$(user):test9_rb")
+{
+	field(SCAN, ".1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 DINTs[9] S 1")
+	field(HOPR, "10.0")
+	field(LOPR, "0.0")
+}
+
+
+record(mbbi, "$(user):tmbbi")
+{
+	field(SCAN, ".1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 DINTs[4] E")
+	field(NOBT, "3")
+	field(ZRVL, "0")
+	field(ONVL, "1")
+	field(TWVL, "2")
+	field(THVL, "3")
+	field(FRVL, "4")
+	field(FVVL, "5")
+	field(SXVL, "6")
+	field(SVVL, "7")
+	field(ZRST, "Zero-Zero-Zero")
+	field(ONST, "Zero-Zero- One")
+	field(TWST, "Zero-One -Zero")
+	field(THST, "Zero-One - One")
+	field(FRST, "One -Zero-Zero")
+	field(FVST, "One -Zero- One")
+	field(SXST, "One -One -Zero")
+	field(SVST, "One -One - One")
+}
+
+record(mbbo, "$(user):tmbbo")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@plc1 DINTs[4] E S 0.2")
+	field(NOBT, "3")
+	field(ZRVL, "0")
+	field(ONVL, "1")
+	field(TWVL, "2")
+	field(THVL, "3")
+	field(FRVL, "4")
+	field(FVVL, "5")
+	field(SXVL, "6")
+	field(SVVL, "7")
+	field(ZRST, "Zero-Zero-Zero")
+	field(ONST, "Zero-Zero- One")
+	field(TWST, "Zero-One -Zero")
+	field(THST, "Zero-One - One")
+	field(FRST, "One -Zero-Zero")
+	field(FVST, "One -Zero- One")
+	field(SXST, "One -One -Zero")
+	field(SVST, "One -One - One")
+}
+
+

@@ -27,6 +27,7 @@ DB += mbbi.db
 DB += mbbo.db
 DB += ramp.db
 DB += stat.db 
+DB += test.db 
 
 #----------------------------------------------------
 # Declare template files which do not show up in DB
