@@ -1609,9 +1609,7 @@ static eip_bool EIP_init_and_connect (EIPConnection *c,
     struct sockaddr_in addr;
     struct timeval timeout;
     unsigned long *addr_p;
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
     int flag = true;
-#endif
                 
     memset (c, 0, sizeof (EIPConnection));
     c->transfer_buffer_limit = EIP_BUFFER_LIMIT;
@@ -1641,7 +1639,6 @@ static eip_bool EIP_init_and_connect (EIPConnection *c,
             return false;
         }
     }
-
     /* Create socket and set it to no-delay */
     c->sock = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (c->sock == INVALID_SOCKET)
@@ -1650,28 +1647,24 @@ static eip_bool EIP_init_and_connect (EIPConnection *c,
         c->sock = 0;
         return false;
     }
-#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
-    if (setsockopt (c->sock, IPPROTO_TCP, TCP_NODELAY,
-                    (char *) &flag, sizeof ( flag )) < 0)
+    if (setsockopt(c->sock, IPPROTO_TCP, TCP_NODELAY,
+                   (char *) &flag, sizeof ( flag )) < 0)
     {
-        EIP_printf (2, "EIP cannot set socket option to TCP_NODELAY\n");
-        socket_close (c->sock);
+        EIP_printf(2, "EIP cannot set socket option to TCP_NODELAY\n");
+        socket_close(c->sock);
         c->sock = 0;
         return false;
     }
-#endif
-    if (connectWithTimeout (c->sock, (struct sockaddr *)&addr,
-                            sizeof (addr), &timeout) != 0)
+    if (connectWithTimeout(c->sock, (struct sockaddr *)&addr,
+                           sizeof (addr), &timeout) != 0)
     {
         EIP_printf (3, "EIP cannot connect to %s:0x%04X\n", ip_addr, port);
         socket_close (c->sock);
         c->sock = 0;
         return false;
     }
-
     EIP_printf (9, "EIP connected to %s:0x%04X on socket %d\n",
                 ip_addr, port, c->sock);
-
     return true;
 }
 

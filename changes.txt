@@ -7,6 +7,21 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2004, 3/17 V2.5
+Timing was wrong under R3.13, keeping the driver thread
+from sleeping.
+Symptoms when using the "test.db" included with the driver
+(9 tags, some of them arrays, connected to 28 records,
+ one scan list for 1 sec and one for 0.1 secs):
+- driver thread used a lot of CPU in the "spy" report.
+  It required about 14%, now it's back to 0%.
+- Continuous "scan task slow" messages with
+  EIP_verbosity >= 8, "scan thread slow count" in
+  "drvEtherIP_report 3" would increment all the time.
+  Now it's back to hardly any under vxWorks w/ R3.13.9.
+- Possible side effects include "Transmit error!"
+  messages from the kernel.
+
 * 2004, 3/2 V2.4
 Review of the R3.14 changes.
 

@@ -5,12 +5,14 @@ include $(TOP)/config/CONFIG_APP
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 
 SRCS.c += ../dl_list.c
+SRCS.c += ../R314Compat.c
 SRCS.c += ../ether_ip.c
 SRCS.c += ../drvEtherIP.c
 SRCS.c += ../devEtherIP.c
 SRCS.c += ../mem_string_file.c
 
 LIBOBJS += dl_list.o
+LIBOBJS += R314Compat.o
 LIBOBJS += ether_ip.o
 LIBOBJS += drvEtherIP.o
 LIBOBJS += devEtherIP.o

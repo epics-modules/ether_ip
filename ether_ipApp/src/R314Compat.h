@@ -23,11 +23,13 @@
 #include <taskLib.h>
  
 /* For timing: all times in seconds */
-#define epicsTimeStamp              double
-#define epicsTimeGetCurrent(A)      (*(A)=(double)tickGet()/sysClkRateGet())
-#define epicsTimeDiffInSeconds(B,A) (*(B) - *(A))
-#define epicsTimeLessThan(A,B)      (*(A) < *(B))
-#define epicsTimeAddSeconds(T,S)    (*(T) += (S))
+typedef ULONG epicsTimeStamp;
+void epicsTimeGetCurrent(epicsTimeStamp *s);
+double epicsTimeDiffInSeconds(epicsTimeStamp *B, epicsTimeStamp *A);
+int epicsTimeLessThan(epicsTimeStamp *A, epicsTimeStamp *B);
+int epicsTimeLessThanEqual(epicsTimeStamp *A, epicsTimeStamp *B);
+void epicsTimeAddSeconds(epicsTimeStamp *T, double secs);
+void epicsThreadSleep(double secs);
 
 /* For event and mutex */ 
 #define epicsMutexId         SEM_ID
@@ -38,19 +40,7 @@
 #define epicsMutexUnlock     semGive
 #define epicsMutexLockOK     OK
 #define epicsMutexLock(A)    semTake(A,WAIT_FOREVER)
-#define epicsMutexTryLock(A) semTake(A,NO_WAIT)
-/*
-#define epicsEventId            SEM_ID
-#define epicsEventWaitStatus    int
-#define epicsEventWaitOK        OK
-#define epicsEventCreate               semMCreate
-#define epicsEventDestroy              semDelete
-#define epicsEventWaitWithTimeout      semTake
-#define epicsEventSignal               semGive
-*/
-
 /* For threads */
-#define epicsThreadSleep(A)     taskDelay((int)((A) * sysClkRateGet()))
 #define epicsThreadId           int
  
 /* Parameters for scan task, one per PLC.

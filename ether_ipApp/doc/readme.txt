@@ -107,6 +107,10 @@ and the name that the driver uses (plc1) are all related but different!
     # EtherIP driver verbosity, 0=silent, up to 10:
     EIP_verbosity=4
 
+NOTE for EPICS R3.14 Soft-IOCs:
+Replace variable assignments like "EIP_verbosity=4"
+by function calls like "EIP_verbosity(4)".
+
 4) Tell EPICS Database about Driver/Device
 To inform EPICS of this new driver/device, a DBD file is used.
 ether_ip.dbd looks like this:
@@ -379,8 +383,8 @@ notices that it's already time to process the list again. Since all
 delays are specified in vxWorks ticks (3.13) or seconds (3.14), defaulting 
 to 60 ticks per second (3.13) or 1 second (3.14), this scheduling is rather 
 coarse. With all the other task scheduling going on and ethernet delays, 
-PLC_TASK_SLOW will increment quite often without a noticeable impact on the 
-data (no time-outs, no old data).
+PLC_TASK_SLOW might increment every once in a while without a
+noticeable impact on the data (no time-outs, no old data).
 
 * ao, Analog Output Record
 Like analog input, tags of type REAL, INT, DINT, BOOL are supported as

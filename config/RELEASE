@@ -10,4 +10,4 @@
 # Add your declarations here
 
 EPICS_BASE=$(EPICS_BASE_RELEASE)
-ETHER_IP=$(SHARE_RELEASE)/ether_ip/current
+ETHER_IP=$(SHARE_RELEASE)/ether_ip/devel

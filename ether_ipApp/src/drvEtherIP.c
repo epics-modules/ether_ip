@@ -179,8 +179,7 @@ static void free_TagInfo(TagInfo *info)
 void epicsTimeToStrftime(char *txt, size_t len, const char *fmt,
                          const epicsTimeStamp *stamp)
 {
-    /* TODO: Would be nice to show time/date? */
-    sprintf(txt, "%f secs", (double)(*stamp));
+    sprintf(txt, "%f secs", ((double)*stamp)/sysClkRateGet());
 }
 #endif
 
@@ -706,12 +705,10 @@ static void PLC_scan_task(PLC *plc)
     double            timeout, delay;
     eip_bool          transfer_ok, reset_next_schedule;
     
-    timeout = plc->connection.millisec_timeout / 1000;
+    timeout = (double)plc->connection.millisec_timeout / 1000.0;
     if (timeout < EIP_MIN_CONN_TIMEOUT)
-        timeout = EIP_MIN_CONN_TIMEOUT;
-    
+        timeout = EIP_MIN_CONN_TIMEOUT;    
   scan_loop: /* --------- The Scan Loop for one PLC -------- */
-    reset_next_schedule = true;
     if (epicsMutexLock(plc->lock) != epicsMutexLockOK)
     {
         EIP_printf(1, "drvEtherIP scan task for PLC '%s'"
@@ -722,23 +719,23 @@ static void PLC_scan_task(PLC *plc)
     {   /* don't rush since connection takes network bandwidth */
         epicsMutexUnlock(plc->lock);
         EIP_printf(2, "drvEtherIP: PLC '%s' is disconnected\n", plc->name);
-        delay = timeout;
-        epicsThreadSleep(delay);
+        epicsThreadSleep(timeout);
         goto scan_loop;
     }
+    reset_next_schedule = true;
+    epicsTimeGetCurrent(&start_time);
     for (list = DLL_first(ScanList,&plc->scanlists);
          list;  list = DLL_next(ScanList,list))
     {
         if (! list->enabled)
             continue;
-        epicsTimeGetCurrent(&start_time);
-        if (epicsTimeLessThan(&list->scheduled_time, &start_time))
+        if (epicsTimeLessThanEqual(&list->scheduled_time, &start_time))
         {
-            list->scan_time = start_time;
+            epicsTimeGetCurrent(&list->scan_time);
             transfer_ok = process_ScanList(&plc->connection, list);
             epicsTimeGetCurrent(&end_time);
-            list->last_scan_time = epicsTimeDiffInSeconds(&end_time,
-                                                          &start_time);
+            list->last_scan_time =
+                epicsTimeDiffInSeconds(&end_time, &list->scan_time);
             /* update statistics */
             if (list->last_scan_time > list->max_scan_time)
                 list->max_scan_time = list->last_scan_time;
@@ -747,11 +744,11 @@ static void PLC_scan_task(PLC *plc)
                 list->min_scan_time = list->last_scan_time;
             if (transfer_ok) /* re-schedule exactly */
             {
-                list->scheduled_time = start_time;
+                list->scheduled_time = list->scan_time;
                 epicsTimeAddSeconds(&list->scheduled_time, list->period);
             }
             else
-            {   /* delay: ignore extra due to error/timeout */
+            {   /* end_time+fixed delay, ignore extra due to error */
                 list->scheduled_time = end_time;
                 epicsTimeAddSeconds(&list->scheduled_time, timeout);
                 ++list->list_errors;
@@ -761,7 +758,7 @@ static void PLC_scan_task(PLC *plc)
                 goto scan_loop;
             }
         }
-        /* Update time for closest list */
+        /* Update time for list that's due next */
         if (reset_next_schedule ||
             epicsTimeLessThan(&list->scheduled_time, &next_schedule))
         {
@@ -778,10 +775,14 @@ static void PLC_scan_task(PLC *plc)
         epicsTimeGetCurrent(&start_time);
         delay = epicsTimeDiffInSeconds(&next_schedule, &start_time);
     }    
-    /* sleep until next turn */
+    /* Sleep until next turn.
+     * On Unix, the timing isn't that exact.
+     * On vxWorks, the default Ticks are quite coarse, too.
+     * So ignore delay==0, but report when we're getting behind.
+     */
     if (delay > 0.0)
         epicsThreadSleep(delay);
-    else if (delay <= 0.0) /* no time to spare, getting behind: */
+    else if (delay < 0.0)
     {
         EIP_printf(8, "drvEtherIP scan task slow, %g sec delay\n", delay);
         ++plc->slow_scans; /* hmm, "plc" not locked... */
@@ -899,6 +900,8 @@ long drvEtherIP_report(int level)
     EIPIdentityInfo *ident;
     ScanList *list;
     eip_bool have_drvlock, have_PLClock;
+    epicsTimeStamp now;
+    char tsString[50];
 
     if (level <= 0)
     {
@@ -949,6 +952,10 @@ long drvEtherIP_report(int level)
                     taskIdVerify(plc->scan_task_id) != OK   ? "-dead-" :
 #endif
                     "running"));
+            epicsTimeGetCurrent(&now);
+            epicsTimeToStrftime(tsString, sizeof(tsString),
+                                "%Y/%m/%d %H:%M:%S.%04f", &now); 
+            printf("  Now                   : %s\n", tsString);
             have_PLClock = epicsMutexLock(plc->lock) == epicsMutexLockOK;
             if (! have_PLClock)
                 printf("   CANNOT GET PLC'S LOCK!\n");
