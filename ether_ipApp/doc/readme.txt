@@ -903,6 +903,46 @@ For binary records, we assume that the 5th _bit_ should be addressed.
 Therefore the first element (bits 0-31) is read and the single
 bit number 5 in there returned.
 
+* Message '<channel xxx> already writing'
+This message is a result of how the device & driver support writes
+to the PLC.
+Remember that even _output_ records are periodically _read_ by the
+driver, and in case the value of the tag on the PLC differs from
+what's in the record, the record gets updated & processed.
+Most of the time, the tag is thus read, the result matches what's
+in the record, and nothing else happens.
+When on the other hand an output record is updated via ChannelAccess
+or database processing, the device support for this record type
+deposits the new value to be written in the driver's tag table
+(the entry for that tag or element of an array tag), and marks the tag
+to be written.
+The next time around in the driver scan task, the driver recognizes that
+the tag should be written instead of read, and writes the tag to the PLC,
+and resets the 'please write' flag, so the next time around, we're back
+to reading the tag.
+If you have various records all associated with elements of an array tag,
+and these records get processed at about the same time, the following can happen:
+Record A processes, updates array element Na of the array tag,
+and marks the array to be written.
+If now records B, C, ... process, updating array elements Nb, Nc, ...,
+(doesn't matter if all the Nx are different or not),
+the array tag has already been marked for writing, and if the EIP_verbosity
+is high enough, you get the 'already writing' message.
+Most of the time, this is not a problem.
+If the affected records process at about the same time, it's to be expected,
+and you can simply set EIP_verbosity=5 or lower to hide the message.
+If, on the other hand, you would have expected the driver to handle the
+'write' between record processings, this would indicate a problem.
+Example:
+The one and only output record with OUT="@plc tagname S 5"
+configures the driver to scan the 'tagname' every 5 seconds.
+If you now process the record every second by e.g. entering
+new value via ChannelAccess, you'll see about 4 'already writing' 
+messages, because the driver will only write every 5 seconds.
+But if you only process the record every 10 seconds, you should
+see no message, because the last new value should have been written
+by the time you enter a new value.
+
 * Files
 ether_ip.[ch]    EtherNet/IP protocol
 dl_list*         Double-linked list, used by the following
