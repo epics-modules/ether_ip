@@ -853,6 +853,11 @@ long drvEtherIP_report(int level)
     
     printf("drvEtherIP V%d.%d report, -*- outline -*-\n",
            ETHERIP_MAYOR, ETHERIP_MINOR);
+    if (drvEtherIP_private.lock == 0)
+    {
+        printf(" drvEtherIP lock is 0, did you call drvEtherIP_init?\n");
+        return 0;
+    }
     if (level > 0)
         printf("  SEM_ID lock: 0x%X\n",
                (unsigned int) drvEtherIP_private.lock);
