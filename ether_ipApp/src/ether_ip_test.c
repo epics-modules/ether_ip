@@ -20,7 +20,7 @@
 
 #ifdef DEFINE_CONNECTED_METHODS
 
-bool ForwardOpen (EIPConnection *c)
+bool ForwardOpen(EIPConnection *c)
 {
     size_t      request_size = CM_Forward_Open_size ();
     MR_Request  *request;
@@ -83,7 +83,7 @@ bool ForwardOpen (EIPConnection *c)
     return true;
 }
 
-bool ForwardClose (EIPConnection *c)
+bool ForwardClose(EIPConnection *c)
 {
     size_t      request_size = CM_Forward_Close_size ();
     MR_Request  *request;
@@ -144,7 +144,7 @@ bool ForwardClose (EIPConnection *c)
     return true;
 }
 
-bool ReadConnected (EIPConnection *c, size_t count, const ParsedTag *tag[])
+bool ReadConnected(EIPConnection *c, size_t count, const ParsedTag *tag[])
 {
     size_t  i, msg_size[40], requests_size = 0, multi_size, 
             single_response_size;
@@ -217,7 +217,7 @@ bool ReadConnected (EIPConnection *c, size_t count, const ParsedTag *tag[])
     return true;
 }
 
-void TestConnected (EIPConnection *c, const ParsedTag *tag[])
+void TestConnected(EIPConnection *c, const ParsedTag *tag[])
 {
     printf ("ForwardOpen:\n");
     if (ForwardOpen (c))
@@ -234,7 +234,7 @@ void TestConnected (EIPConnection *c, const ParsedTag *tag[])
 
 
 #if 0
-void stressC (EIPConnection *c, size_t count, const ParsedTag *tag[], size_t runs)
+void stressC(EIPConnection *c, size_t count, const ParsedTag *tag[], size_t runs)
 {
     TimerValue t;
     double secs;
@@ -262,7 +262,7 @@ void stressC (EIPConnection *c, size_t count, const ParsedTag *tag[], size_t run
     ForwardClose (c);
 }
 
-void stress (EIPConnection *c, size_t count, const ParsedTag *tags[], size_t runs)
+void stress(EIPConnection *c, size_t count, const ParsedTag *tags[], size_t runs)
 {
     TimerValue t;
     double secs;
@@ -292,17 +292,18 @@ void stress (EIPConnection *c, size_t count, const ParsedTag *tags[], size_t run
 }
 #endif
 
-void usage (const char *progname)
+void usage(const char *progname)
 {
-    fprintf (stderr, "Usage: %s <flags> [tag]\n", progname);
-    fprintf (stderr, "Options:\n");
-    fprintf (stderr, "    -v verbosity\n");
-    fprintf (stderr, "    -i ip  (as 123.456.789.001)\n");
-    fprintf (stderr, "    -p port\n");
-    fprintf (stderr, "    -t timeout (ms)\n");
-    fprintf (stderr, "    -a array size\n");
-    fprintf (stderr, "    -w <double value to write>\n");
-    exit (-1);
+    fprintf(stderr, "Usage: %s <flags> [tag]\n", progname);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "    -v verbosity\n");
+    fprintf(stderr, "    -i ip  (as 123.456.789.001 or DNS name)\n");
+    fprintf(stderr, "    -p port\n");
+    fprintf(stderr, "    -s slot\n");
+    fprintf(stderr, "    -t timeout (ms)\n");
+    fprintf(stderr, "    -a array size\n");
+    fprintf(stderr, "    -w <double value to write>\n");
+    exit(-1);
 }
 
 int main (int argc, const char *argv[])
@@ -310,6 +311,7 @@ int main (int argc, const char *argv[])
     EIPConnection   c;
     const char      *ip = "snsioc1";
     unsigned short  port = 0xAF12;
+    int             slot = 0;
     size_t          timeout_ms  = 5000;
     size_t          elements = 1;
     ParsedTag       *tag = 0;
@@ -327,8 +329,8 @@ int main (int argc, const char *argv[])
     /* Win32 socket init. */
     WORD wVersionRequested;
     WSADATA wsaData;
-    wVersionRequested = MAKEWORD( 2, 2 );
-    WSAStartup( wVersionRequested, &wsaData );
+    wVersionRequested = MAKEWORD(2, 2);
+    WSAStartup(wVersionRequested, &wsaData);
 #endif
 
     EIP_verbosity = 5;
@@ -340,7 +342,7 @@ int main (int argc, const char *argv[])
         {
 #define         GETARG                                         \
             if (argv[i][2])  { arg = &argv[i  ][2]; }          \
-                else             { arg = &argv[i+1][0]; ++i;  }
+                else         { arg = &argv[i+1][0]; ++i; }
             switch (argv[i][1])
             {
             case 'v':
@@ -354,6 +356,10 @@ int main (int argc, const char *argv[])
             case 'p':
             GETARG
                 port = (unsigned short) strtol(arg, 0, 0);
+                break;
+            case 's':
+            GETARG
+                slot = (int) strtol(arg, 0, 0);
                 break;
             case 'a':
             GETARG
@@ -379,11 +385,11 @@ int main (int argc, const char *argv[])
         }
         else
         {
-           tag = EIP_parse_tag (argv[i]);
+           tag = EIP_parse_tag(argv[i]);
         }
     }
     
-    if (! EIP_startup (&c, ip, port, timeout_ms))
+    if (! EIP_startup(&c, ip, port, slot, timeout_ms))
         return 0;
 
     if (tag)
@@ -392,11 +398,11 @@ int main (int argc, const char *argv[])
         size_t data_len;
         if (EIP_verbosity >= 3)
         {
-            EIP_printf (3, "Tag ");
-            EIP_dump_ParsedTag (tag);
+            EIP_printf(3, "Tag ");
+            EIP_dump_ParsedTag(tag);
         }
         if (write)
-            EIP_write_tag (&c, tag, T_CIP_REAL, 1,(CN_USINT*) &writeval, 0, 0);
+            EIP_write_tag(&c, tag, T_CIP_REAL, 1,(CN_USINT*) &writeval, 0, 0);
         else
         {
             if (test_runs > 0)
@@ -409,7 +415,7 @@ int main (int argc, const char *argv[])
 #endif
                 for (i=0; i<test_runs; ++i)
                 {
-                    data = EIP_read_tag (&c, tag, elements, &data_len, 0, 0);
+                    data = EIP_read_tag(&c, tag, elements, &data_len, 0, 0);
                 }
 #ifdef _WIN32    
                 end = (double) time(0);

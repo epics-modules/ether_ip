@@ -566,6 +566,7 @@ static const char *CN_error_text(CN_USINT status)
     switch (status)
     { 
     case 0x00:  return "Ok";
+    case 0x01:  return "Extended error";
     case 0x04:  return "Unknown tag or Path error";
     case 0x05:  return "Instance not found";
     case 0x06:  return "Buffer too small, partial data only";
@@ -574,7 +575,7 @@ static const char *CN_error_text(CN_USINT status)
     case 0x13:  return "Not enough data";
     case 0x14:  return "Attribute not supported, ext. shows attribute";
     case 0x15:  return "Too much data";
-    case 0x1E:  return "One of the MultiRequests stinks";
+    case 0x1E:  return "One of the MultiRequests failed";
     }
     return "<unknown>";
 }
@@ -669,26 +670,34 @@ static const CN_USINT *dump_raw_MR_Response(const CN_USINT *response,
     {
         unpack_UINT(ext_buf, &ext);
         EIP_printf(0, "    ext. status           = 0x%04X\n", ext);
-        if (general_status == 0xFF)
+        switch (ext)
         {
-            switch (ext)
-            {
-                case 0x2105:
-                    EIP_printf(0, "    (Access beyond end of object, "
-                                "wrong array index)\n");
-                    break;
-                case 0x2107:
-                    EIP_printf(0, "    (CIP type does not match "
-                                "object type)\n");
-                    break;
-                case 0x2104:
-                    EIP_printf(0, "    (Beginning offset beyond end "
-                                "of template)\n");
-                    break;
-                case 0x0107:
-                    EIP_printf(0, "    (Connection not found)\n");
-                    break;
-            }
+            case 0x0107:
+                EIP_printf(0, "    (Connection not found)\n");
+                break;
+            case 0x0204:
+                EIP_printf(0, "    (Unconnected send timed out, "
+                           "no module in slot?)\n");
+                break;
+            case 0x0312:
+                EIP_printf(0, "    (link not found, "
+                           "no module in slot?)\n");
+                break;
+            case 0x0318:
+                EIP_printf(0, "    (link to self invalid)\n");
+                break;
+            case 0x2105:
+                EIP_printf(0, "    (Access beyond end of object, "
+                           "wrong array index)\n");
+                break;
+            case 0x2107:
+                EIP_printf(0, "    (CIP type does not match "
+                           "object type)\n");
+                break;
+            case 0x2104:
+                EIP_printf(0, "    (Beginning offset beyond end "
+                           "of template)\n");
+                break;
         }
         --extended_status_size;
     }
@@ -764,7 +773,9 @@ size_t CM_Unconnected_Send_size(size_t message_size)
  * (to be filled, that's a nested, DIFFERENT request!)
  * or 0 on error
  */
-CN_USINT *make_CM_Unconnected_Send (CN_USINT *request, size_t message_size)
+CN_USINT *make_CM_Unconnected_Send(CN_USINT *request,
+                                   size_t message_size,
+                                   int slot)
 {
     CN_USINT *buf, *nested_request;
     CN_USINT tick_time, ticks;
@@ -783,7 +794,7 @@ CN_USINT *make_CM_Unconnected_Send (CN_USINT *request, size_t message_size)
     buf += message_size + message_size%2;
     buf = pack_USINT (buf, port_path_size (1, 0));
     buf = pack_USINT (buf, 0 /* reserved */);
-    make_port_path (buf, 1, 0); /* Port 1 = backplane, link 0 (slot 0?) */
+    make_port_path (buf, 1, slot); /* Port 1 = backplane, link=slot) */
 
     return nested_request;
 }
@@ -1375,6 +1386,7 @@ static unsigned long hostGetByName (const char *ip_addr)
  */
 static bool EIP_init_and_connect (EIPConnection *c,
                                   const char *ip_addr, unsigned short port,
+                                  unsigned short slot,
                                   size_t millisec_timeout)
 {
     struct sockaddr_in addr;
@@ -1385,6 +1397,7 @@ static bool EIP_init_and_connect (EIPConnection *c,
     c->transfer_buffer_limit = 500;
     c->millisec_timeout = millisec_timeout;
     c->sock = 0;
+    c->slot = slot;
     timeout.tv_sec = millisec_timeout/1000;
     timeout.tv_usec = (millisec_timeout-timeout.tv_sec*1000)*1000;
 
@@ -1895,65 +1908,66 @@ void *EIP_Get_Attribute_Single (EIPConnection *c,
     return EIP_raw_MR_Response_data (response, data.data_length, len);
 }
 
-static bool EIP_check_interface (EIPConnection *c)
+static bool EIP_check_interface(EIPConnection *c)
 {
     EIPIdentityInfo  *info = &c->info;
     void *data;
     size_t len;
 
-    data = EIP_Get_Attribute_Single (c, C_Identity, 1, 1, &len);
+    data = EIP_Get_Attribute_Single(c, C_Identity, 1, 1, &len);
     if (data && len == sizeof (CN_UINT))
         info->vendor = *((CN_UINT *) data);
     else return false;
-    data = EIP_Get_Attribute_Single (c, C_Identity, 1, 2, &len);
+    data = EIP_Get_Attribute_Single(c, C_Identity, 1, 2, &len);
     if (data && len == sizeof (CN_UINT))
         info->device_type = *((CN_UINT *) data);
     else return false;
-    data = EIP_Get_Attribute_Single (c, C_Identity, 1, 4, &len);
+    data = EIP_Get_Attribute_Single(c, C_Identity, 1, 4, &len);
     if (data && len == sizeof (CN_UINT))
         info->revision = *((CN_UINT *) data);
     else return false;
-    data = EIP_Get_Attribute_Single (c, C_Identity, 1, 6, &len);
+    data = EIP_Get_Attribute_Single(c, C_Identity, 1, 6, &len);
     if (data && len == sizeof (CN_UDINT))
         info->serial_number = *((CN_UDINT *) data);
     else return false;
-    data = EIP_Get_Attribute_Single (c, C_Identity, 1, 7, &len);
+    data = EIP_Get_Attribute_Single(c, C_Identity, 1, 7, &len);
     if (data && len > 0 && len < 34)
     {
         len = *((CN_USINT *) data);
-        memcpy (info->name, (const char *)data+1, len);
+        memcpy(info->name, (const char *)data+1, len);
         info->name[len] = '\0';
     }
     else return false;
-    EIP_printf (9, "Identity information of target:\n");
-    EIP_printf (9, "    UINT vendor         = 0x%04X\n", info->vendor);
-    EIP_printf (9, "    UINT device_type    = 0x%04X\n", info->device_type);
-    EIP_printf (9, "    UINT revision       = 0x%04X\n", info->revision);
-    EIP_printf (9, "    UDINT serial_number = 0x%08X\n", info->serial_number);
-    EIP_printf (9, "    USINT name          = '%s'\n", info->name);
+    EIP_printf(9, "Identity information of target:\n");
+    EIP_printf(9, "    UINT vendor         = 0x%04X\n", info->vendor);
+    EIP_printf(9, "    UINT device_type    = 0x%04X\n", info->device_type);
+    EIP_printf(9, "    UINT revision       = 0x%04X\n", info->revision);
+    EIP_printf(9, "    UDINT serial_number = 0x%08X\n", info->serial_number);
+    EIP_printf(9, "    USINT name          = '%s'\n", info->name);
     return true;
 }
 
-bool EIP_startup (EIPConnection *c,
-                  const char *ip_addr, unsigned short port,
-                  size_t millisec_timeout)
+bool EIP_startup(EIPConnection *c,
+                 const char *ip_addr, unsigned short port,
+                 int slot,
+                 size_t millisec_timeout)
 {
-    if (! EIP_init_and_connect (c, ip_addr, port, millisec_timeout))
+    if (! EIP_init_and_connect(c, ip_addr, port, slot, millisec_timeout))
         return false;
 
-    if (! EIP_list_services (c)  ||
-        ! EIP_register_session (c))
+    if (! EIP_list_services(c)  ||
+        ! EIP_register_session(c))
     {
-        EIP_printf (1, "EIP_startup: target %s does not respond\n",
-                    ip_addr);
-        EIP_disconnect (c);
+        EIP_printf(1, "EIP_startup: target %s does not respond\n",
+                   ip_addr);
+        EIP_disconnect(c);
         return false;
     }
 
-    if (! EIP_check_interface (c))
+    if (! EIP_check_interface(c))
     {
         /* Warning, ignored */
-        EIP_printf (1, "EIP_startup: cannot determine target's identity\n");
+        EIP_printf(1, "EIP_startup: cannot determine target's identity\n");
     }
 
     return true;
@@ -2316,7 +2330,8 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
     send_request = EIP_make_SendRRData(c, send_size);
     if (! send_request)
         return 0;
-    msg_request = make_CM_Unconnected_Send(send_request, msg_size);
+    msg_request = make_CM_Unconnected_Send(send_request, msg_size,
+                                           c->slot);
     if (! msg_request)
         return 0;
     if (! make_CIP_ReadData(msg_request, tag, elements))
@@ -2380,7 +2395,8 @@ bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
     send_request = EIP_make_SendRRData(c, send_size);
     if (! send_request)
         return 0;
-    msg_request = make_CM_Unconnected_Send(send_request, msg_size);
+    msg_request = make_CM_Unconnected_Send(send_request, msg_size,
+                                           c->slot);
     if (! msg_request)
         return 0;
     if (! make_CIP_WriteData(msg_request, tag, type, elements, data))

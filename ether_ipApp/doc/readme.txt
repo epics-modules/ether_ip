@@ -39,8 +39,15 @@ ether_ip_test.c  main for Unix/Win32
    These expect to be connected to a BOOL or BOOL[].
    Note the comments on CIP data below.
    You can connect an MBB* to a _single_ DINT or REAL,
-   but not array elements. Only BOOL arrays
-   are allowed.
+   but not array elements.
+   Only BOOL arrays are allowed.
+   Again:
+   Only BOOL arrays are allowed.
+
+   If you have to interface a DINT array and want to decode
+   bits with an MBBI record:
+   Setup an analog input record to read the DINT element,
+   then FLNK to an MBBI.
 
 * Installation, Setup for EPICS
   To use this software, several steps are required.
@@ -75,12 +82,12 @@ ether_ip_test.c  main for Unix/Win32
 
        # Define the DNS name for the PLC, so we can it instead of the
        # raw IP address
-       hostAdd ("snsplc1", "128.165.160.146")  
+       hostAdd "snsplc1", "128.165.160.146"
 
        # *IF* "128.165.160.146" is in a different subnet
        # that the IOC cannot get to directly, define
        # a route table entry. In this example, ..254 is the gateway
-       routeAdd ("128.165.160.146", "128.165.160.254")
+       routeAdd "128.165.160.146", "128.165.160.254"
 
        # Test: See if the IOC can get to "snsplc1":
        ping "snsplc1", 5
@@ -95,12 +102,17 @@ ether_ip_test.c  main for Unix/Win32
        # -------------------------------------
        drvEtherIP_init
 
-       # drvEtherIP_define_PLC <name>, <ip_addr>
-       # The driver/device use the <name>,
-       # the <ip_addr> can be an IP address in dot-notation
+       # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
+       # The driver/device uses the <name> to indentify the PLC.
+       # 
+       # <ip_addr> can be an IP address in dot-notation
        # or a name that the IOC knows about (defined via hostAdd,
-       # see step 4)
-       drvEtherIP_define_PLC "plc1", "snsplc1"
+       # see step 4).
+       # The IP address gets us to the ENET interface.
+       # To get to the PLC itself, we need the slot that
+       # it resides in. The first, left-most slot in the
+       # ControlLogix crate is slot 0:
+       drvEtherIP_define_PLC "plc1", "snsplc1", 0
        
        # EtherIP driver verbosity, 0=silent, up to 10:
        EIP_verbosity=4
@@ -130,7 +142,13 @@ ether_ip_test.c  main for Unix/Win32
        # drvEtherIP_report <level>:
        # Dump various infos, also called by "dbior"
        # (requires EPICS database)
-       drvEtherIP_report 5
+       drvEtherIP_report 10
+
+       # Hint: It's useful to redirect the output to
+       # the host:
+       drvEtherIP_report 10 >/tmp/eip.txt
+       # Then, on the Win32 or Unix host, open that file
+       # with EMACS! The outline format allows easy browsing.
 
 * Record Configuration
 ** Device type

@@ -14,7 +14,23 @@ ld < testether_ip
 # Initialize EtherIP driver, define PLCs
 # -------------------------------------
 drvEtherIP_init
+
+# Tell vxWorks how to get to "snsioc1":
 hostAdd "snsioc1", "128.165.160.146"
+
+# You might need this, too: routeAdd <target>, <gateway>
+# routeAdd "128.165.160.146", "128.165.160.241"
+
+# drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
+# The driver/device uses the <name> to indentify the PLC.
+# 
+# <ip_addr> can be an IP address in dot-notation
+# or a name that the IOC knows about (defined via hostAdd,
+# see step 4).
+# The IP address gets us to the ENET interface.
+# To get to the PLC itself, we need the slot that
+# it resides in. The first, left-most slot in the
+# ControlLogix crate is slot 0:
 drvEtherIP_define_PLC "plc1", "snsioc1"
 
 EIP_verbosity=10

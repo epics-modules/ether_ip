@@ -1,4 +1,6 @@
-/* drvEtherIP
+/* $Id$
+ *
+ * drvEtherIP
  *
  * kasemir@lanl.gov
  */
@@ -9,8 +11,8 @@
 #include "ether_ip.h"
 #include "dl_list.h"
 
-#define ETHERIP_MAYOR 0
-#define ETHERIP_MINOR 1
+#define ETHERIP_MAYOR 1
+#define ETHERIP_MINOR 0
 
 /* TCP port */
 #define ETHERIP_PORT 0xAF12
@@ -41,7 +43,7 @@
 
 typedef struct __TagInfo  TagInfo;  /* forwards */
 typedef struct __ScanList ScanList;
-typedef struct __PLC  PLC;
+typedef struct __PLC      PLC;
 
 /* PLCInfo:
  * Per-PLC information
@@ -51,16 +53,16 @@ typedef struct __PLC  PLC;
  * Holds
  * - EIPConnection for ether_ip protocol routines
  * - ScanList for this PLC, filled by device support
- *
  */
 struct __PLC
 {
     DLL_Node      node;
     SEM_ID        lock;
-    char          *name;        /* symbolic name, used to identify PLC */
-    char          *ip_addr;     /* IP or DNS name that IOC/vxWorks knows */
-    size_t        plc_errors;   /* # of communication errors */
-    size_t        slow_scans;   /* Count: scan task is getting late */
+    char          *name;        /* symbolic name, used to identify PLC    */
+    char          *ip_addr;     /* IP or DNS name that IOC/vxWorks knows  */
+    int           slot;         /* slot in ControlLogix Backplane: 0, ... */
+    size_t        plc_errors;   /* # of communication errors              */
+    size_t        slow_scans;   /* Count: scan task is getting late       */
     EIPConnection connection;
     DL_List /*ScanList*/ scanlists;
     int           scan_task_id;
@@ -133,7 +135,8 @@ struct __TagInfo
 
 void drvEtherIP_init ();
 
-bool drvEtherIP_define_PLC (const char *PLC_name, const char *ip_addr);
+bool drvEtherIP_define_PLC(const char *PLC_name,
+                           const char *ip_addr, int slot);
 
 PLC *drvEtherIP_find_PLC (const char *PLC_name);
 
@@ -148,10 +151,11 @@ int drvEtherIP_restart ();
 
 /* Command-line communication test,
  * not used by the driver */
-int drvEtherIP_read_tag (const char *ip_addr,
-                         const char *tag_name,
-                         int elements,
-                         int timeout);
+int drvEtherIP_read_tag(const char *ip_addr,
+                        int slot,
+                        const char *tag_name,
+                        int elements,
+                        int timeout);
 
 #endif
 

@@ -1,4 +1,7 @@
--*- outline -*- (use emacs to see this in outline-mode)
+-*- outline -*- (use EMACS to see this in outline-mode)
+
+This readme is about compiling the driver & examples.
+See /ether_ipApp/doc for info on how to use the driver.
 
 * Intro
 The sources for this driver are CVS-controlled:
@@ -6,13 +9,18 @@ CVS root: ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot
 Module:   support/linac/ether_ip (aliased as module ether_ip)
 Tag:      ether_ip-<RELEASE>
 
-The current release is 0-5.
-The non-commited next release will be 0-6.
+The current release is 1-0.
+The non-commited next release will be 1-1.
 Replace <RELEASE> by the current release.
+You can also just use "current" for the RELEASE
+and with a periodic cvs update you'll always have
+the most recent one, thought maybe not a good idea
+for production where you prefer to have a fixed
+version and only upgrade during service times.
 
-Example for getting specific release:
+Example for getting a specific release:
 cvs -d :ext:kasemir@ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot \
-     export -r ether_ip-0-5 -d 0-5 ether_ip
+     export -r ether_ip-1-0 -d 1-0 ether_ip
 
 What you have to do is
 - compile the ether_ip driver/device sources
@@ -30,7 +38,7 @@ In case you choose to skip reading the manual on makeBaseApp:
   (if you want to use that test setup).
 - You have to modify config/RELEASE so that ETHER_IP point to where you
   put the stuff, e.g.
-    ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/0-5 
+    ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/current
 
 * I. ether_ip directory structure:
 ether_ip/
@@ -59,79 +67,72 @@ ether_ip/
                 examples will work.
 
 * II. Build and Test Setup
-    1. When using the SNS ADE, you might want to source the ADE
-       setup script to get shortcut variables for the various
-       locations. If you use a different system, you might just
-       remember where you put your stuff.
- 
-       In the following example, SUP is set to
+1. When using some ADE, you might have a setup script
+   to get shortcut variables for the various
+   locations.  
+   In the following example, SUP is set to
        /cs/epics/ADE/R3.13.3/support
-    2. cd $SUP/ether_ip
-    3. cvs export -r ether_ip-<RELEASE> -d <RELEASE> ether_ip
-    4. cd <RELEASE>
-    5. gmake (or gnumake, make, ...)
-    6. Changing the type of ioc: 
-       This code was tested with  both an pc486 and mv2700 iocs.
-       We think it should work for other types of iocs, but we don't
-       have others, so we haven't tried that yet.
+2. cd $SUP/ether_ip
+3. cvs export -r ether_ip-<RELEASE> -d <RELEASE> ether_ip
+4. cd <RELEASE>
+5. gmake (or gnumake, make, ...)
+6. Changing the type of ioc: 
+   This code was tested with pc486, mvme2700 and mvme2100 iocs.
+   We think it should work for other types of iocs, but we don't
+   have others, so we haven't tried that yet.
 
-       The test files in iocBoot/iocether_ip are expecting to be
-       tested on an mv2700 (though EPICS uses the configuration
-       for an mv2300)
-       If you want to use these tests for a pc486 (or some other type
-       of ioc.  You will need to
-       6.1.  cd   iocBoot/iocether_ip and
-       6.2.  edit the Makefile.
-                   Change ARCH = mv2300 to
-                   ARCH = pc486
-       6.3.  create a new version of the cdCommands file by typing:
-             gmake clean
-             gmake
-       6.4.  If you want to watch the test load  on your ioc,
-             set the startup "startup script" boot parameter on your ioc to
-             /cs/epics/ADE/R3.13.3/support/ether_ip/<RELEASE> \
-	        /iocBoot/iocether_ip/st.boot 
+   Modify iocBoot/iocether_ip for your IOC:
+6.1.  cd   iocBoot/iocether_ip and
+6.2.  edit the Makefile.
+        Set e.g. ARCH = mv2100
+6.3.  create a new version of the cdCommands file by typing:
+        gmake clean
+        gmake
+6.4.  If you want to watch the test load  on your ioc,
+      set the startup "startup script" boot parameter on your ioc to
+       /cs/epics/ADE/R3.13.3/support/ether_ip/<RELEASE> \
+       /iocBoot/iocether_ip/st.boot 
 
-             (st.boot is a small file with just two lines:
-	      cd  "/cs/epics/ADE/R3.13.3/support/ether_ip/<RELEASE> \
-		   /iocBoot/iocether_ip"
-              #< st.cmd
-             We use this configuration of our iocs so that we can
-             watch the booting of an ioc from a telnet session when
-             we do not have a serial interface available.
-     7. Boot your ioc and run some of the displays in
-        testether_ipApp/dm2k if you have dm2k available.
+       st.boot is a small file with just two lines:
+            cd  "/cs/epics/ADE/R3.13.3/support/ether_ip/<RELEASE> \
+                 /iocBoot/iocether_ip"
+            #< st.cmd
+       We use this configuration of our iocs so that we can
+       watch the booting of an ioc from a telnet session when
+       we do not have a serial interface available.
+7. Boot your ioc and run some of the displays in
+   testether_ipApp/dm2k if you have dm2k available.
 
 * III. Use of the ether_ip driver in your ioc application
-      1. Make sure that the driver code has been checked out and built
-         as described above.  The Make in the config directory
-	 depends on the proper directories already existing.
+1. Make sure that the driver code has been checked out and built
+   as described above.  The Make in the config directory
+   depends on the proper directories already existing.
 
-      2. Set up ETHER_IP definitions  in the configuration directory
-         for your application by: 
-      2.1. cd  <your ioc application>/config
-      2.2. edit the file RELEASE file, add the line 
-           ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/<RELEASE>
-      2.3. Make sure the new definitions take effect by
+2. Set up ETHER_IP definitions  in the configuration directory
+   for your application by: 
+2.1. cd  <your ioc application>/config
+2.2. edit the file RELEASE file, add the line 
+     ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/<RELEASE>
+2.3. Make sure the new definitions take effect by
            gmake clean
            gmake
-           in the config directory.
-      3. Set up the  dbd include file in your src directory to include
-         ether_ip.dbd by adding the line
-                include "ether_ip.dbd"
-         after the line include "../base.dbd".
-         There is an example in testether_ipApp/src/ether_ipInclude.dbd.
+     in the config directory.
+3. Set up the  dbd include file in your src directory to include
+   ether_ip.dbd by adding the line
+             include "ether_ip.dbd"
+   after the line include "../base.dbd".
+   There is an example in testether_ipApp/src/ether_ipInclude.dbd.
 
-         Now that RELEASE file has been edited and config has been
-         rebuilt the Makefile.Host will be able to find ether_ip.dbd
-         when it expands your dbd file.
-      4. Set up your application to include the object libraries by
-         including the line
+   Now that RELEASE file has been edited and config has been
+   rebuilt the Makefile.Host will be able to find ether_ip.dbd
+   when it expands your dbd file.
+4. Set up your application to include the object libraries by
+   including the line
                    LIBOBJS += $(ETHER_IP_BIN)/ether_ipLib
-         in your Makefile.Vx file.
+   in your Makefile.Vx file.
 
-         ETHER_IP_BIN will be automatically defined for every type of
-         ioc for which your application is built.
+   ETHER_IP_BIN will be automatically defined for every type of
+   ioc for which your application is built.
 
 R. Wright, K. Kasemir
 
