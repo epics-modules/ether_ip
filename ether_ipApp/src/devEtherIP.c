@@ -1,4 +1,12 @@
-/* $Id$ */
+/* $Id$
+ *
+ * devEtherIP
+ *
+ * EPICS Device Support,
+ * glue between EtherIP driver and records.
+ *
+ * kasemir@lanl.gov
+ */
 
 #include <vxWorks.h>
 #include <stdlib.h>
@@ -30,6 +38,7 @@
 #include"mem_string_file.h"
 #endif
 
+#define SEM_TIMEOUT sysClkRateGet()*2
 
 /* Flags that pick special values instead of the tag's "value" */
 typedef enum
@@ -105,12 +114,12 @@ static void dump_DevicePrivate(const dbCommon *rec)
     }
     printf("   link_text  : '%s'\n",  pvt->link_text);
     printf("   PLC_name   : '%s'\n",  pvt->PLC_name);
-    printf("   string_tag : '%s'\n",  pvt->string_tag);
-    printf("   element    : %d\n",    pvt->element);
-    printf("   mask       : 0x%0X\n", (unsigned int)pvt->mask);
-    printf("   spec. opts.: %d\n",    pvt->special);
-    printf("   plc        : 0x%0X\n", (unsigned int)pvt->plc);
-    printf("   tag        : 0x%0X\n", (unsigned int)pvt->tag);
+    printf("   string_tag : '%s', element %d\n",
+           pvt->string_tag, pvt->element);
+    printf("   mask       : 0x%08X    spec. opts.: %d\n",
+           (unsigned int)pvt->mask, pvt->special);
+    printf("   plc        : 0x%08X    tag        : 0x%08X\n",
+           (unsigned int)pvt->plc, (unsigned int)pvt->tag);
 }
 
 /* Helper: check for valid DevicePrivate, lock data
@@ -122,24 +131,30 @@ static bool lock_data(const dbCommon *rec)
         !pvt->plc ||
         !pvt->tag ||
         !pvt->tag->scanlist)
-        return false;
-    if (semTake(pvt->tag->data_lock, sysClkRateGet()) != OK)
     {
         if (rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
-            errlogPrintf("devEtherIP (%s): no data_lock\n", rec->name);
+            printf("devEtherIP lock_data (%s): no tag\n", rec->name);
+        return false;
+    }
+    if (semTake(pvt->tag->data_lock, SEM_TIMEOUT) != OK)
+    {
+        if (rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
+            printf("devEtherIP lock_data (%s): no lock\n", rec->name);
         return false;
     }
     if (pvt->tag->valid_data_size <= 0  ||
         pvt->tag->elements <= pvt->element)
     {
         semGive(pvt->tag->data_lock);
+        if (rec->sevr != INVALID_ALARM) /* don't flood w/ messages */
+            printf("devEtherIP lock_data (%s): no data\n", rec->name);
         return false;
     }
     return true;
 }
 
-/* Like lock_data, but w/o the lock
- * (data_lock is already taken in callbacks)
+/* Like lock_data, but w/o the lock because
+ * data_lock is already taken in callbacks
  */
 static bool check_data(const dbCommon *rec)
 {
@@ -168,8 +183,8 @@ static bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
     *rval   = 0;
     if (!get_CIP_UDINT(pvt->tag->data, element, &value))
     {
-        EIP_printf(0, "EIP get_bits(%s), element %d failed\n",
-                   rec->name, element);
+        errlogPrintf("EIP get_bits(%s), element %d failed\n",
+                     rec->name, element);
         return false;
     }
     /* Fetch bits from BOOL array.
@@ -185,8 +200,8 @@ static bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
             ++element;
             if (!get_CIP_UDINT(pvt->tag->data, element, &value))
             {
-                EIP_printf(0, "EIP get_bits(%s), element %d failed\n",
-                           rec->name, element);
+                errlogPrintf("EIP get_bits(%s), element %d failed\n",
+                       rec->name, element);
                 return false;
             }
         }
@@ -202,10 +217,13 @@ static bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
     CN_UDINT       value, mask = pvt->mask;
-    bool           ok = true;
     
     if (! get_CIP_UDINT(pvt->tag->data, element, &value))
+    {
+        errlogPrintf("EIP put_bits(%s), element %d failed\n",
+                     rec->name, element);
         return false;
+    }
     /* Transfer bits into BOOL array.
      * First one directly (faster for BI case), rest in loop */
     if (rval & 1)
@@ -218,26 +236,34 @@ static bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
         mask <<= 1;
         if (mask == 0) /* end of current UDINT ? */
         {
-            if (! (ok = put_CIP_UDINT(pvt->tag->data, element, value)))
-                break;
+            if (! put_CIP_UDINT(pvt->tag->data, element, value))
+            {
+                errlogPrintf("EIP put_bits(%s), element %d failed\n",
+                             rec->name, element);
+                return false;
+            }
             mask = 1; /* reset mask, go to next element */
             ++element;
-            if (! (ok = get_CIP_UDINT(pvt->tag->data, element, &value)))
-                break;
+            if (! get_CIP_UDINT(pvt->tag->data, element, &value))
+            {
+                errlogPrintf("EIP put_bits(%s), element %d failed\n",
+                             rec->name, element);
+                return false;
+            }
         }
         if (rval & 1)
             value |= mask;
         else
             value &= ~mask;
     }
-
-    if (ok && put_CIP_UDINT(pvt->tag->data, element, value))
+    if (!put_CIP_UDINT(pvt->tag->data, element, value))
     {
-        pvt->tag->do_write = true;
-        return true;
+        errlogPrintf("EIP put_bits(%s), element %d failed\n",
+                     rec->name, element);
+        return false;
     }
     
-    return false;
+    return true;
 }
 
 /* Callback, registered with drvEtherIP, for input records.
@@ -255,9 +281,12 @@ static void scan_callback(void *arg)
 
 /* Callback from driver for every received tag, for ao record:
  * Check if
- * a) PLC's value != record's idea of the current value
- * b) record is UDF, so this is the first time we get a value
- *    from the PLC after a reboot
+ *
+ * 1) pact set -> this is the "finshed the write" callback
+ * 2) pact not set -> this is the "new value" callback
+ * 2a) PLC's value != record's idea of the current value
+ * 2b) record is UDF, so this is the first time we get a value
+ *     from the PLC after a reboot
  * Causing process if necessary to update the record.
  * That process()/scanOnce() call should NOT cause the record to write
  * to the PLC because the xxx_write method will notice that
@@ -272,25 +301,37 @@ static void scan_callback(void *arg)
 static void check_ao_callback(void *arg)
 {
     aoRecord      *rec = (aoRecord *) arg;
+    struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     double        dbl;
     CN_UDINT      udint;
     bool          process = false;
 
+    /* We are about the check and even set val, & rval -> lock */
+    dbScanLock((dbCommon *)rec);
+    if (rec->pact)
+    {
+        (*rset->process) ((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
     /* Check if record's (R)VAL is current */
     if (!check_data((dbCommon *)rec))
+    {
+        dbScanUnlock((dbCommon *)rec);
         return;
+    }
     if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
     {
         if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
             (rec->udf || rec->val != dbl))
         {
             if (rec->tpro)
-                printf("AO '%s': got %g from driver\n", rec->name, dbl);
-            if (pvt->special & SPCO_FORCE)
+                printf("'%s': got %g from driver\n", rec->name, dbl);
+            if (!rec->udf  &&  pvt->special & SPCO_FORCE)
             {
                 if (rec->tpro)
-                    printf("AO '%s': will re-write record's value %g\n",
+                    printf("'%s': will re-write record's value %g\n",
                            rec->name, rec->val);
             }
             else
@@ -298,7 +339,7 @@ static void check_ao_callback(void *arg)
                 rec->val = rec->pval = dbl;
                 rec->udf = false;
                 if (rec->tpro)
-                    printf("AO '%s': updated record's value %g\n",
+                    printf("'%s': updated record's value %g\n",
                            rec->name, rec->val);
             }
             process = true;
@@ -311,12 +352,11 @@ static void check_ao_callback(void *arg)
         {
             if (rec->tpro)
                 printf("AO '%s': got %lu from driver\n", rec->name, udint);
-            if (pvt->special & SPCO_FORCE)
+            if (!rec->udf  &&  pvt->special & SPCO_FORCE)
             {
                 if (rec->tpro)
                     printf("AO '%s': will re-write record's rval 0x%X\n",
                            rec->name, (unsigned int)rec->rval);
-                process = true;
             }
             else
             {
@@ -330,13 +370,11 @@ static void check_ao_callback(void *arg)
                     case menuConvertNO_CONVERSION:
                         rec->val = rec->pval = dbl;
                         rec->udf = false;
-                        process = true;
                         break;
                     case menuConvertLINEAR:
                         dbl = dbl*rec->eslo + rec->eoff;
                         rec->val = rec->pval = dbl;
                         rec->udf = false;
-                        process = true;
                         break;
                     default:
                         if (cvtRawToEngBpt(&dbl,rec->linr,rec->init,
@@ -345,14 +383,14 @@ static void check_ao_callback(void *arg)
                             break; /* cannot back-convert */
                         rec->val = rec->pval = dbl;
                         rec->udf = false;
-                        process = true;
                 }
                 if (rec->tpro)
                     printf("--> val = %g\n", rec->val);
             }
-            
+            process = true;
         }
     }
+    dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
         scanOnce(rec);
@@ -362,34 +400,42 @@ static void check_ao_callback(void *arg)
 static void check_bo_callback(void *arg)
 {
     boRecord      *rec = (boRecord *) arg;
+    struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     unsigned long rval;
     bool          process = false;
 
+    /* We are about the check and even set val, & rval -> lock */
+    dbScanLock((dbCommon *)rec);
+    if (rec->pact)
+    {
+        (*rset->process) ((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
     /* Check if record's (R)VAL is current */
     if (!check_data((dbCommon *) rec))
     {
-        EIP_printf(0, "check_bo_callback(%s): no data?\n", rec->name);
+        dbScanUnlock((dbCommon *)rec);
         return;
     }
     if (get_bits((dbCommon *)rec, 1, &rval) &&
         (rec->udf || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("BO '%s': got %lu from driver\n", rec->name, rval);
+            printf("'%s': got %lu from driver\n", rec->name, rval);
         if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
 #ifdef CATCH_MISSED_WRITE
-            printf("BO '%s': Caught an ignored write, stopping the log\n",
+            printf("'%s': Caught an ignored write, stopping the log\n",
                    rec->name);
-            msfPrintf("BO '%s': Caught an ignored write, stopping the log\n",
-                      rec->name);
-            msfPrintf("Record's value: %lu, tag's value: %lu\n",
-                      rec->rval, rval);
+            msfPrintf("'%s': Caught an ignored write, stopping the log\n"
+                      "Record's value: %lu, tag's value: %lu\n",
+                      rec->name, rec->rval, rval);
             EIP_verbosity = 1;
 #endif
             if (rec->tpro)
-                printf("BO '%s': will re-write record's value %u\n",
+                printf("'%s': will re-write record's value %u\n",
                        rec->name, (unsigned int)rec->val);
         }
         else
@@ -398,11 +444,12 @@ static void check_bo_callback(void *arg)
             rec->val  = (rec->rval==0) ? 0 : 1;
             rec->udf = false;
             if (rec->tpro)
-                printf("BO '%s': updated record to tag, val = %u\n",
+                printf("'%s': updated record to tag, val = %u\n",
                        rec->name, (unsigned int)rec->val);
         }
         process = true;
     }
+    dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
         scanOnce(rec);
@@ -412,24 +459,35 @@ static void check_bo_callback(void *arg)
 static void check_mbbo_callback(void *arg)
 {
     mbboRecord    *rec = (mbboRecord *) arg;
+    struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     unsigned long rval, *state_val;
     size_t        i;
     bool          process = false;
 
+    /* We are about the check and even set val, & rval -> lock */
+    dbScanLock((dbCommon *)rec);
+    if (rec->pact)
+    {
+        (*rset->process) ((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
     /* Check if record's (R)VAL is current */
     if (!check_data ((dbCommon *) rec))
+    {
+        dbScanUnlock((dbCommon *)rec);
         return;
-    
+    }
     if (get_bits ((dbCommon *)rec, rec->nobt, &rval) &&
         (rec->udf || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("MBBO '%s': got %lu from driver\n", rec->name, rval);
-        if (pvt->special & SPCO_FORCE)
+            printf("'%s': got %lu from driver\n", rec->name, rval);
+        if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
-                printf("MBBO '%s': will re-write record's rval 0x%X\n",
+                printf("'%s': will re-write record's rval 0x%X\n",
                        rec->name, (unsigned int)rec->rval);
         }
         else
@@ -460,6 +518,7 @@ static void check_mbbo_callback(void *arg)
         }
         process = true;
     }
+    dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
         scanOnce (rec);
@@ -469,24 +528,35 @@ static void check_mbbo_callback(void *arg)
 static void check_mbbo_direct_callback(void *arg)
 {
     mbboDirectRecord *rec = (mbboDirectRecord *) arg;
+    struct rset      *rset= (struct rset *)(rec->rset);
     DevicePrivate    *pvt = (DevicePrivate *)rec->dpvt;
     unsigned long    rval;
     bool             process = false;
 
+    /* We are about the check and even set val, & rval -> lock */
+    dbScanLock((dbCommon *)rec);
+    if (rec->pact)
+    {
+        (*rset->process) ((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
     /* Check if record's (R)VAL is current */
     if (!check_data((dbCommon *) rec))
+    {
+        dbScanUnlock((dbCommon *)rec);
         return;
-    
+    }
     if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
         (rec->udf || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("MBBODirect '%s': got %lu from driver\n",
+            printf("'%s': got %lu from driver\n",
                    rec->name, rval);
-        if (pvt->special & SPCO_FORCE)
+        if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
-                printf("MBBODirect '%s': re-write record's rval 0x%X\n",
+                printf("'%s': re-write record's rval 0x%X\n",
                        rec->name, (unsigned int)rec->rval);
         }
         else
@@ -497,6 +567,7 @@ static void check_mbbo_direct_callback(void *arg)
         }
         process = true;
     }
+    dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
         scanOnce(rec);
@@ -917,7 +988,6 @@ static long ai_read(aiRecord *rec)
     bool ok;
     CN_UDINT rval;
 
-    rec->pact = TRUE;
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 0);
@@ -927,42 +997,31 @@ static long ai_read(aiRecord *rec)
         return status;
     }
 
-    ok = pvt && pvt->plc && pvt->tag && pvt->tag->scanlist;
+    ok = lock_data((dbCommon *)rec);
     if (ok)
     {
         /* Most common case: ai reads a tag from PLC */
         if (pvt->special == 0  ||
             pvt->special & SPCO_READ_SINGLE_ELEMENT)
         {   
-            if (semTake(pvt->tag->data_lock, sysClkRateGet()) == OK)
+            if (pvt->tag->valid_data_size > 0 &&
+                pvt->tag->elements > pvt->element)
             {
-                if (pvt->tag->valid_data_size > 0 &&
-                    pvt->tag->elements > pvt->element)
+                if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
                 {
-                    if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
-                    {
-                        ok = get_CIP_double(pvt->tag->data,
-                                            pvt->element, &rec->val);
-                        status = 2; /* don't convert */
-                    }
-                    else
-                    {
-                        ok = get_CIP_UDINT(pvt->tag->data,
-                                           pvt->element, &rval);
-                        rec->rval = rval;
-                    }
+                    ok = get_CIP_double(pvt->tag->data,
+                                        pvt->element, &rec->val);
+                    status = 2; /* don't convert */
                 }
                 else
-                    ok = false;
-                semGive (pvt->tag->data_lock);
+                {
+                    ok = get_CIP_UDINT(pvt->tag->data,
+                                       pvt->element, &rval);
+                    rec->rval = rval;
+                }
             }
             else
-            {
-                if (rec->sevr != INVALID_ALARM)
-                    errlogPrintf("devEtherIP (%s): no data_lock\n",
-                                 rec->name);
                 ok = false;
-            }
         }
         /* special cases: ai reads driver stats */
         else if (pvt->special & SPCO_PLC_ERRORS)
@@ -1012,12 +1071,12 @@ static long ai_read(aiRecord *rec)
         else
             ok = false;
     }
+    semGive (pvt->tag->data_lock);
     
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-    rec->pact = FALSE;
     
     return status;
 }
@@ -1028,7 +1087,6 @@ static long bi_read(biRecord *rec)
     long status;
     bool ok;
     
-    rec->pact = TRUE;
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1);
@@ -1037,7 +1095,6 @@ static long bi_read(biRecord *rec)
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
         return status;
     }
-
     if (lock_data((dbCommon *)rec))
     {
         ok = get_bits((dbCommon *)rec, 1, &rec->rval);
@@ -1050,7 +1107,6 @@ static long bi_read(biRecord *rec)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
-    rec->pact = FALSE;
     
     return 0;
 }
@@ -1061,7 +1117,6 @@ static long mbbi_read (mbbiRecord *rec)
     long status;
     bool ok;
     
-    rec->pact = TRUE;
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
     status = check_link ((dbCommon *)rec, scan_callback,
@@ -1084,7 +1139,6 @@ static long mbbi_read (mbbiRecord *rec)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
-    rec->pact = FALSE;
     
     return 0;
 }
@@ -1095,7 +1149,6 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
     long status;
     bool ok;
 
-    rec->pact = TRUE;
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
     status = check_link ((dbCommon *)rec, scan_callback,
@@ -1118,7 +1171,6 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
-    rec->pact = FALSE;
     
     return 0;
 }
@@ -1131,7 +1183,13 @@ static long ao_write(aoRecord *rec)
     CN_UDINT      udint;
     bool          ok = true;
 
-    rec->pact = TRUE;
+    if (rec->pact) /* Second pass, called for write completion ? */
+    {
+        if (rec->tpro)
+            printf("'%s': written\n", rec->name);
+        rec->pact = FALSE;
+        return 0;
+    }
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, check_ao_callback, &rec->out, 0);
@@ -1140,7 +1198,6 @@ static long ao_write(aoRecord *rec)
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
         return status;
     }
-
     if (lock_data((dbCommon *)rec))
     {
         /* Check if record's (R)VAL is current */
@@ -1150,9 +1207,13 @@ static long ao_write(aoRecord *rec)
                 rec->val != dbl)
             {
                 if (rec->tpro)
-                    printf("rec '%s': write %g!\n", rec->name, rec->val);
+                    printf("'%s': write %g!\n", rec->name, rec->val);
                 ok = put_CIP_double(pvt->tag->data, pvt->element, rec->val);
-                pvt->tag->do_write = true;
+                if (pvt->tag->do_write)
+                    EIP_printf(6,"'%s': already writing\n", rec->name);
+                else
+                    pvt->tag->do_write = true;
+                rec->pact=TRUE;
             }
         }
         else
@@ -1161,9 +1222,13 @@ static long ao_write(aoRecord *rec)
                 rec->rval != udint)
             {
                 if (rec->tpro)
-                    printf("rec '%s': write %lu!\n", rec->name, rec->rval);
+                    printf("'%s': write %lu!\n", rec->name, rec->rval);
                 ok = put_CIP_UDINT(pvt->tag->data, pvt->element, rec->rval);
-                pvt->tag->do_write = true;
+                if (pvt->tag->do_write)
+                    EIP_printf(6,"'%s': already writing\n", rec->name);
+                else
+                    pvt->tag->do_write = true;
+                rec->pact=TRUE;
             }
         }
         semGive(pvt->tag->data_lock);
@@ -1175,7 +1240,6 @@ static long ao_write(aoRecord *rec)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-    rec->pact = FALSE;
     
     return 0;
 }
@@ -1187,7 +1251,13 @@ static long bo_write(boRecord *rec)
     unsigned long rval;
     bool          ok = true;
 
-    rec->pact = TRUE;
+    if (rec->pact)
+    {
+        if (rec->tpro)
+            printf("'%s': written\n", rec->name);
+        rec->pact = FALSE;
+        return 0;
+    }
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, check_bo_callback, &rec->out, 1);
@@ -1198,24 +1268,28 @@ static long bo_write(boRecord *rec)
     }
     if (lock_data((dbCommon *)rec))
     {
-        if (get_bits((dbCommon *)rec, 1, &rval)  &&  rec->rval != rval)
+        if (get_bits((dbCommon *)rec, 1, &rval))
         {
-            if (rec->tpro)
-                printf ("rec '%s': write %lu\n", rec->name, rec->rval);
-            ok = put_bits((dbCommon *)rec, 1, rec->rval);
+            if (rec->rval != rval)
+            {
+                if (rec->tpro)
+                    printf("'%s': write %lu\n", rec->name, rec->rval);
+                ok = put_bits((dbCommon *)rec, 1, rec->rval);
+                if (pvt->tag->do_write)
+                    EIP_printf(6,"'%s': already writing\n", rec->name);
+                else
+                    pvt->tag->do_write = true;
+                rec->pact=TRUE;
+            }
         }
         semGive(pvt->tag->data_lock);
     }
     else
-    {
-        EIP_printf(0, "bo_write(%s): lock_data failed\n", rec->name);
         ok = false;
-    }
     if (ok)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-    rec->pact = FALSE;
     
     return 0;
 }
@@ -1227,7 +1301,13 @@ static long mbbo_write (mbboRecord *rec)
     unsigned long rval;
     bool          ok = true;
 
-    rec->pact = TRUE;
+    if (rec->pact)
+    {
+        if (rec->tpro)
+            printf("'%s': written\n", rec->name);
+        rec->pact = FALSE;
+        return 0;
+    }
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
     status = check_link ((dbCommon *)rec, check_mbbo_callback,
@@ -1237,15 +1317,18 @@ static long mbbo_write (mbboRecord *rec)
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
         return status;
     }
-
     if (lock_data((dbCommon *)rec))
     {
-        if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
-            rec->rval != rval)
+        if (get_bits((dbCommon *)rec, rec->nobt, &rval) && rec->rval != rval)
         {
             if (rec->tpro)
-                printf("rec '%s': write %lu\n", rec->name, rec->rval);
+                printf("'%s': write %lu\n", rec->name, rec->rval);
             ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
+            if (pvt->tag->do_write)
+                EIP_printf(6,"'%s': already writing\n", rec->name);
+            else
+                pvt->tag->do_write = true;
+            rec->pact=TRUE;
         }
         semGive(pvt->tag->data_lock);
     }
@@ -1256,7 +1339,6 @@ static long mbbo_write (mbboRecord *rec)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-    rec->pact = FALSE;
     
     return 0;
 }
@@ -1268,7 +1350,13 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
     unsigned long rval;
     bool          ok = true;
 
-    rec->pact = TRUE;
+    if (rec->pact)
+    {
+        if (rec->tpro)
+            printf("'%s': written\n", rec->name);
+        rec->pact = FALSE;
+        return 0;
+    }
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, check_mbbo_direct_callback,
@@ -1285,8 +1373,13 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
             rec->rval != rval)
         {
             if (rec->tpro)
-                printf("rec '%s': write %lu\n", rec->name, rec->rval);
+                printf("'%s': write %lu\n", rec->name, rec->rval);
             ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
+            if (pvt->tag->do_write)
+                EIP_printf(6,"'%s': already writing\n", rec->name);
+            else
+                pvt->tag->do_write = true;
+            rec->pact=TRUE;
         }
         semGive(pvt->tag->data_lock);
     }
@@ -1297,7 +1390,6 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-    rec->pact = FALSE;
     
     return 0;
 }

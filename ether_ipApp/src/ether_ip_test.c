@@ -398,8 +398,9 @@ int main (int argc, const char *argv[])
         size_t data_len;
         if (EIP_verbosity >= 3)
         {
-            EIP_printf(3, "Tag ");
-            EIP_dump_ParsedTag(tag);
+            char buffer[EIP_MAX_TAG_LENGTH];
+            EIP_copy_ParsedTag(buffer, tag);
+            EIP_printf(3, "Tag '%s'\n", buffer);
         }
         if (write)
             EIP_write_tag(&c, tag, T_CIP_REAL, 1,(CN_USINT*) &writeval, 0, 0);

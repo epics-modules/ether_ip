@@ -1,25 +1,37 @@
 /* $Id$
  *
- * EtherNet/IP: Ethernet - ControlNet
+ * ether_ip
+ *
+ * EtherNet/IP routines for Win32, Unix and vxWorks.
+ *
+ * EtherNet/IP started as "ControlNet over Ethernet" (www.controlnet.org),
+ * now defined as ODVA's "EtherNet/IP"   (www.odva.org)
+ *
+ * Docs:  "Spec" = ControlNet Spec. version 2.0, Errata 1
+ *        "ENET" = AB Publication 1756-RM005A-EN-E
  *
  * kasemir@lanl.gov
  */
 
-#include "ether_ip.h"
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdlib.h>
+#include"ether_ip.h"
+#include<stdio.h>
+#include<stdarg.h>
+#include<string.h>
+#include<stddef.h>
+#include<stdlib.h>
+#include<ctype.h>
 #ifndef vxWorks
-#include <memory.h>
+#include<memory.h>
 #endif
 #include"mem_string_file.h"
 
 static const CN_UINT __endian_test = 0x0001;
 #define is_little_endian (*((const CN_USINT*)&__endian_test))
 
-/* Works for VxWorks' gcc, Linux and MS VC: */
+/* __inline seems to work for vxWorks' gcc, Linux and MS VC,
+ * but the real bottleneck is the slow PLC response,
+ * so why bother?
+ */
 #if 0
 #define INLINE  __inline
 #else
@@ -28,9 +40,9 @@ static const CN_UINT __endian_test = 0x0001;
 
 /* Pack binary data in ControlNet format (little endian)
  *
- * Originally "pack" and unpack were modeled after the suggestions
+ * "pack" and "unpack" are modeled after the suggestions
  * in Kerningham/Pike's "Practice of Programming", taking a format argument
- * and a valiable list of values:
+ * and a variable list of values:
  *    s   - CN_SINT
  *    i   - CN_INT
  *    d   - CN_DINT
@@ -38,10 +50,9 @@ static const CN_UINT __endian_test = 0x0001;
  *
  * But that didn't work on vxWorks:
  * I couldn't pass CN_USINT for pack(), va_arg (ap, CN_USINT) always took
- * more than one byte from the stack.
+ * more than one byte from the stack -> one pack_XXX per data type XXX.
  * The unpack seems to work because all var-args are pointer-sized.
  */
-
 INLINE CN_USINT *pack_USINT(CN_USINT *buffer, CN_USINT val)
 {
     *buffer++ = val;
@@ -128,8 +139,7 @@ INLINE const CN_USINT *unpack_REAL(const CN_USINT *buffer, CN_REAL *val)
 /* Format: like pack, but uppercase characters
  * are skipped in buffer, no result is assigned
  */
-static const CN_USINT *unpack(const CN_USINT *buffer,
-                              const char *format, ...)
+static const CN_USINT *unpack(const CN_USINT *buffer, const char *format, ...)
 {
     va_list  ap;
     CN_USINT *vs;
@@ -280,7 +290,8 @@ static CN_USINT *make_CIA_path(CN_USINT *path,
     {
         *path++ = 0x30;
         *path++ = attr;
-        EIP_printf(10, "    Path: Class 0x%X (%s), instance %d, attrib. 0x%X\n",
+        EIP_printf(10,
+                   "    Path: Class 0x%X (%s), instance %d, attrib. 0x%X\n",
                    cls, EIP_class_name(cls), instance, attr);
     }
     else
@@ -362,25 +373,30 @@ ParsedTag *EIP_parse_tag(const char *tag)
     return tl;
 }
 
-void EIP_dump_ParsedTag(const ParsedTag *tag)
+void EIP_copy_ParsedTag(char *buffer, const ParsedTag *tag)
 {
     bool did_first = false;
-    EIP_printf(0, "'");
+    size_t len;
+    
     while (tag)
     {
         switch (tag->type)
         {
-        case te_name:    if (did_first)
-                             EIP_printf(0, ".");
-                         EIP_printf(0, "%s", tag->value.name);
-                         break;
-        case te_element: EIP_printf(0, "[%d]", tag->value.element);
-                         break;
+            case te_name:
+                if (did_first)
+                    *(buffer++) = '.';
+                len = strlen(tag->value.name);
+                memcpy(buffer, tag->value.name, len);
+                buffer += len;
+                break;
+            case te_element:
+                buffer += sprintf(buffer, "[%d]", tag->value.element);
+                break;
         }
         tag = tag->next;
         did_first = true;
     }
-    EIP_printf(0, "'\n");
+    *(buffer++) = '\0';
 }
 
 void EIP_free_ParsedTag(ParsedTag *tag)
@@ -408,7 +424,7 @@ static size_t tag_path_size(const ParsedTag *tag)
         {
         case te_name:
             slen = strlen(tag->value.name);
-            bytes += 2 + slen + slen%2;    /* 0x91, len, strting [, pad] */
+            bytes += 2 + slen + slen%2;    /* 0x91, len, string [, pad] */
             break;
         case te_element:
             if (tag->value.element <= 0xFF)
@@ -870,12 +886,13 @@ CN_USINT *make_CIP_ReadData(CN_USINT *request,
 {
     CN_USINT *buf = make_MR_Request(request, S_CIP_ReadData,
                                     tag_path_size(tag));
-    EIP_printf(10, "    Path: Tag ");
     buf = make_tag_path(buf, tag);
     if (EIP_verbosity >= 10)
     {
-        EIP_dump_ParsedTag(tag);
-        EIP_printf(10, "    UINT elements = %d\n", elements);
+        char buffer[EIP_MAX_TAG_LENGTH];
+        EIP_copy_ParsedTag(buffer, tag);
+        EIP_printf(10, "    Path: Tag '%s'\n    UINT elements = %d\n",
+                   buffer, elements);
     }
     return pack_UINT(buf, elements);
 }
@@ -1135,8 +1152,9 @@ CN_USINT *make_CIP_WriteData (CN_USINT *buf, const ParsedTag *tag,
 
     if (EIP_verbosity >= 10)
     {
-        EIP_printf(10, "    Path: Tag ");
-        EIP_dump_ParsedTag(tag);
+        char buffer[EIP_MAX_TAG_LENGTH];
+        EIP_copy_ParsedTag(buffer, tag);
+        EIP_printf(10, "    Path: Tag '%s'", buffer);
         EIP_printf(10, "    UINT type     = 0x%X\n", type);
         EIP_printf(10, "    UINT elements = %d\n", elements);
         EIP_printf(10, "    Data: ");
@@ -1554,8 +1572,8 @@ bool EIP_send_connection_buffer(EIPConnection *c)
     len = sizeof_EncapsulationHeader + length;
     ok = send(c->sock, (void *)c->buffer, len, 0) == len;
 
-    EIP_printf(10, "Data sent (%d bytes):\n", len);
-    EIP_hexdump(10, c->buffer, len);
+    EIP_printf(9, "Data sent (%d bytes):\n", len);
+    EIP_hexdump(9, c->buffer, len);
     
     return ok;
 }
@@ -1610,8 +1628,8 @@ bool EIP_read_connection_buffer(EIPConnection *c)
     while (got < sizeof_EncapsulationHeader  ||  got < needed);
     set_nonblock (c->sock, 0);
 
-    EIP_printf(10, "Data Received (%d bytes):\n", got);
-    EIP_hexdump(10, c->buffer, got);
+    EIP_printf(9, "Data Received (%d bytes):\n", got);
+    EIP_hexdump(9, c->buffer, got);
 
     return ok;
 }
@@ -2479,8 +2497,9 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
     {
         if (EIP_verbosity >= 1)
         {
-            EIP_printf(1, "EIP_read_tag: Failed tag: ");
-            EIP_dump_ParsedTag(tag);
+            char buffer[EIP_MAX_TAG_LENGTH];
+            EIP_copy_ParsedTag(buffer, tag);
+            EIP_printf(1, "EIP_read_tag: Failed tag '%s'\n");
         }
         return 0;
     }
@@ -2538,8 +2557,9 @@ bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
     {
         if (EIP_verbosity >= 1)
         {
-            EIP_printf(1, "EIP_write_tag: Failed tag: ");
-            EIP_dump_ParsedTag(tag);
+            char buffer[EIP_MAX_TAG_LENGTH];
+            EIP_copy_ParsedTag(buffer, tag);
+            EIP_printf(1, "EIP_write_tag: Failed tag '%s'\n", buffer);
         }
         return 0;
     }

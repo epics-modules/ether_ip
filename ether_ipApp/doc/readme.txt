@@ -186,7 +186,6 @@ record(ai, "B")
     ...
 }
 
-
 -> The driver will scan the tag "fred" at 10 Hz.
 
 This also applies to arrays:
@@ -358,7 +357,7 @@ old data).
 * ao, Analog Output Record
 Like analog input, tags of type REAL, INT, DINT, BOOL are supported as
 well as REAL, INT, DINT arrays (no BOOL arrays). No statistics flags
-are supported.	
+are supported.  
 
 If the SCAN field is "Passive", the "S" flag has to be used.
 
@@ -424,24 +423,22 @@ and no known threshold that causes this to happen.
 *** "FORCE" Flag
 Whenever an output record is processed, it will
 update the driver's copy of a tag and mark it for "write".
-When the record is not processed, the driver will read the
-tag from the PLC and update the record whenever there is
-a discrepency between the tag read from the PLC
-and the record.
-This way, both the IOC and e.g. a PanelView display
-can change the same PLC tag. Changes from "one" source
-are reflected on the respective "other" side.
+The next time the driver processes the scan list which
+contains the tag, it will write the tag to the PLC.
 
-In theory. In practice, some of the write requests seem
-to get lost because of the "dropped messages" syndrome (see above).
-When you set the "TPRO" flag of the record, a write
-request might end up like this:
-	rec 'Test_HPRF:Xmtr1:FilOff_Cmd': write 1
-	BO 'Test_HPRF:Xmtr1:FilOff_Cmd': got 0 from driver
-Even though we just wrote "1", the tag still reflects "0".
-With the default behavior, the record will change back to "0"
-which is very confusing with e.g. command push buttons:
-Operator presses button, button immediately pops back.
+When the record is not processed, and therefore the tag
+is not marked for write, the driver will read the
+tag from the PLC.
+What happens when the value of the tag differs from
+the value of the record?
+
+Per default, the record is updated to reflect the value of the
+tag. This way, both the IOC and e.g. a PanelView display can change
+the same PLC tag. Changes from "one" source are reflected on the
+respective "other" side.
+With TPRO, it looks like this:
+     'Test_HPRF:Fil1:WrmRmp_Set': got 8 from driver
+     'Test_HPRF:Fil1:WrmRmp_Set': updated record's value 8  
 
 The "FORCE" flag will change this behavior:
 When the driver notices a discrepency, it will NOT
@@ -451,19 +448,8 @@ again and again until the tag on the PLC matches
 the value of the record. The record tries to "force"
 its value into the tag.
 With TPRO, it looks like this:
-     rec 'Test_HPRF:Xmtr1:FilOff_Cmd': write 1
-     BO 'Test_HPRF:Xmtr1:FilOff_Cmd': got 0 from driver
-     --> will re-write record's value 1                  
-
-Again: In theory, this flag should not be necessary.
-When the driver sends a write command to the PLC
-and there is no TCP error, the PLC should get the
-command and change the tag as per the write command.
-In reality, the PLC has been known to not comply:
-Even though there is no TCP communication error,
-so the write command reached at least the ControlLogix
-ENET module, the tag on the PLC might not change.
-The FORCE flag is a hack for this situation.
+     'Test_HPRF:Xmtr1:FilOff_Cmd': got 0 from driver
+     'Test_HPRF:Xmtr1:FilOff_Cmd': will re-write record's value 1
 
 *** Arrays
 When writing array tags, a single ao record (or bo, mbbo, ...)
@@ -535,8 +521,8 @@ result, the "B <blit>" flag should be used for non-BOOL arrays.
 Note: In the current implementation, the mbbiX records can read across array
 elements of DINT arrays. This record reads element 4, bit 31 and
 element 5, bit 1:
-	field(INP, "@$(PLC) DINTs[4] B 31")
-	field(NOBT, "2")
+        field(INP, "@$(PLC) DINTs[4] B 31")
+        field(NOBT, "2")
 But this feature is merely a side effect, it's safer to read
 within one INT/DINT. Or use BOOL arrays.
 
@@ -560,8 +546,8 @@ whenever one or more other elements are changed by output records.
 See the ao comments.
 
 * Debugging
-On the IOC vxWorks console (or a telnet connection to the IOC), the
-driver can display information via the usual EPICS dbior call:
+The driver can display information via the usual EPICS dbior call
+on the IOC vxWorks console (or a telnet connection to the IOC):
     dbior "drvEtherIP", 10
 A direct call to
     drvEtherIP_report 10
@@ -583,7 +569,7 @@ drvEtherIP_help shows all user-callable driver routines:
           (if neither SCAN nor INP/OUT provide one)    
       drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
       -  define a PLC name (used by EPICS records) as IP
-	 (DNS name or dot-notation) and slot (0...)
+         (DNS name or dot-notation) and slot (0...)
       drvEtherIP_read_tag <ip>, <tag>, <elements>, <ms_timeout>
       -  call to test a round-trip single tag read
       drvEtherIP_report <level>
@@ -594,8 +580,8 @@ drvEtherIP_help shows all user-callable driver routines:
       -  reset error counts and min/max scan times
       drvEtherIP_restart
       -  in case of communication errors, driver will restart,
-	 so calling this one directly shouldn't be necessary
-	 but is possible                           
+         so calling this one directly shouldn't be necessary
+         but is possible                           
 
 A common problem might be that a record does not seem to read/write
 the PLC tag that it was supposed to be connected to.
@@ -611,9 +597,95 @@ process:   snsioc4:biDINTs40
    link_text  : 'plc1 DINTs[40]'
    PLC_name   : 'plc1'
    string_tag : 'DINTs'
-   element    : 1          <- element 1, not 40!
-   mask       : 0x100      <- mask selects but 8
-(See the description of the bi record and the "B" flag for a better solution)
+   element    : 1          <- element 1!
+   mask       : 0x100      <- mask selects bit 8!
+
+As you see, the BI record is reading bit #8
+in DINT[1], that's bit #40 when counting from the
+beginning of the DINT array.
+If that's what you wanted, OK.
+If you entered "DINTs[40]" because you wanted bit #0
+in array element 40, you should have used "DINTs[40] B 0"
+(See the description of the bi record and the "B" flag)
+
+** Checklist
+( ) Set the record's TPRO to "1".
+    Does the record get processed when you want it to be processed?
+    Does the link_text make sense?
+    Is it parsed correctly, i.e. is the PLC_name what you
+    meant to use for a PLC name?
+    Does the combination of string_tag, element & mask make sense?
+( ) All "drvEtherIP_report 10", locate the information
+    for the tag that the record uses:
+    *** Tag 'Word2' @ 0x18F0F38:
+      scanlist            : 0x191B5F0
+      compiled tag        : 'Word2'
+      elements            : 29
+      cip_r_request_size  : 12
+      cip_r_response_size : 64
+      cip_w_request_size  : 72
+      cip_w_response_size : 4
+      data_lock ID        : 0x18F0ED8
+      data_size (buffer)  : 60
+      valid_data_size     : 60
+      do_write            : no
+      is_writing          : no
+      data                : INT 4 1 1 1 4 0 0 0 0 0 1 1 1 1\
+                           4 1 1 1 1 1 2 2 1 16 0 0 4 1 1 
+      transfer tick-time  : 46 (0.046 secs) 
+    If the "...._size" fields in there are zero, the driver
+    could not learn anything about the tag.
+    See if the tag actually exists on the PLC (next step).
+    Note on arrays:
+    Requests are combined. Assume that we are debugging a record
+    that accesses tag FRED[7]. drvEtherIP_report might show
+    that the driver is actually trying to access 10 elements
+    for tag FRED. That means that some other record must
+    try to get FRED[9], so alltogether the driver reaches
+    for FRED[0]...FRED[9] -> 10 elements.
+    Assert that there are at least 10 elements for the tag FRED
+    on the PLC!
+( ) Use the ether_ip_test tool, e.g. try
+       ether_ip_test -i 123.45.67 MyTag[12]
+    to see if you can get to the PLC and read the tag.
+
+* EIP_verbosity
+Depending on the value of EIP_verbosity, the driver
+and device support will report various levels of detail:
+
+ 0: Only severe errors are reported
+ 1: Show errors and some more information
+...
+ 9: Show a hex-dump of all the network traffic
+    that's sent and received
+10: Show byte-by-byte explanation of what's assembled
+    in the send buffer, hex-dump of that buffer,
+    hex-dump of the received data and byte-by-byte
+    explanation of what has been received.
+
+A LOT of output is generated at levels 9 & 10, resulting
+in a significant CPU load and - when viewed in a telnet
+session - network traffic. Therefore all output can be
+redirected into a memory string file (ring buffer, see mem_string_file.h):
+
+    # Redirect EIP diagnostics output to ring buffer,
+    # enable full diag. messages:
+    EIP_use_mem_string_file=1
+    EIP_verbosity=10
+
+The idea is to keep writing into the ring buffer until
+you believe you caught what you were after. Now
+stop recording (and overwriting) by setting EIP_verbosity=0.
+To view (& clear) the current buffer on stdout:
+    msfDump(0)
+Copy the current buffer into file (& clear the buffer):
+    f=fopen("/tmp/eip.log", "w")
+    msfDump(f)
+    fclose(f)      
+
+The size of the memory string file defaults to 2MB.
+It can be changed in the vxWorks startup file:
+    msfInitialBufferSize=10*1024*1024
 
 * Driver Operation Details
 Example:

@@ -2,6 +2,9 @@
  *
  * drvEtherIP
  *
+ * vxWorks driver that uses ether_ip routines,
+ * keeping lists of PLCs and tags and scanlists etc.
+ *
  * kasemir@lanl.gov
  */
 
@@ -17,10 +20,7 @@
 /* TCP port */
 #define ETHERIP_PORT 0xAF12
 
-/* TCP timeout for connection and readback */
-#define ETHERIP_TIMEOUT 5000
-
-/* timeout in millisec for connection, read, ... */
+/* TCP timeout in millisec for connection and readback */
 #define ETHERIP_TIMEOUT 5000
 
 /* Parameters for scan task, one per PLC.
@@ -40,6 +40,7 @@
 
 /* semaphore options (mutex) */
 #define EIP_SEMOPTS (SEM_Q_PRIORITY | SEM_DELETE_SAFE |SEM_INVERSION_SAFE)
+#define EIP_SEM_TIMEOUT sysClkRateGet()
 
 typedef struct __TagInfo  TagInfo;  /* forwards */
 typedef struct __ScanList ScanList;
@@ -126,11 +127,11 @@ struct __TagInfo
     SEM_ID     data_lock;          /* see "locking" in drvEtherIP.c */
     size_t     data_size;          /* total size of data buffer */
     size_t     valid_data_size;    /* used portion of data, 0 for "invalid" */
-    bool       do_write;           /* set by device, causes driver to write */
-    bool       is_writing;         /* set by driver when handling a write */
+    bool       do_write;           /* set by device, reset by driver */
+    bool       is_writing;         /* driver copy of do_write for cycle */
     CN_USINT   *data;              /* CIP data (type, raw data) */
     size_t     transfer_ticktime;  /* ticks needed for last transfer */
-    DL_List    callbacks;          /* TagCallback list for new values */ 
+    DL_List    callbacks;          /* TagCallbacks for new values&write done */
 };
 
 extern double drvEtherIP_default_rate;
@@ -146,7 +147,8 @@ PLC *drvEtherIP_find_PLC(const char *PLC_name);
 
 TagInfo *drvEtherIP_add_tag(PLC *plc, double period,
                             const char *string_tag, size_t elements);
-/* Note: The data is already locked (data_lock taken)
+/* Register callbacks for "received new data" and "finished the write".
+ * Note: The data is already locked (data_lock taken)
  * when the callback is called!
  */
 void drvEtherIP_add_callback(PLC *plc, TagInfo *tag,

@@ -2,6 +2,9 @@
  *
  * drvEtherIP
  *
+ * vxWorks driver that uses ether_ip routines,
+ * keeping lists of PLCs and tags and scanlists etc.
+ *
  * kasemir@lanl.gov
  */
 
@@ -67,7 +70,7 @@ static struct
  *    so we avoid locking the data and do_write flag all that time
  *    from a) to c). Instead, the lock is released after b) and
  *    taken again in c).
- *    Data is locked in c) only to keep the device from looking at
+ *    Data is locked in c) to keep the device from looking at
  *    immature data. The driver keeps the state of do_write from a)
  *    in is_writing. If the device sets do_write after a), it's
  *    ignored until the next scan. (Otherwise the device would
@@ -75,11 +78,9 @@ static struct
  *
  * do_write   is_writing
  *    1           0       -> Device support requested write
- *    1           1       -> Driver noticed the write request
- *    0/x         1       -> Driver sent the write to the PLC
- *    x           0       -> Driver received write result from PLC
- *    (x because device support might actually set do_write again
- *     while driver is still handling the original write request)
+ *    1           1       -> Driver noticed the write request,
+ *    0           1       -> sends it
+ *    0           0       -> Driver received write result from PLC
  */
 
 /* ------------------------------------------------------------
@@ -88,6 +89,7 @@ static struct
 
 static void dump_TagInfo(const TagInfo *info, int level)
 {
+    char buffer[EIP_MAX_TAG_LENGTH];
     bool have_sem;
     
     printf("*** Tag '%s' @ 0x%X:\n", info->string_tag, (unsigned int)info);
@@ -95,8 +97,8 @@ static void dump_TagInfo(const TagInfo *info, int level)
     {
         printf("  scanlist            : 0x%X\n",
                (unsigned int)info->scanlist);
-        printf("  compiled tag        : ");
-        EIP_dump_ParsedTag(info->tag);
+        EIP_copy_ParsedTag(buffer, info->tag);
+        printf("  compiled tag        : '%s'\n", buffer);
         printf("  elements            : %d\n", info->elements);
         printf("  cip_r_request_size  : %d\n", info->cip_r_request_size);
         printf("  cip_r_response_size : %d\n", info->cip_r_response_size);
@@ -105,7 +107,7 @@ static void dump_TagInfo(const TagInfo *info, int level)
         printf("  data_lock ID        : 0x%X\n",
                (unsigned int) info->data_lock);
     }
-    have_sem = semTake(info->data_lock, sysClkRateGet()) == OK;
+    have_sem = semTake(info->data_lock, EIP_SEM_TIMEOUT) == OK;
     if (! have_sem)
         printf("  (CANNOT GET DATA LOCK!)\n");
     if (level > 3)
@@ -373,23 +375,23 @@ static bool complete_PLC_ScanList_TagInfos(PLC *plc)
     return any_ok;
 }
 
-static void invalidate_PLC_tags (PLC *plc)
+static void invalidate_PLC_tags(PLC *plc)
 {
     ScanList *list;
     TagInfo  *info;
     
     for (list=DLL_first(ScanList,&plc->scanlists);
          list;
-         list=DLL_next (ScanList,list))
+         list=DLL_next(ScanList,list))
     {
-        for (info = DLL_first (TagInfo, &list->taginfos);
+        for (info = DLL_first(TagInfo, &list->taginfos);
              info;
              info = DLL_next(TagInfo, info))
         {
-            if (semTake (info->data_lock, sysClkRateGet()) == OK)
+            if (semTake(info->data_lock, EIP_SEM_TIMEOUT) == OK)
             {
                 info->valid_data_size = 0;
-                semGive (info->data_lock);
+                semGive(info->data_lock);
             }
         }
     }
@@ -432,7 +434,6 @@ static size_t determine_MultiRequest_count(size_t limit,
                                            size_t *multi_response_size)
 {
     size_t try_req, try_resp, count;
-    
     /* Sum sizes for requests and responses,
      * determine total for MultiRequest/Response,
      * stop if too big.
@@ -443,13 +444,15 @@ static size_t determine_MultiRequest_count(size_t limit,
     {
         if (info->cip_r_request_size <= 0)
             continue;
-        if (semTake(info->data_lock, sysClkRateGet()) != OK)
+        if (semTake(info->data_lock, EIP_SEM_TIMEOUT) != OK)
+        {
+            EIP_printf(1, "EIP determine_MultiRequest_count cannot lock %s\n",
+                       info->string_tag);
             return 0;
+        }
         if (info->do_write)
         {
             info->is_writing = true;
-            EIP_printf(5, "%s: do_write=%d, is_writing=%d\n",
-                       info->string_tag, info->do_write, info->is_writing);
             try_req  = *requests_size  + info->cip_w_request_size;
             try_resp = *responses_size + info->cip_w_response_size;
         }
@@ -520,9 +523,8 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
             return false;
         multi_request = make_CM_Unconnected_Send(send_request,
                                                  multi_request_size, c->slot);
-        if (!multi_request)
-            return false;
-        if (!prepare_CIP_MultiRequest(multi_request, count))
+        if (!multi_request  ||
+            !prepare_CIP_MultiRequest(multi_request, count))
             return false;
         /* Add read/write requests to the multi requests */
         for (i=0; i<count; info=DLL_next(TagInfo, info))
@@ -532,34 +534,31 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
             EIP_printf(10, "Request #%d (%s):\n", i, info->string_tag);
             if (info->is_writing)
             {
-                if (semTake(info->data_lock, sysClkRateGet()) != OK)
+                request = CIP_MultiRequest_item(multi_request,
+                                                i, info->cip_w_request_size);
+                if (semTake(info->data_lock, EIP_SEM_TIMEOUT) != OK)
                 {
                     EIP_printf(1, "EIP process_ScanList '%s': "
                                "no data lock (write)\n", info->string_tag);
                     return false;
                 }
-                info->do_write = false; /* ack.: saw the do_write */
-                EIP_printf(5, "%s: do_write=%d, is_writing=%d\n",
-                           info->string_tag, info->do_write, info->is_writing);
-                request = CIP_MultiRequest_item(multi_request,
-                                                i, info->cip_w_request_size);
-                ok = request != NULL  &&
-                    make_CIP_WriteData(request, info->tag,
-                                       (CIP_Type) get_CIP_typecode(info->data),
-                                       info->elements,
-                                       info->data + CIP_Typecode_size) != NULL;
+                ok = request &&
+                    make_CIP_WriteData(
+                        request, info->tag,
+                        (CIP_Type)get_CIP_typecode(info->data),
+                        info->elements, info->data + CIP_Typecode_size);
+                info->do_write = false;
                 semGive(info->data_lock);
-                if (!ok)
-                    return false;
             }
             else
             {   /* reading, !is_writing */
-                request = CIP_MultiRequest_item(multi_request,
-                                                i, info->cip_r_request_size);
-                if (!request ||
-                    !make_CIP_ReadData(request, info->tag, info->elements))
-                    return false;
+                request = CIP_MultiRequest_item(
+                    multi_request, i, info->cip_r_request_size);
+                ok = request &&
+                    make_CIP_ReadData(request, info->tag, info->elements);
             }
+            if (!ok)
+                return false;
             ++i; /* increment here, not in for() -> skip empty tags */
         } /* for i=0..count */
         transfer_ticktime = tickGet();
@@ -572,7 +571,6 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
             return false;
         }
         transfer_ticktime = tickGet() - transfer_ticktime;
-        
         response = EIP_unpack_RRData(c->buffer, &rr_data);
         if (! check_CIP_MultiRequest_Response(response,
                                               rr_data.data_length))
@@ -596,15 +594,20 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
             if (info->cip_r_request_size <= 0)
                 continue;
             info->transfer_ticktime = transfer_ticktime;
-            single_response =
-                get_CIP_MultiRequest_Response(response, rr_data.data_length,
-                                              i, &single_response_size);
+            single_response = get_CIP_MultiRequest_Response(
+                response, rr_data.data_length, i, &single_response_size);
             if (! single_response)
                 return false;
             if (EIP_verbosity >= 10)
             {
                 EIP_printf(10, "Response #%d (%s):\n", i, info->string_tag);
                 EIP_dump_raw_MR_Response(single_response, 0);
+            }
+            if (semTake(info->data_lock, EIP_SEM_TIMEOUT) != OK)
+            {
+                EIP_printf(1, "EIP process_ScanList '%s': "
+                           "no data lock (receive)\n", info->string_tag);
+                return false;
             }
             if (info->is_writing)
             {
@@ -613,64 +616,49 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                 {
                     EIP_printf(0, "EIP: CIPWrite failed for '%s'\n",
                                info->string_tag);
+                    info->valid_data_size = 0;
                 }
                 info->is_writing = false;
-                EIP_printf(5, "%s: do_write=%d, is_writing=%d\n",
-                           info->string_tag, info->do_write, info->is_writing);
             }
             else /* not writing, reading */
             {
-                data = check_CIP_ReadData_Response(single_response,
-                                                   single_response_size,
-                                                   &data_size);
-                if (semTake(info->data_lock, sysClkRateGet()) != OK)
-                {
-                    EIP_printf(1, "EIP process_ScanList '%s': "
-                               "no data lock (read)\n", info->string_tag);
-                    return false;
+                data = check_CIP_ReadData_Response(
+                    single_response, single_response_size, &data_size);
+                if (info->do_write)
+                {   /* Possible: Read request ... network delay ... response.
+                     * Ignore the read, next scan will write */
+                    EIP_printf(8, "EIP '%s': Device support requested write "
+                               "in middle of read cycle.\n", info->string_tag);
                 }
-                if (data_size > 0  &&
-                    EIP_reserve_buffer((void **)&info->data,
-                                       &info->data_size, data_size))
+                else
                 {
-                    memcpy(info->data, data, data_size);
-                    info->valid_data_size = data_size;
-                    if (EIP_verbosity >= 10)
+                    if (data_size > 0  &&
+                        EIP_reserve_buffer((void **)&info->data,
+                                           &info->data_size, data_size))
                     {
-                        elements = CIP_Type_size(get_CIP_typecode(data));
-                        if (elements > 0)
+                        memcpy(info->data, data, data_size);
+                        info->valid_data_size = data_size;
+                        if (EIP_verbosity >= 10)
                         {
-                            elements = data_size / elements;
-                            dump_raw_CIP_data(data, elements);
-                        }
-                        else
-                        {
-                            EIP_printf(10, "Unknown Data type:\n");
-                            EIP_hexdump(10, data, data_size);
+                            elements = CIP_Type_size(get_CIP_typecode(data));
+                            if (elements > 0)
+                            {
+                                elements = data_size / elements;
+                                dump_raw_CIP_data(data, elements);
+                            }
+                            else
+                                EIP_printf(10, "Unknown Data type:\n");
                         }
                     }
+                    else
+                        info->valid_data_size = 0;
                 }
-                else
-                    info->valid_data_size = 0;
-                /* Because of network delay between read request and response,
-                 * device support might request a write in between.
-                 * In that case, don't invoke callback for
-                 * - now outdated - read request
-                 */
-                if (info->do_write)
-                {
-                    EIP_printf(5, "Write requested for '%s' "
-                               "while driver is in the middle "
-                               "of a read request\n", info->string_tag);
-                }
-                else
-                {   /* Call all registered callbacks for this tag */
-                    for (cb = DLL_first(TagCallback,&info->callbacks);
-                         cb; cb=DLL_next(TagCallback,cb))
-                        (*cb->callback) (cb->arg);
-                }
-                semGive(info->data_lock);
             }
+            /* Call all registered callbacks for this tag */
+            for (cb = DLL_first(TagCallback,&info->callbacks);
+                 cb; cb=DLL_next(TagCallback,cb))
+                (*cb->callback) (cb->arg);
+            semGive(info->data_lock);
             ++i;
         }
         /* "info" now on next unread TagInfo or 0 */
@@ -865,7 +853,7 @@ long drvEtherIP_report(int level)
     if (level > 0)
         printf("  SEM_ID lock: 0x%X\n",
                (unsigned int) drvEtherIP_private.lock);
-    have_drvlock = semTake(drvEtherIP_private.lock, sysClkRateGet()*5) == OK;
+    have_drvlock = semTake(drvEtherIP_private.lock, EIP_SEM_TIMEOUT*5) == OK;
     if (! have_drvlock)
         printf("   CANNOT GET DRIVER'S LOCK!\n");
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
@@ -893,7 +881,7 @@ long drvEtherIP_report(int level)
                    plc->scan_task_id,
                    (taskIdVerify(plc->scan_task_id) == OK ?
                     "running" : "-dead-"));
-            have_PLClock = semTake(plc->lock, sysClkRateGet()*5) == OK;
+            have_PLClock = semTake(plc->lock, EIP_SEM_TIMEOUT*5) == OK;
             if (! have_PLClock)
                 printf("   CANNOT GET PLC'S LOCK!\n");
             if (level > 2)
@@ -926,11 +914,11 @@ void drvEtherIP_dump ()
     ScanList *list;
     TagInfo  *info;
     
-    semTake (drvEtherIP_private.lock, WAIT_FOREVER);
+    semTake(drvEtherIP_private.lock, WAIT_FOREVER);
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
          plc; plc=DLL_next(PLC,plc))
     {
-        semTake (plc->lock, WAIT_FOREVER);
+        semTake(plc->lock, WAIT_FOREVER);
         printf ("PLC %s\n", plc->name);
         for (list=DLL_first(ScanList, &plc->scanlists); list;
              list=DLL_next(ScanList, list))
@@ -956,11 +944,11 @@ void drvEtherIP_reset_statistics ()
     PLC *plc;
     ScanList *list;
 
-    semTake (drvEtherIP_private.lock, WAIT_FOREVER);
+    semTake(drvEtherIP_private.lock, WAIT_FOREVER);
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
          plc; plc=DLL_next(PLC,plc))
     {
-        semTake (plc->lock, WAIT_FOREVER);
+        semTake(plc->lock, WAIT_FOREVER);
         plc->plc_errors = 0;
         plc->slow_scans = 0;
         for (list=DLL_first(ScanList, &plc->scanlists); list;
@@ -997,7 +985,7 @@ PLC *drvEtherIP_find_PLC (const char *PLC_name)
 {
     PLC *plc;
 
-    semTake (drvEtherIP_private.lock, WAIT_FOREVER);
+    semTake(drvEtherIP_private.lock, WAIT_FOREVER);
     plc = get_PLC (PLC_name, /*create*/ false);
     semGive (drvEtherIP_private.lock);
 
@@ -1054,7 +1042,7 @@ void  drvEtherIP_add_callback (PLC *plc, TagInfo *info,
 {
     TagCallback *cb;
     
-    semTake (plc->lock, WAIT_FOREVER);
+    semTake(plc->lock, WAIT_FOREVER);
     for (cb = DLL_first(TagCallback, &info->callbacks);
          cb; cb = DLL_next(TagCallback, cb))
     {
@@ -1081,7 +1069,7 @@ void drvEtherIP_remove_callback (PLC *plc, TagInfo *info,
 {
     TagCallback *cb;
 
-    semTake (plc->lock, WAIT_FOREVER);
+    semTake(plc->lock, WAIT_FOREVER);
     for (cb = DLL_first(TagCallback, &info->callbacks);
          cb; cb=DLL_next(TagCallback, cb))
     {

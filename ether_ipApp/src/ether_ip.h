@@ -1,8 +1,10 @@
 /* $Id$
  *
- * EtherNet/IP
+ * ether_ip
  *
- * Started as "ControlNet over Ethernet" (www.controlnet.org),
+ * EtherNet/IP routines for Win32, Unix and vxWorks.
+ *
+ * EtherNet/IP started as "ControlNet over Ethernet" (www.controlnet.org),
  * now defined as ODVA's "EtherNet/IP"   (www.odva.org)
  *
  * Docs:  "Spec" = ControlNet Spec. version 2.0, Errata 1
@@ -16,8 +18,8 @@
 #include <winsock2.h>
 #pragma pack(push, 1)
 
-#define SOCKERRNO WSAGetLastError()                   
-#define socket_close(S)         closesocket(S)
+#define SOCKERRNO       WSAGetLastError()                   
+#define socket_close(S) closesocket(S)
 typedef u_long FAR osiSockIoctl_t;    
 #define SOCK_EWOULDBLOCK WSAEWOULDBLOCK
 #define SOCK_EINPROGRESS WSAEINPROGRESS 
@@ -43,11 +45,11 @@ typedef u_long FAR osiSockIoctl_t;
 #include <hostLib.h>
 #include <ctype.h>
 #include <tickLib.h>
-typedef int                     SOCKET;
-#define INVALID_SOCKET		(-1)
-#define SOCKET_ERROR		(-1)
-#define SOCKERRNO               errno
-#define socket_close(S)         close(S)
+typedef int               SOCKET;
+#define INVALID_SOCKET    (-1)
+#define SOCKET_ERROR      (-1)
+#define SOCKERRNO         errno
+#define socket_close(S)   close(S)
 #define SOCK_EWOULDBLOCK  EWOULDBLOCK                 
 #define SOCK_EINPROGRESS  EINPROGRESS
 /* end of vxWorks settings */
@@ -65,11 +67,11 @@ typedef int                     SOCKET;
 #include <netinet/in.h>    
 #include <arpa/inet.h>    
 #include <netdb.h>    
-typedef int                     SOCKET;
-#define INVALID_SOCKET          (-1)
-#define SOCKET_ERROR            (-1)
-#define SOCKERRNO               errno
-#define socket_close(S)         close(S)
+typedef int               SOCKET;
+#define INVALID_SOCKET    (-1)
+#define SOCKET_ERROR      (-1)
+#define SOCKERRNO         errno
+#define socket_close(S)   close(S)
 #define SOCK_EWOULDBLOCK  EWOULDBLOCK                 
 #define SOCK_EINPROGRESS  EINPROGRESS
 
@@ -87,14 +89,13 @@ typedef int bool;
 #define false 0
 
 /* This could be an application on its own...
- * Original idea:
+ * Rough idea:
  * 10: Dump all protocol details
- *  9: Show about one line per action, request, ...
+ *  9: Hexdump each sent/received buffer
  *
  *  6: show driver details
  *  5: device will show write-related operations
  *
- *  3: show more error info, dump protocol
  *  2: show more error info: "xxx failed because..."
  *  1: show error messages: "xxx failed"
  *  0: keep quiet
@@ -339,37 +340,38 @@ typedef enum
 #define get_CIP_typecode(td)  ( (CIP_Type)  (((CN_USINT *)td)[0]) )
 
 /* Determine byte size of CIP_Type */
-size_t CIP_Type_size (CIP_Type type);
+size_t CIP_Type_size(CIP_Type type);
 
 /* Turn tag string into ParsedTag,
- * print it and free it
+ * convert back into string and free it
  */
-ParsedTag *EIP_parse_tag (const char *tag);
-void EIP_dump_ParsedTag (const ParsedTag *tag);
-void EIP_free_ParsedTag (ParsedTag *tag);
+#define EIP_MAX_TAG_LENGTH 100
+ParsedTag *EIP_parse_tag(const char *tag);
+void EIP_copy_ParsedTag(char *buffer, const ParsedTag *tag);
+void EIP_free_ParsedTag(ParsedTag *tag);
 
-CN_USINT *make_CIP_ReadData (CN_USINT *request,
-                             const ParsedTag *tag, size_t elements);
-const CN_USINT *check_CIP_ReadData_Response (const CN_USINT *response,
-                                             size_t response_size,
-                                             size_t *data_size);
+CN_USINT *make_CIP_ReadData(CN_USINT *request,
+                            const ParsedTag *tag, size_t elements);
+const CN_USINT *check_CIP_ReadData_Response(const CN_USINT *response,
+                                            size_t response_size,
+                                            size_t *data_size);
 
 /* Fill buffer with CIP WriteData request
  * for tag, type of CIP data, given number of elements.
  * Also copies data into buffer,
  * data has to be in network format already!
  */
-CN_USINT *make_CIP_WriteData (CN_USINT *buf, const ParsedTag *tag,
-                              CIP_Type type, size_t elements,
-                              CN_USINT *raw_data);
-void dump_CIP_WriteRequest (const CN_USINT *request);
+CN_USINT *make_CIP_WriteData(CN_USINT *buf, const ParsedTag *tag,
+                             CIP_Type type, size_t elements,
+                             CN_USINT *raw_data);
+void dump_CIP_WriteRequest(const CN_USINT *request);
 /* Test CIP_WriteData response: If not OK, report error */
-bool check_CIP_WriteData_Response (const CN_USINT *response,
-                                   size_t response_size);
+bool check_CIP_WriteData_Response(const CN_USINT *response,
+                                  size_t response_size);
 
-size_t CIP_MultiRequest_size (size_t count, size_t requests_size);
-size_t CIP_MultiResponse_size (size_t count, size_t responses_size);
-bool prepare_CIP_MultiRequest (CN_USINT *request, size_t count);
+size_t CIP_MultiRequest_size(size_t count, size_t requests_size);
+size_t CIP_MultiResponse_size(size_t count, size_t responses_size);
+bool prepare_CIP_MultiRequest(CN_USINT *request, size_t count);
 
 CN_USINT *CIP_MultiRequest_item(CN_USINT *request,
                                 size_t request_no,
@@ -379,21 +381,21 @@ bool check_CIP_MultiRequest_Response(const CN_USINT *response,
                                      size_t response_size);
 void dump_CIP_MultiRequest_Response_Error(const CN_USINT *response,
                                           size_t response_size);
-const CN_USINT *get_CIP_MultiRequest_Response (const CN_USINT *response,
-                                               size_t response_size,
-                                               size_t reply_no,
-                                               size_t *reply_size);
+const CN_USINT *get_CIP_MultiRequest_Response(const CN_USINT *response,
+                                              size_t response_size,
+                                              size_t reply_no,
+                                              size_t *reply_size);
 
 /* dump CIP data, type and data are in raw format */
-void dump_raw_CIP_data (const CN_USINT *raw_type_and_data, size_t elements);
-bool get_CIP_double (const CN_USINT *raw_type_and_data,
-                     size_t element, double *result);
-bool get_CIP_UDINT (const CN_USINT *raw_type_and_data,
-                    size_t element, CN_UDINT *result);
-bool put_CIP_double (const CN_USINT *raw_type_and_data,
-                     size_t element, double value);
-bool put_CIP_UDINT (const CN_USINT *raw_type_and_data,
-                    size_t element, CN_UDINT value);
+void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements);
+bool get_CIP_double(const CN_USINT *raw_type_and_data,
+                    size_t element, double *result);
+bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
+                   size_t element, CN_UDINT *result);
+bool put_CIP_double(const CN_USINT *raw_type_and_data,
+                    size_t element, double value);
+bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
+                   size_t element, CN_UDINT value);
 
 
 /********************************************************
@@ -548,53 +550,54 @@ typedef struct
 #pragma pack(pop)
 #endif
 
-CN_USINT *EIP_make_SendRRData (EIPConnection *c, size_t length);
+CN_USINT *EIP_make_SendRRData(EIPConnection *c, size_t length);
 
 /* Unpack reponse to SendRRData.
  * Fills data with details, returns pointer to raw MRResponse
  * that's enclosed in the RRData
  */
-const CN_USINT *EIP_unpack_RRData (const CN_USINT *response,
-                                   EncapsulationRRData *data);
+const CN_USINT *EIP_unpack_RRData(const CN_USINT *response,
+                                  EncapsulationRRData *data);
 
-void EIP_dump_connection (const EIPConnection *c);
+void EIP_dump_connection(const EIPConnection *c);
 
 /* Assert that *buffer can hold "requested" bytes.
  * A bit like realloc, but only grows and keeps old buffer
  * if no more space */
-bool EIP_reserve_buffer (void **buffer, size_t *size, size_t requested);
+bool EIP_reserve_buffer(void **buffer, size_t *size, size_t requested);
 
-bool EIP_send_connection_buffer (EIPConnection *c);
+bool EIP_send_connection_buffer(EIPConnection *c);
 
-bool EIP_read_connection_buffer (EIPConnection *c);
+bool EIP_read_connection_buffer(EIPConnection *c);
 
 /* A tad like the original strdup (not available for vxWorks),
  * but frees the original string if occupied
  * -> has to be 0-initialized */
-bool EIP_strdup (char **ptr, const char *text, size_t len);
+bool EIP_strdup(char **ptr, const char *text, size_t len);
 
-bool EIP_startup (EIPConnection *c,
-                  const char *ip_addr, unsigned short port,
-                  int slot,
-                  size_t millisec_timeout);
+bool EIP_startup(EIPConnection *c,
+                 const char *ip_addr, unsigned short port,
+                 int slot,
+                 size_t millisec_timeout);
 
-void EIP_shutdown (EIPConnection *c);
+void EIP_shutdown(EIPConnection *c);
 
 /* Read a single tag in a single CIP_ReadData request,
  * report data & data_length
  * as well as sizes of CIP_ReadData request/response
  */
-const CN_USINT *EIP_read_tag (EIPConnection *c,
-                              const ParsedTag *tag, size_t elements,
-                              size_t *data_size,
-                              size_t *request_size, size_t *response_size);
+const CN_USINT *EIP_read_tag(EIPConnection *c,
+                             const ParsedTag *tag, size_t elements,
+                             size_t *data_size,
+                             size_t *request_size, size_t *response_size);
 
-bool EIP_write_tag (EIPConnection *c, const ParsedTag *tag,
-                    CIP_Type type, size_t elements, CN_USINT *data,
-                    size_t *request_size,
-                    size_t *response_size);
+bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
+                   CIP_Type type, size_t elements, CN_USINT *data,
+                   size_t *request_size,
+                   size_t *response_size);
 
-void *EIP_Get_Attribute_Single (EIPConnection *c,
-                                CN_Classes cls, CN_USINT instance,
-                                CN_USINT attr, size_t *len);
+void *EIP_Get_Attribute_Single(EIPConnection *c,
+                               CN_Classes cls, CN_USINT instance,
+                               CN_USINT attr, size_t *len);
 
+/* EOF ether_ip.h */
