@@ -1,5 +1,19 @@
 -*- outline -*-
 
+* 2001, 08-30 (not versioned)
+
+** Patch to output records
+Output records are for writing to the PLC.
+But most of the time they are readong from the PLC
+and if there is a difference between the record's value
+and the PLC tag, the record is updated and processed.
+
+New: This will now happen if the record is UDF.
+Before, a record would start as UDF, value 0,
+and unless the tag happened to be !=0, the record
+stayed UDF. Now the record will be updated/initialized
+after e.g. a reboot with the tag value.
+
 * 2001, 06-19    V1.1
 
 ** New "B <bit>" flag:

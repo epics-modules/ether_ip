@@ -79,7 +79,8 @@ and the name that the driver uses (plc1) are all related by different!
     # The IP address gets us to the ENET interface.
     # To get to the PLC itself, we need the slot that
     # it resides in. The first, left-most slot in the
-    # ControlLogix crate is slot 0:
+    # ControlLogix crate is slot 0.
+    # (When omitting the slot number, the default is also 0)
     drvEtherIP_define_PLC "plc1", "snsplc1", 0
        
     # EtherIP driver verbosity, 0=silent, up to 10:
@@ -261,7 +262,34 @@ are supported.
 
 If the SCAN field is "Passive", the "S" flag has to be used.
 
-** Write support
+** Write Caveats
+*** Arrays
+When writing array tags, a single ao record (or bo, mbbo, ...)
+is connected to a single element of the array.
+When the record has a new value, it will update that array
+element and mark the array as "please write to PLC during the
+next scan cycle of the driver".
+This is desirable because it allows several output records to
+specify new values and then the WHOLE ARRAY is written as one unit.
+
+Writing the values that didn't change doesn't matter because
+a) the transfer time for a single tag and an array is almost
+   the same. Transfering an array where many items didn't change
+   is not costly, transferring two separate tags that did change
+   would take longer.
+b) the PLC doesn't care if tags are written. There is no
+   "tag was written" event in the PLC that I know of.
+   Writing the same value again does not upset the ladder logic.
+
+Possible problem:
+DO NOT MIX DIRECTIONS within an array.
+Do use arrays instead of single tags to speed up the transfer,
+but keep different "EPICS to PLC" and "PLC to EPICS" arrays.
+If you have to have handshake tags (EPICS writes, PLC uses
+it and then PLC resets the tag), those bidirectional tags
+should not be in arrays. They have to be standalone, scalar tags.
+   
+*** Keeping things synchronized
 The problem is that the EPICS IOC and the crate that it's on do not
 "own" the PLC. Someone else might write to the PLC's tag (RSLogix,
 PanelMate, another IOC, command-line program). The PLC can also be
@@ -315,6 +343,9 @@ analyzing what array element and what bit is used.
    field(INP, "@plc1 DINTs[1] B 8")
 will read bit #8 in the second DINT array element.
 
+** write caveats
+See the ao comments.
+
 * mbbi, mbbiDirect Multi-bit Binary Input Records
 These records read multiple consecutive bits, the count is given in
 the number-of-bits field:
@@ -349,6 +380,9 @@ cycle since it is marked as changed.
 As a result, it is advisable to keep "read" and "write" arrays
 separate, because otherwise elements meant for "read" will be written
 whenever one or more other elements are changed by output records.
+
+** write caveats
+See the ao comments.
 
 * Debugging
 On the IOC vxWorks console (or a telnet connection to the IOC), the
