@@ -240,7 +240,7 @@ ether_ip_test.c  main for Unix/Win32
       Example:  PLC tag DINT dint[5]
       Assume an mbbi record, INP="@plc1 dint[3]", NOBT=10.
       You might have configured this to mean:
-                          Bits 0...9 from dint[5].
+                          Bits 0...9 from dint[3].
       What you get is:    Bits 3...10, all in the first DINT,
       because the driver assumes that a binary record talks to
       a BOOL array if arrays are used.
