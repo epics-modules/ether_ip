@@ -193,32 +193,35 @@ void EIP_printf(int level, const char *format, ...)
     va_end(ap);              
 }
 
-void EIP_hexdump(const void *_data, int len)
+void EIP_hexdump(int level, const void *_data, int len)
 {
     const char *data = _data;
     int offset = 0;
     int i;
-#define NUM 16
 
+    if (level > EIP_verbosity)
+        return;
+
+#define NUM 16
     while (offset < len)
     {
-        EIP_printf(0, "%08X ", offset);
+        EIP_printf(level, "%08X ", offset);
         for (i=0; i<NUM; ++i)
         {
             if ((i+offset)<len)
-                EIP_printf(0, "%02X ", data[i] & 0xFF);
+                EIP_printf(level, "%02X ", data[i] & 0xFF);
             else
-                EIP_printf(0, "   ");
+                EIP_printf(level, "   ");
         }
-        EIP_printf(0, "- ");
+        EIP_printf(level, "- ");
         for (i=0; i<NUM  &&  (i+offset)<len; ++i)
         {
             if (isprint((int)data[i]))
-                EIP_printf(0, "%c", data[i]);
+                EIP_printf(level, "%c", data[i]);
             else
-                EIP_printf(0, ".");
+                EIP_printf(level, ".");
         }
-        EIP_printf(0, "\n");
+        EIP_printf(level, "\n");
         offset += NUM;
         data += NUM;
     }
@@ -271,7 +274,13 @@ static CN_USINT *make_CIA_path(CN_USINT *path,
     {
         *path++ = 0x30;
         *path++ = attr;
+        EIP_printf(10, "    Path: Class 0x%X (%s), instance %d, attrib. 0x%X\n",
+                   cls, EIP_class_name(cls), instance, attr);
     }
+    else
+        EIP_printf(10, "    Path: Class 0x%X (%s), instance %d\n",
+                   cls, EIP_class_name(cls), instance);
+
     return path;
 }
 
@@ -350,21 +359,22 @@ ParsedTag *EIP_parse_tag(const char *tag)
 void EIP_dump_ParsedTag(const ParsedTag *tag)
 {
     bool did_first = false;
+    EIP_printf(10, "    Path: '");
     while (tag)
     {
         switch (tag->type)
         {
         case te_name:    if (did_first)
-                             printf(".");
-                         printf("%s", tag->value.name);
+                             EIP_printf(10, ".");
+                         EIP_printf(10, "%s", tag->value.name);
                          break;
-        case te_element: printf("[%d]", tag->value.element);
+        case te_element: EIP_printf(10, "[%d]", tag->value.element);
                          break;
         }
         tag = tag->next;
         did_first = true;
     }
-    printf("\n");
+    EIP_printf(10, "'\n");
 }
 
 void EIP_free_ParsedTag(ParsedTag *tag)
@@ -589,6 +599,10 @@ static size_t MR_Request_size(size_t path_size /* in words */)
 static CN_USINT *make_MR_Request(CN_USINT *buf,
                                   CN_USINT service, CN_USINT path_size)
 {
+    EIP_printf(10, "MR Request\n");
+    EIP_printf(10, "    USINT service 0x%X (%s)\n",
+               service, service_name(service));
+    EIP_printf(10, "    USINT path size %d words\n", path_size);
     buf = pack_USINT(buf, service);
     return pack_USINT(buf, path_size);
 }
@@ -707,7 +721,7 @@ static const CN_USINT *dump_raw_MR_Response(const CN_USINT *response,
     if (data_len > 0)
     {
         EIP_printf(0, "    data (net format) =\n    ");
-        EIP_hexdump(data, data_len);
+        EIP_hexdump(0, data, data_len);
     }
 
     return data + data_len;
@@ -833,11 +847,18 @@ static size_t CIP_ReadData_size (const ParsedTag *tag)
            + sizeof (CN_UINT);          /* elements */
 }
 
-CN_USINT *make_CIP_ReadData (CN_USINT *request, const ParsedTag *tag, size_t elements)
+CN_USINT *make_CIP_ReadData(CN_USINT *request,
+                            const ParsedTag *tag, size_t elements)
 {
-    CN_USINT *buf = make_MR_Request (request, S_CIP_ReadData, tag_path_size (tag));
-    buf = make_tag_path (buf, tag);
-    return pack_UINT (buf, elements);
+    CN_USINT *buf = make_MR_Request(request, S_CIP_ReadData,
+                                    tag_path_size(tag));
+    buf = make_tag_path(buf, tag);
+    if (EIP_verbosity >= 10)
+    {
+        EIP_dump_ParsedTag(tag);
+        EIP_printf(10, "    UINT elements %d\n", elements);
+    }
+    return pack_UINT(buf, elements);
 }
 
 static const CN_USINT *dump_raw_CIP_ReadDataRequest (const CN_USINT *request)
@@ -921,7 +942,7 @@ void dump_raw_CIP_data (const CN_USINT *raw_type_and_data, size_t elements)
         default:
             printf ("raw CIP data, unknown type 0x%04X: ",
                     type);
-            EIP_hexdump (buf, elements*CIP_Type_size (type));
+            EIP_hexdump(0, buf, elements*CIP_Type_size (type));
     }
     printf ("\n");
 }
@@ -1118,7 +1139,7 @@ void dump_CIP_WriteRequest (const CN_USINT *request)
     EIP_printf (0, "    UINT CIP type   = 0x%02X\n", type);
     EIP_printf (0, "    UINT elements   = %d\n", elements);
     EIP_printf (0, "    raw data        =\n");
-    EIP_hexdump (buf, elements *  CIP_Type_size (type));
+    EIP_hexdump(0, buf, elements *  CIP_Type_size (type));
 }
 
 /* Test CIP_WriteData response: If not OK, report error */
@@ -1164,6 +1185,7 @@ bool prepare_CIP_MultiRequest (CN_USINT *request, size_t count)
     buf = make_MR_Request (request, S_CIP_MultiRequest,
                            CIA_path_size (C_MessageRouter, 1, 0));
     buf = make_CIA_path (buf, C_MessageRouter, 1, 0);
+    EIP_printf(10, "        UINT count %d\n", count);
     buf = pack_UINT (buf, count);
     
     /* offset is from "count" field, 2 bytes per word ! */
@@ -1487,10 +1509,16 @@ bool EIP_send_connection_buffer(EIPConnection *c)
 {
     CN_UINT length;
     int     len;
+    bool    ok;
     
     unpack_UINT(c->buffer+2, &length);
     len = sizeof_EncapsulationHeader + length;
-    return send(c->sock, (void *)c->buffer, len, 0) == len;
+    ok = send(c->sock, (void *)c->buffer, len, 0) == len;
+
+    EIP_printf(10, "Data sent:\n");
+    EIP_hexdump(10, c->buffer, len);
+    
+    return ok;
 }
 
 bool EIP_read_connection_buffer(EIPConnection *c)
@@ -1532,9 +1560,8 @@ bool EIP_read_connection_buffer(EIPConnection *c)
             if (needed > c->size  &&
                 !EIP_reserve_buffer ((void**)&c->buffer, &c->size, needed))
             {
-                EIP_printf (2, "EIP cannot allocate %d bytes "
-                            "for receive buffer\n",
-                            needed);
+                EIP_printf(2, "EIP cannot allocate %d bytes "
+                           "for receive buffer\n", needed);
                 ok = false;
                 break;
             }
@@ -1544,6 +1571,9 @@ bool EIP_read_connection_buffer(EIPConnection *c)
     while (got < sizeof_EncapsulationHeader  ||  got < needed);
     set_nonblock (c->sock, 0);
 
+    EIP_printf(10, "Data Received (%d bytes(:\n", got);
+    EIP_hexdump(10, c->buffer, got);
+
     return ok;
 }
 
@@ -1552,110 +1582,114 @@ bool EIP_read_connection_buffer(EIPConnection *c)
  * Spec 4. pp 154
  ********************************************************/
 
+/* has to be in host format */
+static void dump_EncapsulationHeader(const EncapsulationHeader *header)
+{
+    
+    EIP_printf(10, "EncapsulationHeader:\n");
+    EIP_printf(10, "    UINT  command   = 0x%02X", header->command);
+    switch (header->command)
+    {
+        case EC_Nop:
+            EIP_printf(10, " (Nop)\n");                break;
+        case EC_ListInterfaces:
+            EIP_printf(10, " (ListInterfaces)\n");     break;
+        case EC_RegisterSession:
+            EIP_printf(10, " (RegisterSession)\n");    break;
+        case EC_UnRegisterSession:
+            EIP_printf(10, " (UnRegisterSession)\n");  break;
+        case EC_ListServices:
+            EIP_printf(10, " (ListServices)\n");       break;
+        case EC_SendRRData:
+            EIP_printf(10, " (SendRRData)\n");         break;
+        case EC_SendUnitData:
+            EIP_printf(10, " (SendUnitData)\n");       break;
+        default:
+            EIP_printf(10, "\n");
+    }
+    EIP_printf(10, "    UINT  length    = %d \n",    header->length);
+    EIP_printf(10, "    UDINT session   = 0x%08X\n", header->session);
+    EIP_printf(10, "    UDINT status    = 0x%08X: ", header->status);
+    switch (header->status)
+    {
+    case 0x00:  EIP_printf(10, "OK\n");
+                break;
+    case 0x01:  EIP_printf(10, "invalid/unsupported command\n");
+                break;
+    case 0x02:  EIP_printf(10, "no memory on target\n");
+                break;
+    case 0x03:  EIP_printf(10, "malformed data in request\n");
+                break;
+    case 0x64:  EIP_printf(10, "invalid session ID\n");
+                break;
+    case 0x65:  EIP_printf(10, "invalid data length\n");
+                break;
+    case 0x69:  EIP_printf(10, "unsupported protocol revision\n");
+                break;
+    default:    EIP_printf(10, "unknown, see page 165 of spec 4\n");
+    }
+    EIP_printf(10, "    USINT context[8]= '%s'\n",   header->server_context);
+    EIP_printf(10, "    UDINT options   = 0x%08X\n", header->options);
+}
+
 /* Fill EncapsulationHeader of connection with
  * given command parameters
  * AND reserve enough space for the following
  * command data as specified by "length"
  */
-static CN_USINT *make_EncapsulationHeader (EIPConnection *c, CN_UINT command,
-                                           CN_UINT length, CN_UDINT options)
+static CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
+                                          CN_UINT length, CN_UDINT options)
 {
     CN_USINT *buf;
     
-    if (! EIP_reserve_buffer ((void **)&c->buffer, &c->size,
-                              sizeof (EncapsulationHeader) + length))
+    if (! EIP_reserve_buffer((void **)&c->buffer, &c->size,
+                             sizeof (EncapsulationHeader) + length))
     {
-        EIP_printf (1, "EIP make_EncapsulationHeader: "
-                    "no memory for %d bytes\n",
-                    sizeof (EncapsulationHeader) + length);
+        EIP_printf(1, "EIP make_EncapsulationHeader: "
+                   "no memory for %d bytes\n",
+                   sizeof (EncapsulationHeader) + length);
         return false;
     }
     buf = c->buffer;
-    buf = pack_UINT (buf, command);
-    buf = pack_UINT (buf, length);
-    buf = pack_UDINT (buf, c->session);
-    buf = pack_UDINT (buf, 0);
-    buf = pack_USINT (buf, 'A');
-    buf = pack_USINT (buf, 'I');
-    buf = pack_USINT (buf, 'R');
-    buf = pack_USINT (buf, 'P');
-    buf = pack_USINT (buf, 'L');
-    buf = pack_USINT (buf, 'A');
-    buf = pack_USINT (buf, 'N');
-    buf = pack_USINT (buf, 'E');
-    buf = pack_UDINT (buf, options);
+    buf = pack_UINT(buf, command);
+    buf = pack_UINT(buf, length);
+    buf = pack_UDINT(buf, c->session);
+    buf = pack_UDINT(buf, 0);
+    buf = pack_USINT(buf, 'A');
+    buf = pack_USINT(buf, 'I');
+    buf = pack_USINT(buf, 'R');
+    buf = pack_USINT(buf, 'P');
+    buf = pack_USINT(buf, 'L');
+    buf = pack_USINT(buf, 'A');
+    buf = pack_USINT(buf, 'N');
+    buf = pack_USINT(buf, 'E');
+    buf = pack_UDINT(buf, options);
+    if (EIP_verbosity <= 10)
+        dump_EncapsulationHeader((const EncapsulationHeader *)c->buffer);
+
     return buf;
 }
 
 /* Unpack from network buffer */
-static const CN_USINT *unpack_EncapsulationHeader (const CN_USINT *buf,
-                                                   EncapsulationHeader *header)
+static const CN_USINT *unpack_EncapsulationHeader(const CN_USINT *buf,
+                                                  EncapsulationHeader *header)
 {
-    return unpack (buf, "iiddssssssssd",
-                   &header->command,
-                   &header->length,
-                   &header->session,
-                   &header->status,
-                   &header->server_context[0],
-                   &header->server_context[1],
-                   &header->server_context[2],
-                   &header->server_context[3],
-                   &header->server_context[4],
-                   &header->server_context[5],
-                   &header->server_context[6],
-                   &header->server_context[7],
-                   &header->options);
+    return unpack(buf, "iiddssssssssd",
+                  &header->command,
+                  &header->length,
+                  &header->session,
+                  &header->status,
+                  &header->server_context[0],
+                  &header->server_context[1],
+                  &header->server_context[2],
+                  &header->server_context[3],
+                  &header->server_context[4],
+                  &header->server_context[5],
+                  &header->server_context[6],
+                  &header->server_context[7],
+                  &header->options);
 }
 
-/* has to be in host format */
-static void dump_EncapsulationHeader (const EncapsulationHeader *header)
-{
-    
-    EIP_printf (10, "EncapsulationHeader:\n");
-    EIP_printf (10, "    UINT  command   = 0x%02X", header->command);
-    switch (header->command)
-    {
-        case EC_Nop:
-            EIP_printf (10, " (Nop)\n");                break;
-        case EC_ListInterfaces:
-            EIP_printf (10, " (ListInterfaces)\n");     break;
-        case EC_RegisterSession:
-            EIP_printf (10, " (RegisterSession)\n");    break;
-        case EC_UnRegisterSession:
-            EIP_printf (10, " (UnRegisterSession)\n");  break;
-        case EC_ListServices:
-            EIP_printf (10, " (ListServices)\n");       break;
-        case EC_SendRRData:
-            EIP_printf (10, " (SendRRData)\n");         break;
-        case EC_SendUnitData:
-            EIP_printf (10, " (SendUnitData)\n");       break;
-        default:
-            EIP_printf (10, "\n");
-    }
-    EIP_printf (10, "    UINT  length    = %d \n",    header->length);
-    EIP_printf (10, "    UDINT session   = 0x%08X\n", header->session);
-    EIP_printf (10, "    UDINT status    = 0x%08X: ", header->status);
-    switch (header->status)
-    {
-    case 0x00:  EIP_printf (10, "OK\n");
-                break;
-    case 0x01:  EIP_printf (10, "invalid/unsupported command\n");
-                break;
-    case 0x02:  EIP_printf (10, "no memory on target\n");
-                break;
-    case 0x03:  EIP_printf (10, "malformed data in request\n");
-                break;
-    case 0x64:  EIP_printf (10, "invalid session ID\n");
-                break;
-    case 0x65:  EIP_printf (10, "invalid data length\n");
-                break;
-    case 0x69:  EIP_printf (10, "unsupported protocol revision\n");
-                break;
-    default:    EIP_printf (10, "unknown, see page 165 of spec 4\n");
-    }
-    EIP_printf (10, "    USINT context[8]= '%s'\n",   header->server_context);
-    EIP_printf (10, "    UDINT options   = 0x%08X\n", header->options);
-}
 
 /* Encapsulation Command "ListServices".
  * Check if CIP is supported.
@@ -1823,22 +1857,32 @@ static bool EIP_unregister_session (EIPConnection *c)
  * length: total byte-size of MR_Request
  * Returns pointer to MR_Request to be completed.
  */
-CN_USINT *EIP_make_SendRRData (EIPConnection *c, size_t length)
+CN_USINT *EIP_make_SendRRData(EIPConnection *c, size_t length)
 {
-    CN_USINT *buf = make_EncapsulationHeader (c, EC_SendRRData,
-                                              sizeof_EncapsulationRRData
-                                              - sizeof_EncapsulationHeader
-                                              + length,
-                                              0 /* options */);
+    CN_USINT *buf = make_EncapsulationHeader(c, EC_SendRRData,
+                                             sizeof_EncapsulationRRData
+                                             - sizeof_EncapsulationHeader
+                                             + length,
+                                             0 /* options */);
     if (!buf)
         return 0;
-    buf = pack_UDINT (buf, /* interface_handle */                   0);
-    buf = pack_UINT  (buf, /* timeout          */                   0);
-    buf = pack_UINT  (buf, /* count (addr., data) */                2);
-    buf = pack_UINT  (buf, /* address_type UCMM */               0x00);
-    buf = pack_UINT  (buf, /* address_length */                     0);
-    buf = pack_UINT  (buf, /* data_type (unconnected message) */ 0xB2);
-    buf = pack_UINT  (buf, /* data_length */                   length);
+    buf = pack_UDINT(buf, /* interface_handle */                   0);
+    buf = pack_UINT (buf, /* timeout          */                   0);
+    buf = pack_UINT (buf, /* count (addr., data) */                2);
+    buf = pack_UINT (buf, /* address_type UCMM */               0x00);
+    buf = pack_UINT (buf, /* address_length */                     0);
+    buf = pack_UINT (buf, /* data_type (unconnected message) */ 0xB2);
+    buf = pack_UINT (buf, /* data_length */                   length);
+
+    EIP_printf(10, "Send RR Data\n");
+    EIP_printf(10, "    UDINT interface handle               0\n");
+    EIP_printf(10, "    UINT timeout                         0\n");
+    EIP_printf(10, "    UINT count (addr., data)             2\n");
+    EIP_printf(10, "    UINT address_type UCMM               0x00\n");
+    EIP_printf(10, "    UINT address_length                  0\n");
+    EIP_printf(10, "    UINT data_type (unconnected message) 0xB2\n");
+    EIP_printf(10, "    UINT data_length                     %d\n", length);
+
     return buf;
 }
 

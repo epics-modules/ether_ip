@@ -102,9 +102,9 @@ typedef int bool;
 extern int EIP_verbosity;
 
 /* print if EIP_verbosity >= level */
-void EIP_printf (int level, const char *format, ...);
+void EIP_printf(int level, const char *format, ...);
 
-void EIP_hexdump (const void *_data, int len);
+void EIP_hexdump(int level, const void *_data, int len);
 
 /********************************************************
  * ControlNet data types

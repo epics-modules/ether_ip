@@ -394,7 +394,7 @@ int main (int argc, const char *argv[])
 
     if (tag)
     {
-        const CN_USINT *data;
+        const CN_USINT *data = 0;
         size_t data_len;
         if (EIP_verbosity >= 3)
         {
