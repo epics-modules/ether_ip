@@ -14,7 +14,9 @@
 #include <limits.h>
 #include "drvSup.h"
 #include "drvEtherIP.h"
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
 #include "epicsExport.h"
+#endif
 
 double drvEtherIP_default_rate = 0.0;
 
@@ -1310,4 +1312,7 @@ struct
 };
 
 
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
 epicsExportAddress(drvet,drvEtherIP);
+#endif
+

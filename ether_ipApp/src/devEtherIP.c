@@ -35,7 +35,9 @@
 #include <mbboRecord.h>
 #include <mbboDirectRecord.h>
 #include "drvEtherIP.h"
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
 #include "epicsExport.h"
+#endif
 
 /* #define CATCH_MISSED_WRITE */
 #ifdef CATCH_MISSED_WRITE
@@ -1272,6 +1274,8 @@ static long wf_read(waveformRecord *rec)
     long status;
     eip_bool ok;
     CN_DINT *dint;
+    CN_DINT dint_val;
+    char    *s;
     double  *dbl;
     size_t i;
 
@@ -1313,7 +1317,7 @@ static long wf_read(waveformRecord *rec)
                 }
             }
             else
-            {
+            {   /* CIP data is something other than REAL */
                 if (rec->ftvl == menuFtypeLONG)
                 {
                     dint = (long *)rec->bptr;
@@ -1325,11 +1329,23 @@ static long wf_read(waveformRecord *rec)
                     if (ok)
                         rec->nord = rec->nelm;
                 }
+                else if (rec->ftvl == menuFtypeCHAR)
+                {
+                    s = (char *)rec->bptr;
+                    for (i=0; ok && i<rec->nelm; ++i)
+                    {
+                        ok = get_CIP_DINT(pvt->tag->data, i,
+                                          &dint_val);
+                        *(s++) = dint_val;
+                    }
+                    if (ok)
+                        rec->nord = rec->nelm;
+                }
                 else
                 {
                     recGblRecordError(S_db_badField, (void *)rec,
-                                      "EtherIP: tag data type requires "
-                                      "waveform FTVL==LONG");
+                                      "EtherIP: tag type requires "
+                                      "waveform FTVL==LONG or CHAR");
                     ok = false;
                 }
             }
@@ -1683,6 +1699,7 @@ DSET devMbboDirectEtherIP =
     NULL
 };
 
+#if EPICS_VERSION >= 3 && EPICS_REVISION >= 14
 epicsExportAddress(dset,devAiEtherIP);
 epicsExportAddress(dset,devBiEtherIP);
 epicsExportAddress(dset,devMbbiEtherIP);
@@ -1693,6 +1710,7 @@ epicsExportAddress(dset,devAoEtherIP);
 epicsExportAddress(dset,devBoEtherIP);
 epicsExportAddress(dset,devMbboEtherIP);
 epicsExportAddress(dset,devMbboDirectEtherIP);
+#endif
                    
 /* EOF devEtherIP.c */
 

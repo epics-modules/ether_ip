@@ -14,8 +14,8 @@
 #include "dl_list.h"
 #include "epicsVersion.h"
 
-#define ETHERIP_MAYOR 1
-#define ETHERIP_MINOR 11
+#define ETHERIP_MAYOR 2
+#define ETHERIP_MINOR 1
 
 /* TCP port */
 #define ETHERIP_PORT 0xAF12

@@ -1064,14 +1064,14 @@ eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
 }
 
 eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
-                  size_t element, CN_DINT *result)
+                      size_t element, CN_DINT *result)
 {
     CN_UINT        type;
     const CN_USINT *buf;
     CN_USINT       vs;
     CN_INT         vi;
     CN_REAL        vr;
-
+    
     buf = unpack_UINT(raw_type_and_data, &type);
     buf += element*CIP_Type_size(type);
     switch (type)
