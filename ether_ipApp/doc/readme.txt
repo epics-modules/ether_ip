@@ -107,10 +107,6 @@ and the name that the driver uses (plc1) are all related but different!
     # EtherIP driver verbosity, 0=silent, up to 10:
     EIP_verbosity=4
 
-NOTE for EPICS R3.14 Soft-IOCs:
-Replace variable assignments like "EIP_verbosity=4"
-by function calls like "EIP_verbosity(4)".
-
 4) Tell EPICS Database about Driver/Device
 To inform EPICS of this new driver/device, a DBD file is used.
 ether_ip.dbd looks like this:
