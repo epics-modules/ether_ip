@@ -11,5 +11,5 @@
 
 TEMPLATE_TOP=/cs/epics/R3.13.3/base/templates/makeBaseApp/top
 EPICS_BASE=/cs/epics/R3.13.3/base
-ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/0-4
+ETHER_IP=/cs/epics/ADE/R3.13.3/support/ether_ip/0-5
 #SHARE=

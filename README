@@ -4,9 +4,11 @@
 The sources for this driver are CVS-controlled:
 CVS root: sofa.ic.ornl.gov:/cs/epics/cvsroot  
 Module:   support/linac/ether_ip (aliased as ether_ip)
+Tag:      ether_ip-<RELEASE>
 
 The current release is 0-4.
-In the following examples, replace <RELEASE> by 0-4.
+The non-commited next release will be 0-5.
+Replace <RELEASE> by the current release.
 
 What you have to do is
 - compile the ether_ip driver/device sources
@@ -53,7 +55,7 @@ ether_ip/
        In the following example, SUP is set to
        /cs/epics/ADE/R3.13.3/support
     2. cd $SUP/ether_ip
-    3. cvs get -r ether_ip-<RELEASE> -d <RELEASE> ether_ip
+    3. cvs export -r ether_ip-<RELEASE> -d <RELEASE> ether_ip
     4. cd <RELEASE>
     5. gmake (or gnumake, make, ...)
     6. Changing the type of ioc: 
