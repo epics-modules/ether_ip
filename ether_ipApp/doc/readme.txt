@@ -260,26 +260,34 @@ ether_ip_test.c  main for Unix/Win32
 
    Allowed flags for the AI record:
 
-   PLC_ERRORS      - # of timeouts/errors in communication with PLC [count]
-   SLOW_SCANS      - # times when scan task was too slow [count]
-   SCANLIST_ERRORS - Like PLC_ERRORS but per scanlist
-   MIN_SCAN_TIME   - Tag's minimum scan time [secs]
-   MAX_SCAN_TIME   - Tag's maximum scan time [secs]
-   LAST_SCAN_TIME  - Tag's most recent scan time [secs]
-   SCAN_TICKTIME   - vxWorks ticks when last scan occured
-   AGE             - Time from last scan until Db processing [secs]
+   PLC_ERRORS         - # of timeouts/errors in communication with PLC [count]
+   PLC_TASK_SLOW      - # times when scan task was too slow [count]
+   LIST_ERRORS        - Error count for tag's scan list
+   LIST_TICKS         - vx Ticktime when tag's list was checked
+   LIST_SCAN_TIME     - Time for handling scanlist [secs]
+   LIST_MIN_SCAN_TIME - min. of '' 
+   LIST_MAX_SCAN_TIME - max. of ''
+   TAG_TRANSFER_TIME  - Time for last round-trip data request */
 
    When using the flags, a tag is always required.
-   For e.g. "MIN_SCAN_TIME" this makes sense because
+   For e.g. "TAG_TRANSFER_TIME" this makes sense because
    you query per-tag information.
    In other cases it's used to find the scanlist.
 
    Examples:
 
-   field(INP, "@snsioc1 PVs.VAL MIN_SCAN_TIME")
-   field(INP, "@snsioc1 PVs.VAL MAX_SCAN_TIME")
-   field(INP, "@snsioc1 PVs.VAL LAST_SCAN_TIME")
+   field(INP, "@snsioc1 PVs.VAL LIST_MIN_SCAN_TIME")
+   field(INP, "@snsioc1 PVs.VAL LIST_MAX_SCAN_TIME")
+   field(INP, "@snsioc1 PVs.VAL LIST_SCAN_TIME")
 
+   The PLC_TASK_SLOW might be of less use than anticipated.
+   It's incremented when the scan task is done processing the list
+   and then notices that it's already time to process the list again.
+   Since all delays are specified in vxWorks ticks,
+   defaulting to 60 ticks per second, this scheduling is rather
+   coarse. With all the other task scheduling going on and ethernet
+   delays, PLC_TASK_SLOW will increment quite often without
+   a noticable impact on the data (no timeouts, no old data).
 
 * Driver Operation
 
