@@ -2,7 +2,9 @@ TOP = ../..
 ifdef EPICS_HOST_ARCH
 
 include $(TOP)/configure/CONFIG
-ARCH = RTEMS-svgm
+#ARCH = RTEMS-svgm
+ARCH = vxWorks-ppc603
+TARGETS = cdCommands
 include $(TOP)/configure/RULES.ioc
 
 else
