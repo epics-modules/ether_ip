@@ -1,6 +1,6 @@
 -*- outline -*-
 
-* 2003, 04/20 V2.0
+* 2003, 04/29 V2.0
 Stephanie Allison, saa@SLAC.Stanford.EDU, 
 ported the EtherIP support to EPICS R3.14!
 This added some #ifdefs, the R3.13 support
