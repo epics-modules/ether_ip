@@ -26,7 +26,7 @@ DB += bo.db
 DB += mbbi.db
 DB += mbbo.db
 DB += ramp.db
-DB += stat.db 
+DB += eip_stat.db 
 DB += test.db 
 
 #----------------------------------------------------

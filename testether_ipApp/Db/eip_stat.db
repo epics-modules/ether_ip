@@ -1,14 +1,15 @@
 # AI records that read statistical information from EtherIP
 # driver/device
 #
-# user:    prefix to records
-# testtag: queried tag (leads to PLC and ScanList)
+# IOC:  prefix to records
+# PLC:  PLC to use
+# TAG:  queried tag (leads to PLC's ScanList)
 
-record(ai, "$(user):PLC_ERRORS")
+record(ai, "$(IOC):PLC_ERRORS")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 $(testtag) PLC_ERRORS")
+	field(INP, "@$(PLC) $(TAG) PLC_ERRORS")
 	field(EGUF, "5")
 	field(EGU, "Errors")
 	field(HOPR, "5")
@@ -16,33 +17,33 @@ record(ai, "$(user):PLC_ERRORS")
 }
 
 
-record(ai, "$(user):PLC_TASK_SLOW")
+record(ai, "$(IOC):PLC_TASK_SLOW")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 $(testtag) PLC_TASK_SLOW")
+	field(INP, "@$(PLC) $(TAG) PLC_TASK_SLOW")
 	field(EGUF, "5")
 	field(EGU, "Holdups")
 	field(HOPR, "5")
 	field(LOPR, "0")
 }
 
-record(ai, "$(user):LIST_TICKS")
+record(ai, "$(IOC):LIST_TICKS")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 $(testtag) LIST_TICKS")
+	field(INP, "@$(PLC) $(TAG) LIST_TICKS")
 	field(EGUF, "5")
 	field(EGU, "vx ticks")
 	field(HOPR, "5")
 	field(LOPR, "0")
 }
 
-record(ai, "$(user):LIST_SCAN_TIME")
+record(ai, "$(IOC):LIST_SCAN_TIME")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 $(testtag) LIST_SCAN_TIME")
+	field(INP, "@$(PLC) $(TAG) LIST_SCAN_TIME")
 	field(EGUF, "1")
 	field(EGU, "s")
 	field(HOPR, "1")
@@ -50,11 +51,11 @@ record(ai, "$(user):LIST_SCAN_TIME")
 	field(PREC, "5")
 }
 
-record(ai, "$(user):LIST_MIN_SCAN_TIME")
+record(ai, "$(IOC):LIST_MIN_SCAN_TIME")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 $(testtag) LIST_MIN_SCAN_TIME")
+	field(INP, "@$(PLC) $(TAG) LIST_MIN_SCAN_TIME")
 	field(EGUF, "1")
 	field(EGU, "s")
 	field(HOPR, "1")
@@ -62,11 +63,11 @@ record(ai, "$(user):LIST_MIN_SCAN_TIME")
 	field(PREC, "5")
 }
 
-record(ai, "$(user):LIST_MAX_SCAN_TIME")
+record(ai, "$(IOC):LIST_MAX_SCAN_TIME")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 $(testtag) LIST_MAX_SCAN_TIME")
+	field(INP, "@$(PLC) $(TAG) LIST_MAX_SCAN_TIME")
 	field(EGUF, "1")
 	field(EGU, "s")
 	field(HOPR, "1")
@@ -74,11 +75,11 @@ record(ai, "$(user):LIST_MAX_SCAN_TIME")
 	field(PREC, "5")
 }
 
-record(ai, "$(user):TAG_TRANSFER_TIME")
+record(ai, "$(IOC):TAG_TRANSFER_TIME")
 {
 	field(SCAN, ".5 second")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 $(testtag) TAG_TRANSFER_TIME")
+	field(INP, "@$(PLC) $(TAG) TAG_TRANSFER_TIME")
 	field(EGUF, "1000000000")
 	field(EGU, "s")
 	field(HOPR, "1")
