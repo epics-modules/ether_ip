@@ -565,6 +565,12 @@ on the PLC:
         field(INP,  "@$(PLC) text_tag")
         field(SCAN, "1 second")
 
+STRING tags seem to have an allowed length of up to 82
+characters. The stringin record is limited to 40 characters.
+Since I decided to include the '\0', any STRING tag gets
+truncated to 39 characters. There is no fault indication for this,
+just a limited string.
+
 The stringin record works only with STRING tags. Any other tag
 type will result in errors.
 Likewise, only stringin records must be used with STRING tags.
