@@ -557,7 +557,7 @@ element 5, bit 1:
 But this feature is merely a side effect, it's safer to read
 within one INT/DINT. Or use BOOL arrays.
 
-* stringin Strin Input Records
+* stringin String Input Records
 String input records can be connected to STRING tags
 on the PLC:
 
