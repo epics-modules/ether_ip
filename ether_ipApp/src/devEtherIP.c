@@ -304,7 +304,7 @@ static void check_ao_callback(void *arg)
     struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     double        dbl;
-    CN_UDINT      udint;
+    CN_DINT       dint;
     bool          process = false;
 
     /* We are about the check and even set val, & rval -> lock */
@@ -347,11 +347,12 @@ static void check_ao_callback(void *arg)
     }
     else
     {
-        if (get_CIP_UDINT(pvt->tag->data, pvt->element, &udint) &&
-            (rec->udf || rec->rval != udint))
+        if (get_CIP_DINT(pvt->tag->data, pvt->element, &dint) &&
+            (rec->udf || rec->rval != dint))
         {
             if (rec->tpro)
-                printf("AO '%s': got %lu from driver\n", rec->name, udint);
+                printf("AO '%s': got %ld from driver\n",
+                       rec->name, (long)dint);
             if (!rec->udf  &&  pvt->special & SPCO_FORCE)
             {
                 if (rec->tpro)
@@ -361,7 +362,7 @@ static void check_ao_callback(void *arg)
             else
             {
                 /* back-convert raw value into val (copied from ao init) */
-                dbl = (double)udint + (double)rec->roff;
+                dbl = (double)dint + (double)rec->roff;
                 if (rec->aslo!=0.0)
                     dbl *= rec->aslo;
                 dbl += rec->aoff;
@@ -989,7 +990,7 @@ static long ai_read(aiRecord *rec)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
     bool ok;
-    CN_UDINT rval;
+    CN_DINT rval;
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
@@ -1017,8 +1018,8 @@ static long ai_read(aiRecord *rec)
                 }
                 else
                 {
-                    ok = get_CIP_UDINT(pvt->tag->data,
-                                       pvt->element, &rval);
+                    ok = get_CIP_DINT(pvt->tag->data,
+                                      pvt->element, &rval);
                     rec->rval = rval;
                 }
             }
@@ -1182,7 +1183,7 @@ static long ao_write(aoRecord *rec)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
     double        dbl;
-    CN_UDINT      udint;
+    CN_DINT       dint;
     bool          ok = true;
 
     if (rec->pact) /* Second pass, called for write completion ? */
@@ -1220,12 +1221,13 @@ static long ao_write(aoRecord *rec)
         }
         else
         {
-            if (get_CIP_UDINT(pvt->tag->data, pvt->element, &udint) &&
-                rec->rval != udint)
+            if (get_CIP_DINT(pvt->tag->data, pvt->element, &dint) &&
+                rec->rval != dint)
             {
                 if (rec->tpro)
-                    printf("'%s': write %lu!\n", rec->name, rec->rval);
-                ok = put_CIP_UDINT(pvt->tag->data, pvt->element, rec->rval);
+                    printf("'%s': write %ld (0x%lX)!\n",
+                           rec->name, rec->rval, rec->rval);
+                ok = put_CIP_DINT(pvt->tag->data, pvt->element, rec->rval);
                 if (pvt->tag->do_write)
                     EIP_printf(6,"'%s': already writing\n", rec->name);
                 else

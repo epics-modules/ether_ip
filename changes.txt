@@ -1,5 +1,22 @@
 -*- outline -*-
 
+* 2002, 06/26 V1.6
+This part is not new but just a description
+of current behaviour of AI, AO records:
+When attached to REAL (float) tags,
+they read & write the (floating point) VAL fields.
+For INT, DINT, ... tags they use the RVAL fields.
+
+RVAL is a signed long,
+all INT, DINT tags of the PLC are signed,
+but for some reason I happened to transfer them
+as "unsigned".
+New: I now use signed values.
+
+* 2002, 05/09
+Log message for "EIP: Cannot read tag"
+didn't show the tag but garbage.
+
 * 2002, 04/30 V1.5
 SCAN="I/O Intr" was broken.
 

@@ -384,7 +384,10 @@ old data).
 * ao, Analog Output Record
 Like analog input, tags of type REAL, INT, DINT, BOOL are supported as
 well as REAL, INT, DINT arrays (no BOOL arrays). No statistics flags
-are supported.  
+are supported.
+For REAL tags, the VAL field of the record is written to the tag.
+Otherwise, the RVAL field is used and you can benefit from
+the AO record's conversions VAL <-> RVAL.
 
 If the SCAN field is "Passive", the "S" flag has to be used.
 

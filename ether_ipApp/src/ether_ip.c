@@ -1046,6 +1046,41 @@ bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
     return false;
 }
 
+bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
+                  size_t element, CN_DINT *result)
+{
+    CN_UINT        type;
+    const CN_USINT *buf;
+    CN_USINT       vs;
+    CN_INT         vi;
+    CN_REAL        vr;
+
+    buf = unpack_UINT(raw_type_and_data, &type);
+    buf += element*CIP_Type_size(type);
+    switch (type)
+    {
+        case T_CIP_BOOL:
+        case T_CIP_SINT:
+            vs = *buf;
+            *result = (CN_DINT) vs;
+            return true;
+        case T_CIP_INT:
+            unpack_UINT(buf, (CN_UINT *)&vi);
+            *result = (CN_DINT) vi;
+            return true;
+        case T_CIP_DINT: 
+        case T_CIP_BITS:
+            unpack_UDINT(buf, (CN_UDINT *)result);
+            return true;
+        case T_CIP_REAL:
+            unpack_REAL(buf, &vr);
+            *result = (CN_DINT) vr;
+            return true;
+    }
+    EIP_printf(1, "EIP get_CIP_UDINT: unknown type %d\n", (int) type);
+    return false;
+}
+
 bool put_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double value)
 {
@@ -1104,7 +1139,42 @@ bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
             pack_REAL(buf, (CN_REAL) value);
             return true;
     }
-    EIP_printf(1, "EIP put_CIP_double: unknown type %d\n", (int) type);
+    EIP_printf(1, "EIP put_CIP_UDINT: unknown type %d\n", (int) type);
+    return false;
+}
+
+bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
+                  size_t element, CN_DINT value)
+{
+    CN_UINT   type;
+    CN_USINT *buf;
+    CN_SINT   vs;
+    CN_INT    vi;
+
+    buf = (CN_USINT *) unpack_UINT(raw_type_and_data, &type);
+    /* buf now on first, skip to given element */
+    if (element > 0)
+        buf += element*CIP_Type_size(type);
+    switch (type)
+    {
+        case T_CIP_BOOL:
+        case T_CIP_SINT:
+            vs = value;
+            pack_USINT(buf, *((CN_USINT*)&vs));
+            return true;
+        case T_CIP_INT:
+            vi = value;
+            pack_UINT(buf, *((CN_UINT*)&vi));
+            return true;
+        case T_CIP_DINT:
+        case T_CIP_BITS:
+            pack_UDINT(buf, *((CN_UDINT*)&value));
+            return true;
+        case T_CIP_REAL:
+            pack_REAL(buf, (CN_REAL) value);
+            return true;
+    }
+    EIP_printf(1, "EIP put_CIP_DINT: unknown type %d\n", (int) type);
     return false;
 }
 

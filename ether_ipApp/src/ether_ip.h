@@ -120,6 +120,7 @@ void EIP_hexdump(int level, const void *_data, int len);
   * Exception:
   * Addresses packed at sockaddr_in are in network order as usual.
   */
+typedef signed char    CN_SINT;
 typedef unsigned char  CN_USINT;
 typedef unsigned short CN_UINT;
 typedef short          CN_INT;
@@ -392,10 +393,14 @@ bool get_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double *result);
 bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT *result);
+bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
+                  size_t element, CN_DINT *result);
 bool put_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double value);
 bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT value);
+bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
+                  size_t element, CN_DINT value);
 
 
 /********************************************************
