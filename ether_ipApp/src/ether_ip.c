@@ -2499,7 +2499,7 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
         {
             char buffer[EIP_MAX_TAG_LENGTH];
             EIP_copy_ParsedTag(buffer, tag);
-            EIP_printf(1, "EIP_read_tag: Failed tag '%s'\n");
+            EIP_printf(1, "EIP_read_tag: Failed tag '%s'\n", buffer);
         }
         return 0;
     }
