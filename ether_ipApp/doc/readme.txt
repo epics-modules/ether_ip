@@ -53,30 +53,33 @@ startups/*
 
 * Installation, Setup for EPICS
 
-  To use this software, several steps are required:
-  1) Compile the driver.
-     A generic VxWorks Makefile is included,
-     no specific ADE is used as of now.
+  To use this software, several steps are required.
+  Many of these are handled by the SNS ADE,
+  but the following steps list the details in case
+  you run into problems.
+  1) Compile the driver with the ADE.
+
   2) The IOC's VxWorks startup file has to load the
      object files that were created for VxWorks in the initial step,
      either by themself or after combining
      all the needed object files into a library
      (this is what most EPICS ADEs do).
+
+     The ether_ipApp creates a library "ether_ipLib"
+     which contains only the driver code.
+
+     The testether_ipApp combines that library with EPICS base
+     objects into "testether_ip".
+     The example in iocBoot/iocether_ip/st.cmd loads that library.
+
   3) To inform EPICS of this new driver/device,
      a DBD file like this one is used:
        include "base.dbd"
-       driver(drvEtherIP)
-       device(ai,         INST_IO, devAiEtherIP,         "EtherIP")
-       device(bi,         INST_IO, devBiEtherIP,         "EtherIP")
-       device(mbbi,       INST_IO, devMbbiEtherIP,       "EtherIP")
-       device(mbbiDirect, INST_IO, devMbbiDirectEtherIP, "EtherIP")
-       device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
-       device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
-       device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")
-       device(mbboDirect, INST_IO, devMbboDirectEtherIP, "EtherIP")
+       include "ether_ip.dbd"
      Refer to the EPICS Application deveopers guide for details
      on DBD files and how to load them in the vxWorks startup-file
      with "dbLoadDatabase".
+
   4) Since the driver uses TCP/IP, the route to the PLC has to defined
      properly. In total, these steps include:
 
@@ -91,6 +94,8 @@ startups/*
 
        # Test: See if the IOC can get to "snsplc1":
        ping "snsplc1", 5
+
+     The st.cmd example shows this.
 
   5) Driver configuration in the startup file:
      Before calling iocInit, the driver's PLC table has to be
@@ -109,6 +114,8 @@ startups/*
        
        # EtherIP driver verbosity, 0=silent, up to 10:
        EIP_verbosity=4
+
+      Again the st.cmd example shows this.
 
    6) Driver Tests	
       Some of these work all the time, other require an actual
@@ -134,7 +141,6 @@ startups/*
        # Dump various infos, also called by "dbior"
        # (requires EPICS database)
        drvEtherIP_report 5
-
 
 * Record Configuration
 
