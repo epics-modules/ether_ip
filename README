@@ -2,8 +2,8 @@
 
 * Intro
 The sources for this driver are CVS-controlled:
-CVS root: sofa.ic.ornl.gov:/cs/epics/cvsroot  
-Module:   support/linac/ether_ip (aliased as ether_ip)
+CVS root: ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot
+Module:   support/linac/ether_ip (aliased as module ether_ip)
 Tag:      ether_ip-<RELEASE>
 
 The current release is 0-4.
@@ -122,3 +122,4 @@ ether_ip/
          ioc for which your application is built.
 
 R. Wright, K. Kasemir
+
