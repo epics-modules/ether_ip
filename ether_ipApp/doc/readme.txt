@@ -39,7 +39,7 @@ Add the "-v 10" option to see a dump of all the exchanged
 EtherIP messages. The included error messages might help
 to detect why some tag cannot be read.
 
-* EPICS startup file
+* EPICS startup files
 1) Load Driver & Device Support
 The ether_ipApp creates a library "ether_ipLib"
 which contains only the driver code.
@@ -49,7 +49,8 @@ the makeBaseApp.pl ADE to include this library
 in your application library.
 
 2) IP Setup
-Since the driver uses TCP/IP, the route to the PLC has to defined:
+Since the driver uses TCP/IP, the route to the PLC has to defined.
+Therefore you have to add something like this to your vxWorks startup file:
     # Define the DNS name for the PLC, so we can it instead of the
     # raw IP address
     hostAdd "snsplc1", "128.165.160.146"
@@ -63,13 +64,22 @@ Since the driver uses TCP/IP, the route to the PLC has to defined:
     ping "snsplc1", 5
 
 3) Driver Configuration
-Before calling iocInit, the driver has to be configured.
+Before calling iocInit in your vxWorks startup file, the driver has to
+be configured. After loading the driver object code either directly
+or as part of an ADE library, issue the following commands.
 Note that the IP address (128.165.160.146), the DNS name (snsplc1)
-and the name that the driver uses (plc1) are all related by different!
+and the name that the driver uses (plc1) are all related but different!
     
     # Initialize EtherIP driver, define PLCs
     # -------------------------------------
     drvEtherIP_init
+
+    # Provide a default for the driver's scan rate in case neither
+    # the record's SCAN field nor the INP/OUT link
+    # contain a scan rate that the driver can use.
+    # Recommendation: Do not use this feature, provide a scan flag
+    # "S" in the INP/OUT link instead. See manual comments on the "S" flag.
+    drvEtherIP_default_rate = 0.5
 
     # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
     # The driver/device uses the <name> to indentify the PLC.
@@ -132,10 +142,13 @@ They are only processed when the record is accessed via ChannelAccess
 from an operator screen where someone entered a new value for this
 record.
 
-The driver still tries to read the tag from the PLC in case it is
-changed from another source (another IOC, PanelView, ...). But the
-driver cannot extract an update rate from the SCAN field, so the "S"
-scan flag has to be used as described in the INP/OUT link section.
+While the driver will only write to a tag when the record is
+processed, it will still try to read the tag from the PLC in case it is
+changed from another source (another IOC, PanelView, ...).
+The section "Keeping things synchronized" gives details on this.
+Since the driver cannot extract an update rate from the SCAN field
+when it is set to "Passive", the "S" scan flag has to be used as
+described in the INP/OUT link section.
 
 *** SCAN I/O Intr
 Input records can be configured to use
@@ -150,7 +163,7 @@ has to match
    field(INP, "@<plc name> <tag> [flags]")
    field(OUT, "@<plc name> <tag> [flags]")
 
-<plc name>
+*** <plc name>
     This is the driver's name for the PLC, defined in the vxWorks
     startup script via
        drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
@@ -159,7 +172,7 @@ has to match
     More detail on this as well as the IP address mapping
     and routing can be found in the "Installation" section.
 
-<tag>
+*** <tag>
     This can be a single tag "fred" that is defined in the "Controller
     Tags" section of the PLC ladder logic. It can also be an array tag
     "my_array[5]" as well as a structure element "Local:2:I.Ch0Data".
@@ -171,11 +184,11 @@ has to match
     The <tag> has to be a single elementary item (scalar tag, array
     element, structure element), not a whole array or structure.
 
-<flags>
+*** <flags>
     There are record-specific flags that will be explained
     later. Common flags are:
 
-    "S <scan period>"
+    "S <scan period>" - Scan flag
     If the SCAN field does not specify a scan rate as in the case of
     "Passive" and "I/O Intr", the S flag has to be used to inform the
     driver of the requested update rate.
@@ -185,6 +198,21 @@ has to match
        field(INP, "@snsioc1 temp S .1")
        field(INP, "@myplc xyz S 0.5")
     There has to be a space after the "S"!
+
+    If the record has neither a periodic SCAN rate nor an S flag in
+    the link field, you will get an error message similar to
+
+       devEtherIP (Test_HPRF:Amp_Out:Pwr1_H):
+       cannot decode SCAN field, no scan flag given
+       Device support will use the default of 1 secs,
+       please complete the record config
+
+    In the vxWorks startup file, you can set the double-typed variable
+    "drvEtherIP_default_rate" to provide a default rate.
+    If you do that, the warning will vanish.
+    The recommended practice, however, is to provide a per-record
+    "S" flag because then you can recollect the full configuration
+    from the record and avoid ambiguities.
 
     "E" - force elementary transfer
     If the tag refers to an array element,
@@ -263,6 +291,44 @@ are supported.
 If the SCAN field is "Passive", the "S" flag has to be used.
 
 ** Write Caveats
+
+*** Keeping things synchronized
+The problem is that the EPICS IOC does not "own" the PLC. Someone else
+might write to the PLC's tag (RSLogix, PanelView, another IOC,
+command-line program). The PLC can also be rebooted independent from
+the IOC. Therefore the write records cannot just write once they have
+a new value, they have to reflect the actual value on the PLC.
+
+In order to learn about changes to the PLC from other sources, the
+driver scans write tags just like read tags, so it always knows the
+current value. When the record is processed, it checks if the value to
+be written is different from what the PLC has. If so, it puts its RVAL
+into the driver's table and marks it for update
+-> the driver writes the new value to the PLC.
+
+So in the case of output records the driver will still read from the PLC
+periodically and only switch to write mode once after an output record
+has been processed and provided a new value.
+
+Some glue code in the device is called for every value that the driver
+gets. It checks if this still matches the record's value. If not, the
+record's RVAL is updated and the record is processed. A user interface
+tool that looks at the record sees the actual value of the PLC.
+The record will not write the value that it just received because
+it can see that RVAL matches what the driver has.
+
+This fails if two output records are connected to the same tag,
+especially if one is a binary output that tries to write 0 or 1. In
+that case the two records each try to write "their" value into the
+tag, which is likely to make the value fluctuate.
+
+Another side effect is that when processing an output record,
+that record will not write immediately. The writing is handled
+by a separate thread in the driver. The next time the tag is scanned,
+the driver thread will notice the "update" flag and write to the PLC.
+Consequently you adjust the write latency when you specify the scan
+rate of the driver thread.
+
 *** Arrays
 When writing array tags, a single ao record (or bo, mbbo, ...)
 is connected to a single element of the array.
@@ -289,33 +355,6 @@ If you have to have handshake tags (EPICS writes, PLC uses
 it and then PLC resets the tag), those bidirectional tags
 should not be in arrays. They have to be standalone, scalar tags.
    
-*** Keeping things synchronized
-The problem is that the EPICS IOC and the crate that it's on do not
-"own" the PLC. Someone else might write to the PLC's tag (RSLogix,
-PanelMate, another IOC, command-line program). The PLC can also be
-rebooted independent from the IOC.
-Therefore the write records cannot just write once they have a new
-value, they have to reflect the actual value on the PLC.
-
-In order to learn about changes to the PLC from other sources, the
-driver scans write tags just like read tags, so it always knows the
-current value. When the record is processed, it checks if the value to
-be written is different from what the PLC has. If so, it puts its RVAL
-into the driver's table and marks it for update
- -> the driver writes the new value to the PLC.
-
-Some glue code in the device is called for every value that the driver
-gets. It checks if this still matches the record's value. If not, the
-record's RVAL is updated and the record is processed. A user interface
-tool that looks at the record sees the actual value of the PLC.
-The record will not write the value that it just received because
-it can see that RVAL matches what the driver has.
-
-This fails if two output records are connected to the same tag,
-especially if one is a binary output that tries to write 0 or 1. In
-that case the two records each try to write "their" value into the
-tag, which is likely to make the value fluctuate.
-
 * bi, Binary Input Record
 Reads a single bit from a tag.
 
@@ -403,6 +442,9 @@ drvEtherIP_help shows all user-callable driver routines:
     drvEtherIP V1.1 diagnostics routines:
       int EIP_verbosity:
       -  set to 0..10
+      double drvEtherIP_default_rate = <seconds>
+       -  define the default scan rate
+          (if neither SCAN nor INP/OUT provide one)    
       drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
       -  define a PLC name (used by EPICS records) as IP
 	 (DNS name or dot-notation) and slot (0...)

@@ -1,5 +1,9 @@
 -*- outline -*-
 
+* 2001, 10-01 V1.2
+
+** New driver option "drvEtherIP_default_rate"
+
 * 2001, 08-30 (not versioned)
 
 ** Patch to output records

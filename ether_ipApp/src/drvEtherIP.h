@@ -12,7 +12,7 @@
 #include "dl_list.h"
 
 #define ETHERIP_MAYOR 1
-#define ETHERIP_MINOR 1
+#define ETHERIP_MINOR 2
 
 /* TCP port */
 #define ETHERIP_PORT 0xAF12
@@ -133,21 +133,25 @@ struct __TagInfo
     DL_List    callbacks;          /* TagCallback list for new values */ 
 };
 
-void drvEtherIP_init ();
+extern double drvEtherIP_default_rate;
+
+void drvEtherIP_help();
+
+void drvEtherIP_init();
 
 bool drvEtherIP_define_PLC(const char *PLC_name,
                            const char *ip_addr, int slot);
 
-PLC *drvEtherIP_find_PLC (const char *PLC_name);
+PLC *drvEtherIP_find_PLC(const char *PLC_name);
 
-TagInfo *drvEtherIP_add_tag (PLC *plc, double period,
-                             const char *string_tag, size_t elements);
-void drvEtherIP_add_callback (PLC *plc, TagInfo *tag,
+TagInfo *drvEtherIP_add_tag(PLC *plc, double period,
+                            const char *string_tag, size_t elements);
+void drvEtherIP_add_callback(PLC *plc, TagInfo *tag,
                              EIPCallback callback, void *arg);
-void drvEtherIP_remove_callback (PLC *plc, TagInfo *tag,
-                                 EIPCallback callback, void *arg);
+void drvEtherIP_remove_callback(PLC *plc, TagInfo *tag,
+                                EIPCallback callback, void *arg);
 
-int drvEtherIP_restart ();
+int drvEtherIP_restart();
 
 /* Command-line communication test,
  * not used by the driver */

@@ -607,10 +607,15 @@ static long analyze_link(dbCommon *rec,
     {
         period = get_period(rec);
         if (period <= 0)
+            period = drvEtherIP_default_rate;
+        if (period <= 0)
         {
             errlogPrintf("devEtherIP (%s): cannot decode SCAN field,"
                          " no scan flag given\n", rec->name);
-            return S_db_badField;
+            period = 1.0; /* default scan rate */
+            errlogPrintf("Device support will use the default of %g secs, ",
+                         period);
+            errlogPrintf("please complete the record configuration\n");
         }
     }
     

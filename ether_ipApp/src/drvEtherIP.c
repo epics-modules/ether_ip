@@ -8,6 +8,8 @@
 #include "drvEtherIP.h"
 #include "stdio.h"
 
+double drvEtherIP_default_rate = 0.0;
+
 /* THE structure for this driver
  * Note that each PLC entry has it's own lock
  * for the scanlists & statistics.
@@ -742,28 +744,31 @@ void drvEtherIP_init ()
     DLL_init (&drvEtherIP_private.PLCs);
 }
 
-void drvEtherIP_help ()
+void drvEtherIP_help()
 {
     printf("drvEtherIP V%d.%d diagnostics routines:\n",
            ETHERIP_MAYOR, ETHERIP_MINOR);
-    printf ("    int EIP_verbosity:\n");
-    printf ("    -  set to 0..10\n");
-    printf ("    drvEtherIP_define_PLC <name>, <ip_addr>, <slot>\n");
-    printf ("    -  define a PLC name (used by EPICS records) as IP\n");
-    printf ("       (DNS name or dot-notation) and slot (0...)\n");
-    printf ("    drvEtherIP_read_tag <ip>, <tag>, <elements>, <ms_timeout>\n");
-    printf ("    -  call to test a round-trip single tag read\n");
-    printf ("    drvEtherIP_report <level>\n");
-    printf ("    -  level = 0..10\n");
-    printf ("    drvEtherIP_dump\n");
-    printf ("    -  dump all tags and values; short version of drvEtherIP_report\n");
-    printf ("    drvEtherIP_reset_statistics\n");
-    printf ("    -  reset error counts and min/max scan times\n");
-    printf ("    drvEtherIP_restart\n");
-    printf ("    -  in case of communication errors, driver will restart,\n");
-    printf ("       so calling this one directly shouldn't be necessary\n");
-    printf ("       but is possible\n");
-    printf ("\n");
+    printf("    int EIP_verbosity:\n");
+    printf("    -  set to 0..10\n");
+    printf("    double drvEtherIP_default_rate = <seconds>\n");
+    printf("    -  define the default scan rate\n");
+    printf("       (if neither SCAN nor INP/OUT provide one)\n");
+    printf("    drvEtherIP_define_PLC <name>, <ip_addr>, <slot>\n");
+    printf("    -  define a PLC name (used by EPICS records) as IP\n");
+    printf("       (DNS name or dot-notation) and slot (0...)\n");
+    printf("    drvEtherIP_read_tag <ip>, <tag>, <elements>, <ms_timeout>\n");
+    printf("    -  call to test a round-trip single tag read\n");
+    printf("    drvEtherIP_report <level>\n");
+    printf("    -  level = 0..10\n");
+    printf("    drvEtherIP_dump\n");
+    printf("    -  dump all tags and values; short version of drvEtherIP_report\n");
+    printf("    drvEtherIP_reset_statistics\n");
+    printf("    -  reset error counts and min/max scan times\n");
+    printf("    drvEtherIP_restart\n");
+    printf("    -  in case of communication errors, driver will restart,\n");
+    printf("       so calling this one directly shouldn't be necessary\n");
+    printf("       but is possible\n");
+    printf("\n");
 }
 
 long drvEtherIP_report(int level)
