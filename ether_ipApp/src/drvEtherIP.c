@@ -826,8 +826,11 @@ void drvEtherIP_help()
     printf("    drvEtherIP_define_PLC <name>, <ip_addr>, <slot>\n");
     printf("    -  define a PLC name (used by EPICS records) as IP\n");
     printf("       (DNS name or dot-notation) and slot (0...)\n");
-    printf("    drvEtherIP_read_tag <ip>, <tag>, <elements>, <ms_timeout>\n");
+    printf("    drvEtherIP_read_tag <ip>, <slot>, <tag>, <elm.>, <timeout>\n");
     printf("    -  call to test a round-trip single tag read\n");
+    printf("       ip: IP address (numbers or name known by vxWorks\n");
+    printf("       slot: Slot of the PLC controller (not ENET). 0, 1, ...\n");
+    printf("       timeout: milliseconds\n");
     printf("    drvEtherIP_report <level>\n");
     printf("    -  level = 0..10\n");
     printf("    drvEtherIP_dump\n");
