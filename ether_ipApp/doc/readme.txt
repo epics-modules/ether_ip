@@ -265,6 +265,20 @@ has to match
     "Passive" output records or input records with SCAN="I/O Intr",
     the S flag has to be used to inform the driver of the requested update
     rate.
+    Note that the behavior of the scan flag is only defined for these
+    cases:
+     Record Type     SCAN
+     AI              I/O Intr
+     BI		     I/O Intr
+     MBBI	     I/O Intr
+     MBBIDirect	     I/O Intr
+     AO		     Passive
+     BO		     Passive
+     MBBO	     Passive
+     MBBODirect	     Passive
+
+    In all other cases, the S flag should not be used, instead the
+    SCAN field must provide the needed period (e.g. SCAN=".5 second").  
 
     The time format is in seconds, like the SCAN field, but without "seconds".
     Examples:
