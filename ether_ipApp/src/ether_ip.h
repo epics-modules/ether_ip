@@ -467,6 +467,8 @@ eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT *result);
 eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
                   size_t element, CN_DINT *result);
+eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
+                       size_t element, CN_USINT *result);
 /* Fill buffer with up to 'size' characters (incl. ending '\0').
  * Return true for success */
 eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,

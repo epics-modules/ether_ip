@@ -11,10 +11,10 @@ ld < testether_ip
 drvEtherIP_init
 
 # Tell vxWorks how to get to "snsioc1"
-# Now don't get confused here:
-# "snsioc1" happens to be the DNS name of this IP address,
-# it's the ENET module of a ControlLogix PLC, no IOC!
-hostAdd("snsioc1", "128.165.160.146")
+# that is the ENET module of a ControlLogix PLC.
+# vxWorks doesn't generally use DNS, so if you
+# want to use names, you have to define them:
+hostAdd("myplc", "192.168.0.50")
 # You might need this, too, if the IOC is on
 # a different subnet: routeAdd <target>, <gateway>
 # routeAdd("128.165.160.146", "128.165.160.241")
@@ -29,7 +29,7 @@ hostAdd("snsioc1", "128.165.160.146")
 # To get to the PLC itself, we need the slot that
 # it resides in. The first, left-most slot in the
 # ControlLogix crate is slot 0.
-drvEtherIP_define_PLC("plc1", "snsioc1", 0)
+drvEtherIP_define_PLC("plc1", "myplc", 0)
 
 # 10 - Truckload of detailed messages down to the raw send/receive buffers
 #  8 - Good value for operation
@@ -48,7 +48,7 @@ dbLoadDatabase("./dbd/ether_ip_test.dbd")
 #dbLoadRecords("./db/ao.db",      "PLC=plc1,IOC=snsioc4")
 #dbLoadRecords("./db/bo.db",      "PLC=plc1,IOC=snsioc4")
 #dbLoadRecords("./db/mbbo.db",    "PLC=plc1,IOC=snsioc4")
-dbLoadRecords("./db/test.db",    "PLC=plc1,IOC=snsioc3")
+dbLoadRecords("./db/test.db",    "PLC=plc1,IOC=plc1")
 
 # Default master port: 18233
 TSconfigure (1, 10, 0, 18299, 0, 0, 0)

@@ -1277,6 +1277,7 @@ static long wf_read(waveformRecord *rec)
     CN_DINT dint_val;
     char    *s;
     double  *dbl;
+    char    *c;
     size_t i;
 
     if (rec->tpro)
@@ -1313,6 +1314,28 @@ static long wf_read(waveformRecord *rec)
                     recGblRecordError(S_db_badField, (void *)rec,
                                       "EtherIP: tag data type requires "
                                       "waveform FTVL==DOUBLE");
+                    ok = false;
+                }
+            }
+            else if (get_CIP_typecode(pvt->tag->data) == T_CIP_SINT)
+            {
+                if (rec->ftvl == menuFtypeCHAR ||
+                    rec->ftvl == menuFtypeUCHAR)
+                {
+                    c = (char *)rec->bptr;
+                    for (i=0; ok && i<rec->nelm; ++i)
+                    {
+                        ok = get_CIP_USINT(pvt->tag->data, i, (CN_USINT*)c);
+                        ++c;
+                    }
+                    if (ok)
+                        rec->nord = rec->nelm;
+                }
+                else
+                {
+                    recGblRecordError(S_db_badField, (void *)rec,
+                                      "EtherIP: tag data type requires "
+                                      "waveform FTVL==CHAR/UCHAR");
                     ok = false;
                 }
             }

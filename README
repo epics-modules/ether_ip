@@ -9,8 +9,7 @@ CVS root: ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot
 Module:   support/linac/ether_ip (aliased as module ether_ip)
 Tag:      ether_ip-<RELEASE>
 
-The current release is 1-11.
-Replace <RELEASE> by the current release.
+Replace <RELEASE> by the desired release.
 You can also just use "current" for the RELEASE
 and with a periodic cvs update you'll always have
 the most recent one, thought maybe not a good idea

@@ -1029,7 +1029,7 @@ eip_bool get_CIP_double(const CN_USINT *raw_type_and_data,
 }
 
 eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
-                   size_t element, CN_UDINT *result)
+                       size_t element, CN_UDINT *result)
 {
     CN_UINT        type;
     const CN_USINT *buf;
@@ -1095,6 +1095,27 @@ eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
             return true;
     }
     EIP_printf(1, "EIP get_CIP_UDINT: unknown type %d\n", (int) type);
+    return false;
+}
+
+eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
+                       size_t element, CN_USINT *result)
+{
+    CN_UINT        type;
+    const CN_USINT *buf;
+    CN_USINT       vs;
+
+    buf = unpack_UINT(raw_type_and_data, &type);
+    buf += element*CIP_Type_size(type);
+    switch (type)
+    {
+        case T_CIP_BOOL:
+        case T_CIP_SINT:
+            vs = *buf;
+            *result = (CN_UDINT) vs;
+            return true;
+    }
+    EIP_printf(1, "EIP get_CIP_USINT: cannot handle type %d\n", (int) type);
     return false;
 }
 
