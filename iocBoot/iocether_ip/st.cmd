@@ -1,3 +1,4 @@
+# -*- shell-script -*-
 # Example vxWorks startup file
 
 # Following must be added for many board support packages
@@ -21,7 +22,7 @@ EIP_verbosity=10
 cd top
 dbLoadDatabase("./dbd/ether_ip_test.dbd")
 dbLoadRecords("./db/ramp.db","user=kay")
-dbLoadRecords("./db/stat.db","user=kay,testtag=BOOLs")
+dbLoadRecords("./db/eip_stat.db","PLC=plc1,IOC=snsioc47,TAG=BOOLs")
 dbLoadRecords("./db/ai.db","user=kay")
 dbLoadRecords("./db/ana.db","user=kay")
 dbLoadRecords("./db/bi.db","user=kay")
@@ -30,7 +31,8 @@ dbLoadRecords("./db/mbbi.db","user=kay")
 dbLoadRecords("./db/ao.db","user=kay")
 dbLoadRecords("./db/bo.db","user=kay")
 dbLoadRecords("./db/mbbo.db","user=kay")
-dbLoadRecords("./db/test.db","user=kay")
+#dbLoadRecords("./db/test.db","user=kay")
+#dbLoadRecords("./db/null.db","user=kay")
 
 # Time syncronization:
 # beowolf: 128.165.160.128
@@ -42,4 +44,8 @@ iocInit
 
 #dbpf "kay:test1.TPRO", "1"
 #dbpf "kay:test2.TPRO", "1"
+
+
+
+
 
