@@ -1,5 +1,17 @@
 -*- outline -*- $Id$
 
+* This document
+is part of the EPICS EtherIP package, to be found in
+<ether_ip>/ether_ipApp/doc/readme.txt.
+For now this is the "manual" on how to use the driver.
+
+For details on the underlying protocol, see
+"Interfacing the ControlLogix PLC Over EtherNet/IP",
+ K.U. Kasemir, L.R. Dalesio
+ ICALEPCS PSN THAP020
+ LANL E-Print Archive: http://arXiv.org/abs/cs.NI/0110065
+
+
 * EtherNet/IP
 EtherNet/IP, originally called "ControlNet over Ethernet"
 as defined in the ControlNet Spec, Errata 2, is the protocol
@@ -250,8 +262,9 @@ has to match
 
     "S <scan period>" - Scan flag
     If the SCAN field does not specify a scan rate as in the case of
-    "Passive" and "I/O Intr", the S flag has to be used to inform the
-    driver of the requested update rate.
+    "Passive" output records or input records with SCAN="I/O Intr",
+    the S flag has to be used to inform the driver of the requested update
+    rate.
 
     The time format is in seconds, like the SCAN field, but without "seconds".
     Examples:
