@@ -775,6 +775,23 @@ static void PLC_scan_task(PLC *plc)
     {  
         epicsTimeGetCurrent(&start_time);
         delay = epicsTimeDiffInSeconds(&next_schedule, &start_time);
+        if (delay > 60.0)
+        {
+            char      tsString[50];
+            printf("Scanlist %g secs has scheduling problem, delay = %g\n",
+                  list->period, delay);
+            epicsTimeToStrftime(tsString, sizeof(tsString),
+                                "%Y/%m/%d %H:%M:%S.%04f", &list->scan_time);
+            printf("  'Scan time'    : %s\n", tsString);
+            epicsTimeToStrftime(tsString, sizeof(tsString),
+                                "%Y/%m/%d %H:%M:%S.%04f", &start_time);
+            printf("  'Current time' : %s\n", tsString);
+            epicsTimeToStrftime(tsString, sizeof(tsString),
+                                "%Y/%m/%d %H:%M:%S.%04f", &next_schedule);
+            printf("  'Next    time' : %s\n", tsString);
+
+            delay = EIP_MIN_TIMEOUT;
+        }
     }    
     /* Sleep until next turn. */
     if (delay > 0.0)
