@@ -20,6 +20,10 @@ ether_ip_test_LIBS += Com
 DBD = ether_ip.dbd
 
 LIBRARY_IOC = ether_ip
+
+# create munch file for dynamic loading will install in <bin>
+PROD_IOC_vxWorks += ether_ipLib
+
 LIB_LIBS += $(EPICS_BASE_IOC_LIBS)
 DLL_LIBS = ca Com
 SYS_DLL_LIBS = wsock32
@@ -31,6 +35,11 @@ ether_ip_SRCS += drvEtherIP.c
 ether_ip_SRCS += devEtherIP.c 
 ether_ip_SRCS += mem_string_file.c
 ether_ip_SRCS += drvEtherIPRegister.cpp
+
+# The PROD_IOC_vxWorks is built from the same srcs and must include
+# the registry routines.
+ether_ipLib_SRCS+=$(ether_ip_SRCS)
+ether_ipLib_SRCS+= ether_ip_registerRecordDeviceDriver.cpp
 
 include $(TOP)/configure/RULES
 #----------------------------------------

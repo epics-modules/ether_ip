@@ -1,4 +1,9 @@
 -*- outline -*-
+* 2004, 02/11 V2.3 
+(CVS Release Tag --> ether_ip-2-3)
+Create munch file to support
+IOC run-time loading (RTL) of
+the ether_ip driver libraries
 
 * 2003, 10/31 V2.2
 R3.14.4 port
