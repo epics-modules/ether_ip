@@ -201,11 +201,11 @@ static bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
         mask <<= 1;
         if (mask == 0) /* end of current UDINT ? */
         {
-            if (! (ok = put_CIP_UDINT (pvt->tag->data, element, value)))
+            if (! (ok = put_CIP_UDINT(pvt->tag->data, element, value)))
                 break;
             mask = 1; /* reset mask, go to next element */
             ++element;
-            if (! (ok = get_CIP_UDINT (pvt->tag->data, element, &value)))
+            if (! (ok = get_CIP_UDINT(pvt->tag->data, element, &value)))
                 break;
         }
         if (rval & 1)
@@ -236,12 +236,23 @@ static void scan_callback(void *arg)
     scanIoRequest(pvt->ioscanpvt);
 }
 
-/* Callback for ao:
- * Used for every AO record to check if
- * PLC's value != record's idea of the current value,
- * causing process if necessary to update the record.
+/* Callback from driver for every received tag, for ao record:
+ * Check if
+ * a) PLC's value != record's idea of the current value
+ * b) record is UDF, so this is the first time we get a value
+ *    from the PLC after a reboot
+ * Causing process if necessary to update the record.
+ * That process()/scanOnce() call should NOT cause the record to write
+ * to the PLC because the xxx_write method will notice that
+ * the PLC and record value agree.
+ * It will, however, trigger CA monitors.
+ *
+ * Problem: Alarms are handled before "write_xx" is called.
+ * So we have to set udf in here,
+ * then process() can recognize udf and finally it will
+ * call write_xx.
  */
-static void check_ao_callback (void *arg)
+static void check_ao_callback(void *arg)
 {
     aoRecord      *rec = (aoRecord *) arg;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
@@ -250,28 +261,27 @@ static void check_ao_callback (void *arg)
     bool          process = false;
 
     /* Check if record's (R)VAL is current */
-    if (lock_data ((dbCommon *)rec))
+    if (lock_data((dbCommon *)rec))
     {
         if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
         {
-            if (get_CIP_double (pvt->tag->data, pvt->element, &dbl) &&
-                rec->val != dbl)
+            if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
+                (rec->udf || rec->val != dbl))
             {
-                rec->val = rec->pval = dbl;
-                process = true;
                 if (rec->tpro)
-                    printf ("AO '%s': got %g from driver\n",
-                            rec->name, dbl);
+                    printf("AO '%s': got %g from driver\n", rec->name, dbl);
+                rec->val = rec->pval = dbl;
+                rec->udf = false;
+                process = true;
             }
         }
         else
         {
-            if (get_CIP_UDINT (pvt->tag->data, pvt->element, &udint) &&
-                rec->rval != udint)
+            if (get_CIP_UDINT(pvt->tag->data, pvt->element, &udint) &&
+                (rec->udf || rec->rval != udint))
             {
                 if (rec->tpro)
-                    printf ("AO '%s': got %lu from driver\n",
-                            rec->name, udint);
+                    printf("AO '%s': got %lu from driver\n", rec->name, udint);
                 /* back-convert raw value into val (copied from ao init) */
                 dbl = (double)udint + (double)rec->roff;
                 if (rec->aslo!=0.0)
@@ -281,11 +291,13 @@ static void check_ao_callback (void *arg)
                 {
                     case menuConvertNO_CONVERSION:
                         rec->val = rec->pval = dbl;
+                        rec->udf = false;
                         process = true;
                         break;
                     case menuConvertLINEAR:
                         dbl = dbl*rec->eslo + rec->eoff;
                         rec->val = rec->pval = dbl;
+                        rec->udf = false;
                         process = true;
                         break;
                     default:
@@ -293,21 +305,22 @@ static void check_ao_callback (void *arg)
                                            (void *)&rec->pbrk,&rec->lbrk)!=0)
                             break; /* cannot back-convert */
                         rec->val = rec->pval = dbl;
+                        rec->udf = false;
                         process = true;
                 }
                 if (rec->tpro)
-                    printf ("--> val = %g\n", rec->val);
+                    printf("--> val = %g\n", rec->val);
             }
         }
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
     }
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce (rec);
+        scanOnce(rec);
 }
 
-/* Callback for bo */
-static void check_bo_callback (void *arg)
+/* Callback for bo, see ao_callback comments */
+static void check_bo_callback(void *arg)
 {
     boRecord      *rec = (boRecord *) arg;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
@@ -315,30 +328,30 @@ static void check_bo_callback (void *arg)
     bool          process = false;
 
     /* Check if record's (R)VAL is current */
-    if (lock_data ((dbCommon *) rec))
+    if (lock_data((dbCommon *) rec))
     {
-        if (get_bits ((dbCommon *)rec, 1, &rval) &&
-            rec->rval != rval)
+        if (get_bits((dbCommon *)rec, 1, &rval) &&
+            (rec->udf || rec->rval != rval))
         {
             if (rec->tpro)
-                printf ("BO '%s': got %lu from driver\n",
-                        rec->name, rval);
+                printf("BO '%s': got %lu from driver\n", rec->name, rval);
             /* back-convert rval into val */
             rec->rval = rval;
             rec->val  = (rec->rval==0) ? 0 : 1;
+            rec->udf = false;
             if (rec->tpro)
-                printf ("--> val = %u\n", (unsigned int)rec->val);
+                printf("--> val = %u\n", (unsigned int)rec->val);
             process = true;
         }
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
     }
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce (rec);
+        scanOnce(rec);
 }
 
 /* Callback for mbbo */
-static void check_mbbo_callback (void *arg)
+static void check_mbbo_callback(void *arg)
 {
     mbboRecord    *rec = (mbboRecord *) arg;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
@@ -350,11 +363,10 @@ static void check_mbbo_callback (void *arg)
     if (lock_data ((dbCommon *) rec))
     {
         if (get_bits ((dbCommon *)rec, rec->nobt, &rval) &&
-            rec->rval != rval)
+            (rec->udf || rec->rval != rval))
         {
             if (rec->tpro)
-                printf ("MBBO '%s': got %lu from driver\n",
-                        rec->name, rval);
+                printf("MBBO '%s': got %lu from driver\n", rec->name, rval);
             /* back-convert rval into val */
             if (rec->sdef)
             {
@@ -369,17 +381,19 @@ static void check_mbbo_callback (void *arg)
                     }
                     state_val++;
                 }
+                rec->udf = false;
             }
             else
             {
                 /* the raw value is the desired val */
                 rec->val = (unsigned short)rval;
+                rec->udf = false;
             }
             if (rec->tpro)
-                printf ("--> val = %u\n", (unsigned int)rec->val);
+                printf("--> val = %u\n", (unsigned int)rec->val);
             process = true;
         }
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
     }
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
@@ -387,7 +401,7 @@ static void check_mbbo_callback (void *arg)
 }
 
 /* Callback for mbboDirect */
-static void check_mbbo_direct_callback (void *arg)
+static void check_mbbo_direct_callback(void *arg)
 {
     mbboDirectRecord *rec = (mbboDirectRecord *) arg;
     DevicePrivate    *pvt = (DevicePrivate *)rec->dpvt;
@@ -395,23 +409,24 @@ static void check_mbbo_direct_callback (void *arg)
     bool             process = false;
 
     /* Check if record's (R)VAL is current */
-    if (lock_data ((dbCommon *) rec))
+    if (lock_data((dbCommon *) rec))
     {
-        if (get_bits ((dbCommon *)rec, rec->nobt, &rval) &&
-            rec->rval != rval)
+        if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
+            (rec->udf || rec->rval != rval))
         {
             if (rec->tpro)
-                printf ("MBBODirect '%s': got %lu from driver\n",
-                        rec->name, rval);
+                printf("MBBODirect '%s': got %lu from driver\n",
+                       rec->name, rval);
             rec->rval= rval;
             rec->val = (unsigned int) rval;
+            rec->udf = false;
             process = true;
         }
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
     }
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce (rec);
+        scanOnce(rec);
 }
 
 /* device support routine get_ioint_info */
@@ -780,14 +795,20 @@ static long mbbi_direct_init_record(mbbiDirectRecord *rec)
 
 static long ao_init_record(aoRecord *rec)
 {
-    return init_record((dbCommon *)rec, check_ao_callback,
-                       &rec->out, 0);
+    long status = init_record((dbCommon *)rec, check_ao_callback,
+                              &rec->out, 0);
+    if (status)
+        return status;
+    return 2; /* don't convert, we have no value, yet */
 }
 
 static long bo_init_record(boRecord *rec)
 {
-    return init_record((dbCommon *)rec, check_bo_callback,
-                       &rec->out, 1 /* bits */);
+    long status = init_record((dbCommon *)rec, check_bo_callback,
+                              &rec->out, 1 /* bits */);
+    if (status)
+        return status;
+    return 2; /* don't convert, we have no value, yet */
 }
 
 static long mbbo_init_record(mbboRecord *rec)
@@ -795,7 +816,9 @@ static long mbbo_init_record(mbboRecord *rec)
     long status = init_record((dbCommon *)rec, check_mbbo_callback,
                               &rec->out, rec->nobt);
     rec->shft = 0;
-    return status;
+    if (status)
+        return status;
+    return 2; /* don't convert, we have no value, yet */
 }
 
 static long mbbo_direct_init_record(mbboDirectRecord *rec) 
@@ -803,7 +826,9 @@ static long mbbo_direct_init_record(mbboDirectRecord *rec)
     long status = init_record((dbCommon *)rec, check_mbbo_direct_callback,
                               &rec->out, rec->nobt);
     rec->shft = 0;
-    return status;
+    if (status)
+        return status;
+    return 2; /* don't convert, we have no value, yet */
 }
 
 static long ai_read(aiRecord *rec)
@@ -1035,8 +1060,8 @@ static long ao_write(aoRecord *rec)
             if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
                 rec->val != dbl)
             {
-                EIP_printf(5, "rec '%s': write %g!\n",
-                           rec->name, rec->val);
+                if (rec->tpro)
+                    printf("rec '%s': write %g!\n", rec->name, rec->val);
                 ok = put_CIP_double(pvt->tag->data, pvt->element, rec->val);
                 pvt->tag->do_write = true;
             }
@@ -1047,8 +1072,7 @@ static long ao_write(aoRecord *rec)
                 rec->rval != udint)
             {
                 if (rec->tpro)
-                    printf("rec '%s': write %lu!\n",
-                           rec->name, rec->rval);
+                    printf("rec '%s': write %lu!\n", rec->name, rec->rval);
                 ok = put_CIP_UDINT(pvt->tag->data, pvt->element, rec->rval);
                 pvt->tag->do_write = true;
             }
@@ -1057,7 +1081,7 @@ static long ao_write(aoRecord *rec)
     }
     else
         ok = false;
-    
+
     if (ok)
         rec->udf = FALSE;
     else
@@ -1090,8 +1114,7 @@ static long bo_write(boRecord *rec)
             rec->rval != rval)
         {
             if (rec->tpro)
-                printf ("rec '%s': write %lu\n",
-                        rec->name, rec->rval);
+                printf ("rec '%s': write %lu\n", rec->name, rec->rval);
             ok = put_bits((dbCommon *)rec, 1, rec->rval);
         }
         semGive(pvt->tag->data_lock);
@@ -1126,17 +1149,16 @@ static long mbbo_write (mbboRecord *rec)
         return status;
     }
 
-    if (lock_data ((dbCommon *)rec))
+    if (lock_data((dbCommon *)rec))
     {
-        if (get_bits ((dbCommon *)rec, rec->nobt, &rval) &&
+        if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
             rec->rval != rval)
         {
             if (rec->tpro)
-                printf ("rec '%s': write %lu\n",
-                        rec->name, rec->rval);
-            ok = put_bits ((dbCommon *)rec, rec->nobt, rec->rval);
+                printf("rec '%s': write %lu\n", rec->name, rec->rval);
+            ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
         }
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
     }
     else
         ok = false;
@@ -1159,8 +1181,8 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
 
     rec->pact = TRUE;
     if (rec->tpro)
-        dump_DevicePrivate ((dbCommon *)rec);
-    status = check_link ((dbCommon *)rec, check_mbbo_direct_callback,
+        dump_DevicePrivate((dbCommon *)rec);
+    status = check_link((dbCommon *)rec, check_mbbo_direct_callback,
                          &rec->out, rec->nobt);
     if (status)
     {
@@ -1168,17 +1190,16 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
         return status;
     }
 
-    if (lock_data ((dbCommon *)rec))
+    if (lock_data((dbCommon *)rec))
     {
-        if (get_bits ((dbCommon *)rec, rec->nobt, &rval) &&
+        if (get_bits((dbCommon *)rec, rec->nobt, &rval) &&
             rec->rval != rval)
         {
             if (rec->tpro)
-                printf ("rec '%s': write %lu\n",
-                        rec->name, rec->rval);
-            ok = put_bits ((dbCommon *)rec, rec->nobt, rec->rval);
+                printf("rec '%s': write %lu\n", rec->name, rec->rval);
+            ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
         }
-        semGive (pvt->tag->data_lock);
+        semGive(pvt->tag->data_lock);
     }
     else
         ok = false;
