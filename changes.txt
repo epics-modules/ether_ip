@@ -1,0 +1,22 @@
+-*- outline -*-
+
+* 2001, 05-18    V1.0
+
+** New "slot" parameter: drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
+
+Before, the driver assumed that the PLC would be in slot 0,
+the left-most slot of the ControlLogix crate.
+
+Now you can put it anywhere (in the crate),
+but if it's not slot 0, you have to specify that
+when you define the PLC.
+
+** Some changes to output of drvEtherIP_report
+Now displaying the PLC interface info, e.g.:
+  Interface name        : 1756-ENET/A 
+  Interface vendor      : 0x100
+  Interface type        : 0xC00
+  Interface revision    : 0x112
+  Interface serial      : 0x13D40700
+
+
