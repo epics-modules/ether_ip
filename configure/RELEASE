@@ -8,5 +8,5 @@
 # EPICS_BASE usually appears last so other apps can override stuff:
 ADE=/ade
 EPICS_BASE=$(ADE)/epics/supTop/base/R3.14.6
-ETHER_IP=$(ADE)/epics/supTop/share/R3.14.6/ether_ip/Development
+ETHER_IP=$(ADE)/epics/supTop/share/R3.14.6/ether_ip/ether_ip-2-5-1
 MSI=$(ADE)/epics/supTop/extensions/R3.14.6/bin/$(EPICS_HOST_ARCH)/msi
