@@ -1,6 +1,28 @@
 -*- outline -*-
 
-* 2002, 10/02/2002 V1.9
+* 2002, 10/15
+Pilar created a perfectly fine database that causes
+communication errors, causing the PLC to return an error code
+that indicates "does not fit in buffer".
+
+There is a limit for the PLC transfer buffer, about 500 bytes.
+Spec page P. 2-5 mentions "504 bytes" as the CIP UCMM limit,
+Spec page 156 in version 2.0, errata 2 mentions "511 bytes"
+as the "Forward_Open" connection size limit.
+
+None if this tells me exactly where the limit is
+and whether it's 500 or 504 or ??
+Is it in the PLC controller, so the Ethernet overhead
+(encapsulation header) is handled by the ENET module
+and does not count?
+Is it in the ENET module, so the total inc. encapsulation
+is limited?
+
+Introduced a new EIP_PROTOCOL_OVERHEAD macro
+based on the encapsulation header size
+which for now reduces the used buffer size to 446 bytes.
+
+* 2002, 10/02 V1.9
 Support for stringin record and STRING type tags
 
 * 2002, 09/24 V1.8

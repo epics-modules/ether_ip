@@ -349,7 +349,15 @@ static bool complete_PLC_ScanList_TagInfos(PLC *plc)
             if (data)
             {
                 any_ok = true;
-                /* Estimate write sizes from the request/response for read */
+                /* Estimate write sizes from the request/response for read
+                 * because we don't want to issue a 'write' just for the
+                 * heck of it.
+                 * Nevertheless, the write sizes calculated in here
+                 * should be exact since we can determine the write
+                 * request package from the read request
+                 * (CIP service code, tag name, elements)
+                 * plus the raw data size.
+                 */
                 if (info->cip_r_response_size <= 4)
                 {
                     info->cip_w_request_size  = 0;
@@ -513,7 +521,8 @@ static bool process_ScanList(EIPConnection *c, ScanList *scanlist)
          * 2) to handle the responses
          */
         info_position = info;
-        count = determine_MultiRequest_count(c->transfer_buffer_limit,
+        count = determine_MultiRequest_count(c->transfer_buffer_limit
+                                             - EIP_PROTOCOL_OVERHEAD,
                                              info,
                                              &requests_size,
                                              &responses_size,

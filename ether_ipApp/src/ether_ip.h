@@ -111,6 +111,26 @@ void EIP_printf(int level, const char *format, ...);
 
 void EIP_hexdump(int level, const void *_data, int len);
 
+/* Unclear:
+ * There is a limit for the PLC transfer buffer.
+ * Spec page P. 2-5 mentions "504 bytes" as the CIP UCMM limit,
+ * Spec page 156 in version 2.0, errata 2 mentions "511 bytes"
+ * as the "Forward_Open" connection size limit.
+ * None if this tells me exactly where the limit is
+ * and whether it's 500 or 504 or ??
+ * Is it in the PLC controller, so the Ethernet overhead
+ * (encapsulation header) is handled by the ENET module
+ * and does not count?
+ * Is it in the ENET module, so the total inc. encapsulation
+ * is limited?
+ * These macros are the best guess for the buffer
+ * plus the protocol overhead (encap. header).
+ * EIP_BUFFER_LIMIT - EIP_PROTOCOL_OVERHEAD are used
+ * to fit the Multi-Request.
+ */
+#define EIP_BUFFER_LIMIT 500
+#define EIP_PROTOCOL_OVERHEAD 54
+
 /********************************************************
  * ControlNet data types
  * Spec 5 p 3
