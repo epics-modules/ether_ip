@@ -6,8 +6,8 @@ CVS root: ics-srv01.sns.ornl.gov:/sns/ADE/cvsroot
 Module:   support/linac/ether_ip (aliased as module ether_ip)
 Tag:      ether_ip-<RELEASE>
 
-The current release is 0-4.
-The non-commited next release will be 0-5.
+The current release is 0-5.
+The non-commited next release will be 0-6.
 Replace <RELEASE> by the current release.
 
 What you have to do is
