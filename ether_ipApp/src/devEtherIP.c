@@ -35,6 +35,7 @@
 #include <mbboRecord.h>
 #include <mbboDirectRecord.h>
 #include "drvEtherIP.h"
+#include "epicsExport.h"
 
 /* #define CATCH_MISSED_WRITE */
 #ifdef CATCH_MISSED_WRITE
@@ -1682,4 +1683,16 @@ DSET devMbboDirectEtherIP =
     NULL
 };
 
+epicsExportAddress(dset,devAiEtherIP);
+epicsExportAddress(dset,devBiEtherIP);
+epicsExportAddress(dset,devMbbiEtherIP);
+epicsExportAddress(dset,devMbbiDirectEtherIP);
+epicsExportAddress(dset,devSiEtherIP);
+epicsExportAddress(dset,devWfEtherIP);
+epicsExportAddress(dset,devAoEtherIP);
+epicsExportAddress(dset,devBoEtherIP);
+epicsExportAddress(dset,devMbboEtherIP);
+epicsExportAddress(dset,devMbboDirectEtherIP);
+                   
 /* EOF devEtherIP.c */
+

@@ -12,7 +12,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include "drvSup.h"
 #include "drvEtherIP.h"
+#include "epicsExport.h"
 
 double drvEtherIP_default_rate = 0.0;
 
@@ -1308,3 +1310,4 @@ struct
 };
 
 
+epicsExportAddress(drvet,drvEtherIP);
