@@ -430,25 +430,79 @@ the driver thread will notice the "update" flag and write to the PLC.
 Consequently you adjust the write latency when you specify the scan
 rate of the driver thread.
 
+*** Output records and arrays
+When using _input_records_ that reference array tags a[0], a[1],
+a[9], the driver will read the whole referenced part of the array,
+that is a[0...9]. While the array might have more elements, the driver
+reads elements from zero up to the highest element referenced by a
+record.
+
+Likewise, when output records reference those array tags,
+the whole section of the array from 0 to the highest element
+referenced by a record gets written.
+When no output record requested a 'write', it is read.
+
+This is perfect for e.g. limit settings:
+Most of the time, they are unchanged and the driver efficiently
+monitors them. Should an operator change one of the limits on the IOC,
+the whole array is written. Should the operator change a limit via
+PanelView, the driver on the IOC notices the change and updates
+the output record for this array entry.
+
+There are problems when frequently processed records are combined in
+such a bi-directional array tag.
+
+Example: A heartbeat record, processed every second, is part of an
+'output' array. Every second, that record marks the whole array(!) for
+'write'.
+If an operator now changes another array element on the IOC, that gets
+written, too. But when the operator changes a value on the PLC via
+PanelView, that change is very likely to be lost because the driver
+doesn't get around to 'read' the tag since the heartbeat record causes
+it to 'write' all the time. Consequently, most tag changes from
+PanelView are almost immediately overwritten by the IOC's value.
+
+Conclusion:
+It's impossible to have truly 100% bi-directional communication.
+If both the record and the tag on the PLC change, one may overrule
+the other depending on timing (scanning, network).
+
+Next Best Solution:
+Bi-directional use of arrays for e.g. limits work well enough
+if they are infrequently changed from either side.
+Records that are frequently written should not be combined in such
+arrays. If they happen to be in the same array, use the 'E' flag
+in the OUT link of e.g. the heartbeat record. That way, the heartbeat
+record will only write that single array element and not trigger a
+write of the whole referenced subsection of the array.
+One could conclude to add 'E' to every output record, but then you
+loose all the possible array-transfer optimization.
+
+Best Solution:
+Change the driver to
+- read output record tags as part of an array
+- but write only the single element
+That requires some fundamental change to the driver because
+these two read/write transfers involve technically different
+tags.
+
 *** Dropped messages
 The EtherIP driver uses TCP. So unless the TCP layer reports
 errors, all messages to the PLC should eventually reach the PLC.
 And unless the PLC reports an error in response to a write request,
 the write request should actually change the affected PLC tag.
-
 In practice, Herb Strong and Pam Gurd (ORNL) noticed that
 some write requests do not reach the PLC.
-It is unclear, when this starts to happen
-(certain number of network packages per second?).
-The cause seems to be between the ControlLogix ENET module
-and the ControlLogix Controller. Both use ControlNet
-to communication via the ControlLogix backplane.
-Though TCP shows no errors and ControlNet is supposed to
-be reliable and deterministic, some write requests
-get dropped on the way from ENET to the controller.
-
-There is no error message for the driver to notice this,
-and no known threshold that causes this to happen.
+I believe this was based on an error in this driver:
+A read request was sent out. Sometimes, an output record could
+process before the response to the read arrives.
+So the output record tries to write a 'new' value but before
+that new value gets written, the previous read arrives
+and therefore overwrites the 'new' value to be written with
+the previous value from the PLC
+-> When we get around to write, we write the old value.
+This has been fixed and I could not reproduce any 'dropped write
+requests' ever since.
 
 *** "FORCE" Flag
 Whenever an output record is processed, it will
