@@ -7,6 +7,33 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2005, 04/19  V2.10
+EIP_verbosity>=10 will now print a message for the initial 'connect'
+call, which might help debug a situation where the driver
+cannot connect: You should now see a difference between a connection
+timeout (network problem, device not there) and a refused connection
+(possibly the wrong IP address).
+
+Change to AI record support:
+Before, no conversion via LINR was supported.
+In fact the device support code forced LINR=NO CONVERSION.
+From now on, LINR==SLOPE is allowed,
+in which case you configure the record's ESLO and EOFF
+fields, and the record will then perform a linear conversion
+from the RVAL field to the VAL field:
+              VAL = (RVAL * ESLO) + EOFF
+
+Similarly, the AO record will convert VAL to RVAL:
+            RVAL = (VAL - EOFF) / ESLO
+
+Note, however, that this only makes sense for records that
+are communicating with tags of type other than REAL.
+Only tags of type INT, DINT, ... will be read into the RVAL
+field (AI records) or be written from the RVAL field (AO recs).
+Tags of type REAL are directly read into respectively written
+from the VAL field, and all those VAL <-> RVAL conversions
+are performed in vain.
+
 * 2005, 01/28  V2.9
 Driver's delay in disconnecting/reconnecting could be almost
 zero in some cases. Now fixed to ~5 secs.

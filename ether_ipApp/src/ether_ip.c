@@ -1669,6 +1669,11 @@ static eip_bool EIP_init_and_connect (EIPConnection *c,
         c->sock = 0;
         return false;
     }
+    if (EIP_verbosity >= 10)
+    {
+        EIP_printf(10, "EIP connectWithTimeout(%s:0x%04X sec, %d msec)\n",
+                   ip_addr, port, (int)timeout.tv_sec, (int)timeout.tv_usec);
+    }
     if (connectWithTimeout(c->sock, (struct sockaddr *)&addr,
                            sizeof (addr), &timeout) != 0)
     {
