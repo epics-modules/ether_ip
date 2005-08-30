@@ -712,8 +712,11 @@ drvEtherIP_help shows all user-callable driver routines:
       drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
       -  define a PLC name (used by EPICS records) as IP
          (DNS name or dot-notation) and slot (0...)
-      drvEtherIP_read_tag <ip>, <tag>, <elements>, <ms_timeout>
-      -  call to test a round-trip single tag read
+     drvEtherIP_read_tag <ip>, <slot>, <tag>, <elm.>, <timeout>
+     -  call to test a round-trip single tag read
+        ip: IP address (numbers or name known by IOC)
+        slot: Slot of the PLC controller (not ENET). 0, 1, ...
+        timeout: milliseconds
       drvEtherIP_report <level>
       -  level = 0..10
       drvEtherIP_dump
