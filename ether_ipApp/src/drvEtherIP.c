@@ -424,6 +424,15 @@ static void invalidate_PLC_tags(PLC *plc)
     }
 }
 
+static void disconnect_PLC(PLC *plc)
+{
+    if (plc->connection.sock)
+    {
+        EIP_shutdown(&plc->connection);
+        invalidate_PLC_tags(plc);
+    }
+}   
+
 /* Test if we are connected, if not try to connect to PLC */
 static eip_bool assert_PLC_connect(PLC *plc)
 {
@@ -438,15 +447,6 @@ static eip_bool assert_PLC_connect(PLC *plc)
         return false;
     }
     return true;
-}
-
-static void disconnect_PLC(PLC *plc)
-{
-    if (plc->connection.sock)
-    {
-        EIP_shutdown(&plc->connection);
-        invalidate_PLC_tags(plc);
-    }
 }
 
 /* Given a transfer buffer limit,
