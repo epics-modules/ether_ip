@@ -429,9 +429,15 @@ static eip_bool assert_PLC_connect(PLC *plc)
 {
     if (plc->connection.sock)
         return true;
-    return EIP_startup(&plc->connection, plc->ip_addr,
-                       ETHERIP_PORT, plc->slot, ETHERIP_TIMEOUT)
-        && complete_PLC_ScanList_TagInfos(plc);
+    if (! EIP_startup(&plc->connection, plc->ip_addr,
+                      ETHERIP_PORT, plc->slot, ETHERIP_TIMEOUT))
+        return false;
+    if (! complete_PLC_ScanList_TagInfos(plc))
+    {
+        disconnect_PLC(plc);
+        return false;
+    }
+    return true;
 }
 
 static void disconnect_PLC(PLC *plc)
