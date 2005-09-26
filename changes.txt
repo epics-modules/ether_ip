@@ -7,6 +7,10 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2005, 09/26  V2.11
+In case of communication errors during an initial 'read'
+of all tags, the network socket might have been left open.
+
 * 2005, 04/19  V2.10
 EIP_verbosity>=10 will now print a message for the initial 'connect'
 call, which might help debug a situation where the driver

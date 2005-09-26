@@ -15,7 +15,7 @@
 #include "dl_list.h"
 
 #define ETHERIP_MAYOR 2
-#define ETHERIP_MINOR 10
+#define ETHERIP_MINOR 11
 
 /* For timing */
 #define EIP_MIN_TIMEOUT         0.1  /* second */
