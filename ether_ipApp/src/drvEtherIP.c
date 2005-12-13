@@ -337,7 +337,7 @@ static eip_bool complete_PLC_ScanList_TagInfos(PLC *plc)
     ScanList       *list;
     TagInfo        *info;
     const CN_USINT *data;
-    eip_bool       any_ok = false;
+    size_t         tried = 0, succeeded = 0;
     size_t         type_and_data_len;
 
     for (list=DLL_first(ScanList, &plc->scanlists);  list;
@@ -352,50 +352,53 @@ static eip_bool complete_PLC_ScanList_TagInfos(PLC *plc)
                            info->string_tag);
                 continue;
             }
-            if (info->cip_r_request_size==0)
-            {   /* Need to get the read sizes */
-                data = EIP_read_tag(&plc->connection,
-                                    info->tag, info->elements,
-                                    NULL /* data_size */,
-                                    &info->cip_r_request_size,
-                                    &info->cip_r_response_size);
-                if (data)
+            /* Need to get the read sizes */
+            ++tried;
+            data = EIP_read_tag(&plc->connection,
+                                info->tag, info->elements,
+                                NULL /* data_size */,
+                                &info->cip_r_request_size,
+                                &info->cip_r_response_size);
+            if (data)
+            {
+                ++succeeded;
+                /* Estimate write sizes from the request/response for read
+                 * because we don't want to issue a 'write' just for the
+                 * heck of it.
+                 * Nevertheless, the write sizes calculated in here
+                 * should be exact since we can determine the write
+                 * request package from the read request
+                 * (CIP service code, tag name, elements)
+                 * plus the raw data size.
+                 */
+                if (info->cip_r_response_size <= 4)
                 {
-                    any_ok = true;
-                    /* Estimate write sizes from the request/response for read
-                     * because we don't want to issue a 'write' just for the
-                     * heck of it.
-                     * Nevertheless, the write sizes calculated in here
-                     * should be exact since we can determine the write
-                     * request package from the read request
-                     * (CIP service code, tag name, elements)
-                     * plus the raw data size.
-                     */
-                    if (info->cip_r_response_size <= 4)
-                    {
-                        info->cip_w_request_size  = 0;
-                        info->cip_w_response_size = 0;
-                    }
-                    else
-                    {
-                        type_and_data_len = info->cip_r_response_size - 4;
-                        info->cip_w_request_size  = info->cip_r_request_size
-                            + type_and_data_len;
-                        info->cip_w_response_size = 4;
-                    }
-                }
-                else
-                {
-                    info->cip_r_request_size  = 0;
-                    info->cip_r_response_size = 0;
                     info->cip_w_request_size  = 0;
                     info->cip_w_response_size = 0;
                 }
+                else
+                {
+                    type_and_data_len = info->cip_r_response_size - 4;
+                    info->cip_w_request_size  = info->cip_r_request_size
+                        + type_and_data_len;
+                    info->cip_w_response_size = 4;
+                }
+            }
+            else
+            {
+                info->cip_r_request_size  = 0;
+                info->cip_r_response_size = 0;
+                info->cip_w_request_size  = 0;
+                info->cip_w_response_size = 0;
             }
             epicsMutexUnlock(info->data_lock);
         }
     }
-    return any_ok;
+    EIP_printf(2, "complete_PLC_ScanList_TagInfos tried %zd tags, got %zd tags\n",
+               tried, succeeded);
+    /* OK if we got at least one answer,
+     * or we never really tried to get any tag */
+    return (succeeded > 0) || (tried == 0);
 }
 
 static void invalidate_PLC_tags(PLC *plc)
@@ -924,7 +927,6 @@ long drvEtherIP_report(int level)
     PLC *plc;
     EIPIdentityInfo *ident;
     ScanList *list;
-    eip_bool have_drvlock, have_PLClock;
     epicsTimeStamp now;
     char tsString[50];
 
@@ -944,9 +946,6 @@ long drvEtherIP_report(int level)
     if (level > 1)
         printf("  Mutex lock: 0x%X\n",
                (unsigned int) drvEtherIP_private.lock);
-    have_drvlock = epicsMutexLock(drvEtherIP_private.lock) == epicsMutexLockOK;
-    if (! have_drvlock)
-        printf("   CANNOT GET DRIVER'S LOCK!\n");
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
          plc;  plc = DLL_next(PLC,plc))
     {
@@ -981,9 +980,6 @@ long drvEtherIP_report(int level)
             epicsTimeToStrftime(tsString, sizeof(tsString),
                                 "%Y/%m/%d %H:%M:%S.%04f", &now); 
             printf("  Now                   : %s\n", tsString);
-            have_PLClock = epicsMutexLock(plc->lock) == epicsMutexLockOK;
-            if (! have_PLClock)
-                printf("   CANNOT GET PLC'S LOCK!\n");
             if (level > 3)
             {
                 printf("** ");
@@ -998,12 +994,8 @@ long drvEtherIP_report(int level)
                     dump_ScanList(list, level);
                 }
             }
-            if (have_PLClock)
-                epicsMutexUnlock(plc->lock);
         }
     }
-    if (have_drvlock)
-        epicsMutexUnlock(drvEtherIP_private.lock);
     printf("\n");
     return 0;
 }

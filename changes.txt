@@ -7,6 +7,41 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2005, 12/13  V2.12
+Fix for the case where the IOC might not fully reconnect
+after a PLC was reprogrammed.
+With EIP_verbosity=10, one could see that the driver
+would reconnect:
+
+  EIP connectWithTimeout(my_plc:0xAF12, 5 sec, 0 msec)
+  EIP connected to rfq-mod-plc:0xAF12 on socket 52
+  EIP sending ListServices encapsulation command
+  ....
+and successfully gather some information,
+  ------------------------------
+  Identity information of target:
+      UINT vendor         = 0x0100
+  ....
+      USINT name          = '1756-ENET/B '
+  ------------------------------
+but then immediately disconnect:
+  EIP sending UnRegisterSession encapsulation command, session ID 0x0202F900
+  ....
+  EIP disconnecting socket 52
+  drvEtherIP: PLC 'mod' is disconnected
+
+The fault was in the routine which initially reads
+every tag via a new connection in order to obtain
+the data sizes.
+
+In addition, drvEtherIP_report no longer locks
+anything. So it might print nonsense values in very
+rare cases, but to me that beats hanging when
+one tries to debug a driver thread.
+
+Eliminated a vxWorks compiler warning about inet_addr(),
+where the VXW lack the 'const' that Linux uses.
+
 * 2005, 09/26  V2.11
 In case of communication errors during an initial 'read'
 of all tags, the network socket might have been left open.

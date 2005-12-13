@@ -1642,7 +1642,7 @@ static eip_bool EIP_init_and_connect (EIPConnection *c,
 #else
     addr_p =(unsigned long *) &addr.sin_addr.s_addr;
 #endif
-    *addr_p = inet_addr (ip_addr);
+    *addr_p = inet_addr((char *)ip_addr);
     if (*addr_p == -1)
     {   /* ... or DNS */
         *addr_p = hostGetByName ((char *)ip_addr);
