@@ -1020,7 +1020,7 @@ void drvEtherIP_dump ()
             {
                 EIP_printf(0, "%s ", info->string_tag);
                 epicsMutexLock(info->data_lock);
-                if (info->valid_data_size >= 0)
+                if (info->valid_data_size > 0)
                     dump_raw_CIP_data(info->data, info->elements);
                 else
                     printf(" - no data -\n");
