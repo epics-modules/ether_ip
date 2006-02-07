@@ -27,6 +27,13 @@ static const iocshFuncDef EIP_verbosityDef = {"EIP_verbosity", 1, EIP_verbosityA
 static void EIP_verbosityCall(const iocshArgBuf * args) {
 	EIP_verbosity = args[0].ival;
 }
+
+static const iocshArg EIP_buffer_limitArg0 = {"bytes", iocshArgInt};
+static const iocshArg *const EIP_buffer_limitArgs[1] = {&EIP_buffer_limitArg0};
+static const iocshFuncDef EIP_buffer_limitDef = {"EIP_buffer_limit", 1, EIP_buffer_limitArgs};
+static void EIP_buffer_limitCall(const iocshArgBuf * args) {
+        EIP_buffer_limit = args[0].ival;
+}
   
 static const iocshArg EIP_use_mem_string_fileArg0 = {"value", iocshArgInt};
 static const iocshArg *const EIP_use_mem_string_fileArgs[1] = {&EIP_use_mem_string_fileArg0};
@@ -99,6 +106,7 @@ static void drvEtherIP_read_tagCall(const iocshArgBuf * args) {
 void drvEtherIP_Register() {
 	iocshRegister(&drvEtherIP_default_rateDef, drvEtherIP_default_rateCall);
 	iocshRegister(&EIP_verbosityDef        , EIP_verbosityCall);
+	iocshRegister(&EIP_buffer_limitDef     , EIP_buffer_limitCall);
 	iocshRegister(&EIP_use_mem_string_fileDef, EIP_use_mem_string_fileCall);
 	iocshRegister(&drvEtherIP_helpDef      , drvEtherIP_helpCall);
 	iocshRegister(&drvEtherIP_initDef      , drvEtherIP_initCall);

@@ -7,6 +7,29 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2006, 02/07  V2.13
+The PLC or the ENET module or both have a buffer limit.
+Comments in ether_ipApp/src/ether_ip.h give some details
+on the difficulty in finding the exact limit.
+When the the driver tries to read too much data at a time,
+it run into "status 0x06 (Buffer too small, partial data only)"
+errors from the PLC.
+Then the limit is set too small, one cannot read arrays
+that hit the limit.
+I thought I had determined the exact limit via read and write
+tests on a PLC back in October 2002.
+Now, the update of the SNS CF IOCs shows that this value
+is wrong, at least for the CF PLCs or ENET modules.
+
+Changes:
+1) A message that indicates when the driver hits the limit
+and refuses to read or write.
+Before, you simply had INVALID records with no idea why.
+
+2) A new EIP_buffer_limit configuration value,
+defaulting to 500 because that worked for the CF IOCs.
+The previous default was 538-52 = 486.
+
 * 2005, 12/13  V2.12
 Fix for the case where the IOC might not fully reconnect
 after a PLC was reprogrammed.

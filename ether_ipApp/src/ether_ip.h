@@ -159,19 +159,25 @@ void EIP_hexdump(int level, const void *_data, int len);
  * the _request_ reaches 538 bytes
  * -> request & response each limited to 538 bytes.
  *
- * These macros are the best guess for the buffer
- * plus the protocol overhead (encap. header).
- * EIP_BUFFER_LIMIT - EIP_PROTOCOL_OVERHEAD are used
+ * These macros used to be the best guess for the buffer
+ * plus the protocol overhead (encap. header), using
+ * 538 - EIP_PROTOCOL_OVERHEAD
  * to fit the Multi-Request.
  * The response has an overhead of 40 bytes, see above: 24+6+10.
  * The request has an overhead of 52 bytes.
  *
  * Buffer code rejects requests > EIP_BUFFER_PANIC_THRESHOLD
  * because that's not supposed to happen.
+ *
+ * However, the SNS CF PLCs seem to work best with a buffer limit
+ * of 500, so that's now the EIP_DEFAULT_BUFFER_LIMIT.
  */
-#define EIP_BUFFER_LIMIT 538
+#define EIP_DEFAULT_BUFFER_LIMIT 500
 #define EIP_PROTOCOL_OVERHEAD 52
 #define EIP_BUFFER_PANIC_THRESHOLD 600
+
+extern int EIP_buffer_limit;
+
 
 /********************************************************
  * ControlNet data types

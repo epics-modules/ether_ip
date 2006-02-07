@@ -25,6 +25,8 @@
 #endif
 #include"mem_string_file.h"
 
+int EIP_buffer_limit =  EIP_DEFAULT_BUFFER_LIMIT;
+
 static const CN_UINT __endian_test = 0x0001;
 #define is_little_endian (*((const CN_USINT*)&__endian_test))
 
@@ -1626,7 +1628,7 @@ static eip_bool EIP_init_and_connect (EIPConnection *c,
     int flag = true;
                 
     memset (c, 0, sizeof (EIPConnection));
-    c->transfer_buffer_limit = EIP_BUFFER_LIMIT;
+    c->transfer_buffer_limit = EIP_buffer_limit;
     c->millisec_timeout = millisec_timeout;
     c->sock = 0;
     c->slot = slot;
