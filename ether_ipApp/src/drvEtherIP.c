@@ -510,9 +510,20 @@ static size_t determine_MultiRequest_count(size_t limit,
         if (*multi_request_size  > limit ||
             *multi_response_size > limit)
         {   /* more won't fit */
+            if (count <= 0)
+            {   /* The one and only tag didn't fit?! */
+                EIP_printf(2, "Tag '%s' exceeds buffer limit of %lu bytes,\n",
+                           info->string_tag, (unsigned long) limit);
+                EIP_printf(3, " Request   size: %10lu bytes\n", try_req);
+                EIP_printf(3, " Response  size: %10lu bytes\n", try_resp);
+                EIP_printf(3, " Total  request: %10lu bytes\n",
+                           *multi_request_size);
+                EIP_printf(3, " Total response: %10lu bytes\n",
+                           *multi_response_size);
+            }
             *multi_request_size =CIP_MultiRequest_size (count,*requests_size);
             *multi_response_size=CIP_MultiResponse_size(count,*responses_size);
-            return count;
+            return 0;
         }
         ++count; /* ok, include another request */
         *requests_size  = try_req;
@@ -556,12 +567,8 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
             c->transfer_buffer_limit,
             info, &requests_size, &responses_size,
             &multi_request_size, &multi_response_size);
-        if (count == 0)
-        {   /* nothing fits on list?? */
-            EIP_printf(3, "Hit buffer size limit for %.2f second scanlist\n",
-                       scanlist->period);
+        if (count == 0) /* Empty, or nothing fits in one request. */
             return true;
-        }
         /* send <count> requests as one transfer */
         send_size = CM_Unconnected_Send_size(multi_request_size);
         EIP_printf(10, " ------------------- New Request ------------\n");

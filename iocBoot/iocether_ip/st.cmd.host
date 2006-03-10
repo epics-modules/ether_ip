@@ -6,6 +6,7 @@ dbLoadDatabase("../../dbd/example.dbd")
 example_registerRecordDeviceDriver(pdbbase)
 
 # Initialize EtherIP driver, define PLCs
+EIP_buffer_limit(20)
 drvEtherIP_init()
 
 # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>

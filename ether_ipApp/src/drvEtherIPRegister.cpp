@@ -32,7 +32,11 @@ static const iocshArg EIP_buffer_limitArg0 = {"bytes", iocshArgInt};
 static const iocshArg *const EIP_buffer_limitArgs[1] = {&EIP_buffer_limitArg0};
 static const iocshFuncDef EIP_buffer_limitDef = {"EIP_buffer_limit", 1, EIP_buffer_limitArgs};
 static void EIP_buffer_limitCall(const iocshArgBuf * args) {
+        printf("Changing buffer limit from %lu ",
+               (unsigned long) EIP_buffer_limit);
         EIP_buffer_limit = args[0].ival;
+        printf("to %lu bytes\n",
+               (unsigned long) EIP_buffer_limit);
 }
   
 static const iocshArg EIP_use_mem_string_fileArg0 = {"value", iocshArgInt};

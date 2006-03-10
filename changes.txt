@@ -7,6 +7,48 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2006, 03/10  V2.14
+The error message about hitting the buffer limit is now
+more verbose (at EIP_verbosity 3  or higher) to help
+with finding the culprit:
+
+Assume this output from drvEtherIP_report:
+...
+*** Tag 'P1R0' @ 0x8054278:
+  scanlist            : 0x8054220
+  compiled tag        : 'P1R0'
+  elements            : 4
+  cip_r_request_size  : 10
+  cip_r_response_size : 22
+  cip_w_request_size  : 28
+  cip_w_response_size : 4
+  data_lock ID        : 0x8054320
+  data_size (buffer)  : 0
+  valid_data_size     : 0
+  do_write            : no
+  is_writing          : no
+  data                : -no data-
+  transfer time       : 0 secs
+...
+and 
+   EIP_buffer_limit=20
+in the startup file, you'll get the following error message:
+
+Tag 'P1R0' exceeds buffer limit of 20 bytes,
+ Request   size:         10 bytes
+ Response  size:         22 bytes
+ Total  request:         20 bytes
+ Total response:         30 bytes
+
+Meaning:
+The request, something like "CIP read 'P1R0'",
+takes 10 bytes. That's OK.
+Wrapped with what's necessary so send it,
+it turns into 20 bytes. Still OK.
+But the raw data that we expect back would be 22 bytes,
+resulting in a total response packet size of 30 bytes.
+Not OK when we assume that 20 bytes is the limit.
+
 * 2006, 02/07  V2.13
 The PLC or the ENET module or both have a buffer limit.
 Comments in ether_ipApp/src/ether_ip.h give some details
