@@ -2236,7 +2236,7 @@ static eip_bool EIP_check_interface(EIPConnection *c)
         info->serial_number = *((CN_UDINT *) data);
     else return false;
     data = EIP_Get_Attribute_Single(c, C_Identity, 1, 7, &len);
-    if (data && len > 0 && len < 34)
+    if (data && len > 0 && len < sizeof(info->name)-1)
     {
         len = *((CN_USINT *) data);
         memcpy(info->name, (const char *)data+1, len);

@@ -620,7 +620,10 @@ typedef struct
     CN_UINT device_type;
     CN_UINT revision;
     CN_UDINT serial_number;
-    CN_USINT name[33];
+    /* Table 10.3 in spec limits string to 32 chars,
+     * but CompactLogix seems to return 52 characters.
+     */
+   CN_USINT name[100];
 } EIPIdentityInfo;
 
 /* Parameters & buffers for one EtherNet/IP connection.

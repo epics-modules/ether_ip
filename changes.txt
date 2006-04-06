@@ -7,6 +7,11 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2006, 04/06
+Minor tweak to allow longer product name in Identity,
+since Compact Logix then seems to work ok.
+
+
 * 2006, 03/10  V2.14
 The error message about hitting the buffer limit is now
 more verbose (at EIP_verbosity 3  or higher) to help
