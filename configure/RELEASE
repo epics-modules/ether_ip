@@ -5,9 +5,7 @@
 #If using macro substitutions, point MSI at the binary:
 #MSI=<path>extensions/bin/$(EPICS_HOST_ARCH)/msi
 
-# EPICS_BASE usually appears last so other apps can override stuff:
-EPICS_BASE=$(EPICS_BASE_RELEASE)
-ETHER_IP=$(SHARE)/ether_ip/HEAD
-#ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-14
+EPICS_BASE=/Users/kasemir/epics/R3.14.8.2/base
+ETHER_IP=/Users/kasemir/epics/R3.14.8.2/extensions/src/ether_ip-2-14
 
 MSI=$(EPICS_EXTENSIONS)/bin/$(EPICS_HOST_ARCH)/msi
