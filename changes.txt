@@ -12,6 +12,51 @@ The code for determining the multi-request-count
 had a bug: When a scan list had too many entries,
 it wouldn't work at all (tags remain with "- no data -").
 
+Some more info on the buffer limit, EIP_buffer_limit:
+The default is 500, which seems to work in most cases,
+but the exact size is unknown.
+You can only change EIP_buffer_limit in the startup file
+_before_any_other_EIP_routine is called!
+It applies to both the request and the response data packages.
+The driver will only assemble requests which are sized below
+the buffer limit, and whose expected reply (data) is also below
+the buffer limit.
+These are possible errors and what to do about them.
+You might have to set EIP_verbosity high enough to see the errors.
+
+1) Request failed, ... "Buffer too small, partial data only"
+This is an error message from the PLC. The PLC tried to return data
+for a request, but couldn't, because the PLC's buffer is too small.
+--> decrease EIP_buffer_limit, because the response needs to be
+    made smaller.
+
+2) Request failed, ... "Service not supported" or other error.
+Also an error from the PLC. Might mean that the request was too big,
+so the PLC didn't understand the request at all, returning some
+error.
+--> decrease EIP_buffer_limit, so that the driver will send smaller requests.
+
+3) "Tag 'xyz' exceeds buffer limit of ... bytes"
+An error from the driver. The single tag 'xyz' has either a request size
+(basically: tag name length) or a response size (basically: data size)
+that exceeds the buffer limit.
+The driver won't even try to send that request to the PLC.
+--> increase EIP_buffer_limit, so that the driver will try.
+    If you then run into errors 1 or 2, you're out of luck.
+    The tag's name (unlikely) or the tag's data (probably) are too big,
+    so you have to use fewer array elements in the tag,
+    rearrange the data on the PLC to reside in several tags.
+
+4) "EIP_reserve_buffer refuses to allocate ... bytes"
+An error from the driver. We know that the actual PLC buffer limit
+is around 500, so the driver has a hard limit of 600 which you
+cannot exceed. If you set EIP_buffer_limit to >600,
+the driver will give this error message.
+Could also be caused by a faulty PLC response:
+A packet returned from the PLC that claims to contain >600 bytes
+of data. Instead of running out of memory, the driver will reject
+such responses and disconnect/reconnect.
+
 * 2006, 04/06 V2.14
 Minor tweak to allow longer product name in Identity,
 since Compact Logix then seems to work ok.
