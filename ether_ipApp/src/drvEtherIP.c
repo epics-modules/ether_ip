@@ -483,6 +483,8 @@ static size_t determine_MultiRequest_count(size_t limit,
      * Skip entries with empty cip_*_request_size!
      */
     count = *requests_size = *responses_size = 0;
+    EIP_printf(8, "EIP determine_MultiRequest_count, limit %lu\n",
+               (unsigned long) limit);
     for (/**/; info; info = DLL_next(TagInfo, info))
     {
         if (info->cip_r_request_size <= 0)
@@ -498,11 +500,19 @@ static size_t determine_MultiRequest_count(size_t limit,
             info->is_writing = true;
             try_req  = *requests_size  + info->cip_w_request_size;
             try_resp = *responses_size + info->cip_w_response_size;
+            EIP_printf(8, "tag %lu '%s' (write): %lu, %lu ?\n",
+                       (unsigned long)count, info->string_tag,
+                       (unsigned long)info->cip_w_request_size,
+                       (unsigned long)info->cip_w_response_size);
         }
         else
         {
             try_req  = *requests_size  + info->cip_r_request_size;
             try_resp = *responses_size + info->cip_r_response_size;
+            EIP_printf(8, "tag %lu '%s' (read): %lu, %lu ?\n",
+                       (unsigned long)count, info->string_tag,
+                       (unsigned long)info->cip_r_request_size,
+                       (unsigned long)info->cip_r_response_size);
         }
         epicsMutexUnlock(info->data_lock);
         *multi_request_size  = CIP_MultiRequest_size (count+1, try_req);
@@ -514,21 +524,27 @@ static size_t determine_MultiRequest_count(size_t limit,
             {   /* The one and only tag didn't fit?! */
                 EIP_printf(2, "Tag '%s' exceeds buffer limit of %lu bytes,\n",
                            info->string_tag, (unsigned long) limit);
-                EIP_printf(3, " Request   size: %10lu bytes\n", try_req);
-                EIP_printf(3, " Response  size: %10lu bytes\n", try_resp);
+                EIP_printf(3, " Request   size: %10lu bytes\n", (unsigned long)try_req);
+                EIP_printf(3, " Response  size: %10lu bytes\n", (unsigned long)try_resp);
                 EIP_printf(3, " Total  request: %10lu bytes\n",
-                           *multi_request_size);
+                           (unsigned long)*multi_request_size);
                 EIP_printf(3, " Total response: %10lu bytes\n",
-                           *multi_response_size);
+                           (unsigned long)*multi_response_size);
             }
             *multi_request_size =CIP_MultiRequest_size (count,*requests_size);
             *multi_response_size=CIP_MultiResponse_size(count,*responses_size);
-            return 0;
+            EIP_printf(8, "reached buffer limit at req/resp: %lu, %lu\n",
+                       (unsigned long)*multi_request_size,
+                       (unsigned long)*multi_response_size);
+            return count;
         }
         ++count; /* ok, include another request */
         *requests_size  = try_req;
         *responses_size = try_resp;
     }
+    EIP_printf(8, "End of list, total req/resp: %lu, %lu\n",
+               (unsigned long)*multi_request_size,
+               (unsigned long)*multi_response_size);
     return count;
 }
 
@@ -555,6 +571,7 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
     TagCallback         *cb;
     eip_bool            ok;
 
+    EIP_printf(10, "EIP process_ScanList %g s\n", scanlist->period);
     info = DLL_first(TagInfo, &scanlist->taginfos);
     while (info)
     {   /* keep position, we'll loop several times:
@@ -567,6 +584,8 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
             c->transfer_buffer_limit,
             info, &requests_size, &responses_size,
             &multi_request_size, &multi_response_size);
+        EIP_printf(10, "EIP process_ScanList %lu items\n",
+                   (unsigned long)count);
         if (count == 0) /* Empty, or nothing fits in one request. */
             return true;
         /* send <count> requests as one transfer */

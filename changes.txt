@@ -7,6 +7,11 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2006, 06/06 V2.15
+The code for determining the multi-request-count
+had a bug: When a scan list had too many entries,
+it wouldn't work at all (tags remain with "- no data -").
+
 * 2006, 04/06 V2.14
 Minor tweak to allow longer product name in Identity,
 since Compact Logix then seems to work ok.
