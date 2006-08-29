@@ -17,6 +17,8 @@ SYS_PROD_LIBS_WIN32 = wsock32
 PROD_HOST += ether_ip_test
 ether_ip_test_SRCS += ether_ip_test.c
 ether_ip_test_LIBS += Com
+ether_ip_test_SYS_LIBS_solaris += socket
+ether_ip_test_SYS_LIBS_solaris += nsl
 
 DBD = ether_ip.dbd
 
