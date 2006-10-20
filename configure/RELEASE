@@ -2,16 +2,11 @@
 # Run "gnumake clean uninstall install" in the application
 # top directory each time this file is changed.
 
-TEMPLATE_TOP=/ade/epics/supTop/base/R3.14.8.2/templates/makeBaseApp/top
-
-EPICS_BASE_RELEASE=/ade/epics/supTop/base/R3.14.8.2
-
-SHARE_RELEASE=/ade/epics/supTop/share/R3.14.8.2
+EPICS_BASE=/Users/kasemir/epics/R3.14.8.2/base
 
 #If using macro substitutions, point MSI at the binary:
 #MSI=<path>extensions/bin/$(EPICS_HOST_ARCH)/msi
 
-EPICS_BASE=$(EPICS_BASE_RELEASE)
-ETHER_IP=$(SHARE_RELEASE)/ether_ip/ether_ip-2-15
+ETHER_IP=/Users/kasemir/epics/R3.14.8.2/extensions/ether_ip
 
 MSI=$(EPICS_EXTENSIONS)/bin/$(EPICS_HOST_ARCH)/msi

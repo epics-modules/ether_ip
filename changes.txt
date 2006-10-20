@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2006, 10/20 V2.16
+Basic 'connection failed' info now also goes to error log.
+
 * 2006, 06/06 V2.15
 The code for determining the multi-request-count
 had a bug: When a scan list had too many entries,

@@ -15,6 +15,7 @@
 #include <limits.h>
 /* Base */
 #include <drvSup.h>
+#include <errlog.h>
 /* Local */
 #include "drvEtherIP.h"
 #ifdef HAVE_314_API
@@ -449,9 +450,15 @@ static eip_bool assert_PLC_connect(PLC *plc)
         return true;
     if (! EIP_startup(&plc->connection, plc->ip_addr,
                       ETHERIP_PORT, plc->slot, ETHERIP_TIMEOUT))
+    {
+        errlogPrintf("EIP connection failed for %s:%d\n", 
+                      plc->ip_addr, ETHERIP_PORT);
         return false;
+    }
     if (! complete_PLC_ScanList_TagInfos(plc))
     {
+        errlogPrintf("EIP error during scan list completion for %s:%d\n", 
+                      plc->ip_addr, ETHERIP_PORT);
         disconnect_PLC(plc);
         return false;
     }

@@ -5,6 +5,10 @@
 dbLoadDatabase("../../dbd/example.dbd")
 example_registerRecordDeviceDriver(pdbbase)
 
+epicsEnvSet("EPICS_IOC_LOG_INET", "127.0.0.1")
+epicsEnvSet("EPICS_IOC_LOG_PORT", "6505")
+iocLogInit
+
 # Initialize EtherIP driver, define PLCs
 EIP_buffer_limit(20)
 drvEtherIP_init()
