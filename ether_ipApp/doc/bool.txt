@@ -1,0 +1,46 @@
+
+Some people have run into problems with binary records and BOOL tags.
+
+Symptom:
+The record can write a '1' to turn something on the PLC 'on',
+but writing a '0' to turn something 'off' seems to have no effect.
+
+Reason/explanation/underlying problem:
+The support for binary records (BO, MBBO, MBBODIRECT, ...) addresses bits.
+
+Problem 1:
+The protocol doesn't really distinguish between writing bits in a BOOL
+array and bits of a DINT.
+When writing BOOL[32], that's actually the same as writing DINT[1].0.
+Both refer to the 33rd bit (counting from 0) in some memory structure.
+So complcation #1 arises when your BO record writes to 'fred[2]',
+and you think that's DINT array 'fred', third element,
+but the driver will actually deal with the third bit of the first element.
+
+Problem 2:
+When we write a '1' to a bit in a BOOL array,
+that bit will read back as '1'
+(assuming that nothing else on the PLC changes it).
+The driver is specifically written to handle that case:
+The BO records will only touch bits.
+
+When you, however, write '1' to a scalar BOOL tag,
+it can read back as '255'.
+Which is OK, both values are considered 'on' by PLC
+logic.
+But if you now write a '0' to that tag,
+the driver will only write a zero bit,
+using the last readback.
+Meaning: it ends up writing 254 = 255 - bit 0,
+and the PLC will still consider that 'on'.
+
+
+--> Use binary records with BOOL arrays.
+That works, and is more efficient than single BOOL tags.
+If you have to deal with a single BOOL tag,
+remember that this really looks like an SINT with
+possible values 0 and 255,
+and use an AI or AO record for it.
+Maybe an AO record linked to a BO record.
+
+
