@@ -2,10 +2,11 @@
 # Run "gnumake clean uninstall install" in the application
 # top directory each time this file is changed.
 
-EPICS_BASE=/ade/epics/supTop/base/R3.14.7
-
-SHARE_RELEASE=/ade/epics/supTop/share/R3.14.7
-
-ETHER_IP=$(SHARE_RELEASE)/ether_ip/ether_ip-2-16
+# Once upon a time, SNS used an ADE setup that allowed
+# macros in here.
+# That is no longer the case, so you need to specify
+# the full path to your R3.14.7 or R3.14.8.2 base etc.
+EPICS_BASE=/Users/kasemir/epics/R3.14.8.2/base
+ETHER_IP=/Users/kasemir/epics/R3.14.8.2/extensions/ether_ip
 
 MSI=$(EPICS_EXTENSIONS)/bin/$(EPICS_HOST_ARCH)/msi
