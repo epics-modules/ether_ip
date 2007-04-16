@@ -31,12 +31,6 @@
 #include<string.h>
 #include<stdio.h>
 
-typedef int bool;
-#ifndef true
-#define true 1
-#define false 0
-#endif
-
 /*
  * Default size of buffer.
  * Change it in vxWorks startup file

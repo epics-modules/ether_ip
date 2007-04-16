@@ -98,9 +98,7 @@ typedef int               SOCKET;
 #endif
 #endif
 
-typedef int eip_bool;
-#define true  1
-#define false 0
+#include "eip_bool.h"
 
 /* This could be an application on its own...
  * Rough idea:
