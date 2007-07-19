@@ -6,7 +6,8 @@
 # macros in here.
 # That is no longer the case, so you need to specify
 # the full path to your R3.14.7 or R3.14.8.2 base etc.
-EPICS_BASE=/Users/kasemir/epics/R3.14.8.2/base
-ETHER_IP=/Users/kasemir/epics/R3.14.8.2/extensions/ether_ip
 
-MSI=$(EPICS_EXTENSIONS)/bin/$(EPICS_HOST_ARCH)/msi
+EPICS_BASE=/ade/epics/supTop/base/R3.14.9
+ETHER_IP=/ade/epics/supTop/share/R3.14.9/ether_ip/ether_ip-2-16_3-14-9
+
+# MSI=$(EPICS_EXTENSIONS)/bin/$(EPICS_HOST_ARCH)/msi
