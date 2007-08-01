@@ -1,0 +1,10 @@
+This driver was written for ControlLogix,
+but also seems to work with CompactLogix,
+as reported by Mike Forster <mike4ster@gmail.com>:
+
+We saw that when a record scan list became long (too many records with the same scan rate),
+all the elements in that scan list would stop responding.
+Eventually we traced this down to the EIP_buffer_limit which was the default 500.
+This limit at 500 allows data to be sent that is 554 bytes long.  After some trial and
+error we found that the PLC responded correctly if the data sent was 548 bytes long or less.
+When we set EIP_buffer_limit to 494 our problems went away. 
