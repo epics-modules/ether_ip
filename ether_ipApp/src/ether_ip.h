@@ -668,11 +668,19 @@ eip_bool EIP_read_connection_buffer(EIPConnection *c);
  * -> has to be 0-initialized */
 eip_bool EIP_strdup(char **ptr, const char *text, size_t len);
 
+/** Allocate EIPConnection */
+EIPConnection *EIP_init();
+
+/** Dispose EIPConnection */
+void EIP_dispose(EIPConnection *c);
+
+/** Connect to PLC */
 eip_bool EIP_startup(EIPConnection *c,
                  const char *ip_addr, unsigned short port,
                  int slot,
                  size_t millisec_timeout);
 
+/** Disconnect from PLC */
 void EIP_shutdown(EIPConnection *c);
 
 /* Read a single tag in a single CIP_ReadData request,

@@ -7,6 +7,12 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2008, March 12 ether_ip-2-17
+EIP_init_and_connect always re-initialized the EIPConnection
+with zeros, so a previously allocated EIPConnection->buffer
+was lost and then re-allocated, resulting in a memory leak
+after PLC disconnects or read/write errors.
+
 * 2007, July 19 ether_ip-2-16_3-14-9
 R3.14.9
 

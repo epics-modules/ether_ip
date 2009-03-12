@@ -30,15 +30,21 @@ int EIP_buffer_limit =  EIP_DEFAULT_BUFFER_LIMIT;
 static const CN_UINT __endian_test = 0x0001;
 #define is_little_endian (*((const CN_USINT*)&__endian_test))
 
-/* __inline seems to work for vxWorks' gcc, Linux and MS VC,
- * but the real bottleneck is the slow PLC response,
- * so why bother?
- */
-#if 0
-#define EIP_INLINE  __inline
-#else
-#define EIP_INLINE  /* */
-#endif
+/** Perform some size checks to assert that the protocol can "work" */
+static void check_sizes()
+{
+    if (sizeof(CN_USINT) != 1  ||
+        sizeof(CN_INT) != 2  ||
+        sizeof(CN_UDINT) != 4  ||
+        sizeof(CN_REAL) != 4  ||
+        sizeof(EncapsulationHeader) != sizeof_EncapsulationHeader  ||
+        sizeof(RegisterSessionData) != sizeof_RegisterSessionData  ||
+        sizeof(EncapsulationRRData) != sizeof_EncapsulationRRData)
+    {
+        EIP_printf(1, "Structure sizes don't match expectations, code will not work\n");
+        exit(-1);
+    }
+}
 
 /* Pack binary data in ControlNet format (little endian)
  *
@@ -55,20 +61,20 @@ static const CN_UINT __endian_test = 0x0001;
  * more than one byte from the stack -> one pack_XXX per data type XXX.
  * The unpack seems to work because all var-args are pointer-sized.
  */
-EIP_INLINE CN_USINT *pack_USINT(CN_USINT *buffer, CN_USINT val)
+CN_USINT *pack_USINT(CN_USINT *buffer, CN_USINT val)
 {
     *buffer++ = val;
     return buffer;
 }
 
-EIP_INLINE CN_USINT *pack_UINT(CN_USINT *buffer, CN_UINT val)
+CN_USINT *pack_UINT(CN_USINT *buffer, CN_UINT val)
 {
     *buffer++ =  val & 0x00FF;
     *buffer++ = (val & 0xFF00) >> 8;
     return buffer;
 }
 
-EIP_INLINE CN_USINT *pack_UDINT(CN_USINT *buffer, CN_UDINT val)
+CN_USINT *pack_UDINT(CN_USINT *buffer, CN_UDINT val)
 {
     *buffer++ =  val & 0x000000FF;
     *buffer++ = (val & 0x0000FF00) >> 8;
@@ -77,7 +83,7 @@ EIP_INLINE CN_USINT *pack_UDINT(CN_USINT *buffer, CN_UDINT val)
     return buffer;
 }
 
-EIP_INLINE CN_USINT *pack_REAL(CN_USINT *buffer, CN_REAL val)
+CN_USINT *pack_REAL(CN_USINT *buffer, CN_REAL val)
 {
     const CN_USINT *p;
     
@@ -100,14 +106,14 @@ EIP_INLINE CN_USINT *pack_REAL(CN_USINT *buffer, CN_REAL val)
     return buffer;
 }
 
-EIP_INLINE const CN_USINT *unpack_UINT(const CN_USINT *buffer, CN_UINT *val)
+const CN_USINT *unpack_UINT(const CN_USINT *buffer, CN_UINT *val)
 {
     *val =  buffer[0]
          | (buffer[1]<<8);
     return buffer + 2;
 }
 
-EIP_INLINE const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
+const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
 {
     *val =  buffer[0]
          | (buffer[1]<< 8)
@@ -116,7 +122,7 @@ EIP_INLINE const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
     return buffer + 4;
 }
 
-EIP_INLINE const CN_USINT *unpack_REAL(const CN_USINT *buffer, CN_REAL *val)
+const CN_USINT *unpack_REAL(const CN_USINT *buffer, CN_REAL *val)
 {
     CN_USINT *p;
     if (is_little_endian)
@@ -1599,7 +1605,7 @@ static int connectWithTimeout (SOCKET s, const struct sockaddr *addr,
 
 /* 
  * NOTE: base/src/libCom/osi/os/<arch>/osdSock.c defines hostToIPAddr which
- * could be used by EIP_init_and_connect instead.
+ * could be used by EIP_connect instead.
  */
 static unsigned long hostGetByName (const char *ip_addr)
 {
@@ -1613,24 +1619,39 @@ static unsigned long hostGetByName (const char *ip_addr)
 
 #endif
 
+EIPConnection *EIP_init()
+{
+    EIPConnection *c = (EIPConnection *) calloc(1, sizeof(EIPConnection));
+    return c;
+}
+    
+void EIP_dispose(EIPConnection *c)
+{
+    if (c->size > 0)
+    {
+        free(c->buffer);
+        c->buffer = 0;
+        c->size = 0;
+    }
+    free(c);
+}
+
 /* Init. connection:
  * Init. fields,
  * connect to target
  */
-static eip_bool EIP_init_and_connect (EIPConnection *c,
-                                  const char *ip_addr, unsigned short port,
-                                  unsigned short slot,
-                                  size_t millisec_timeout)
+static eip_bool EIP_connect(EIPConnection *c,
+                            const char *ip_addr, unsigned short port,
+                            unsigned short slot,
+                            size_t millisec_timeout)
 {
     struct sockaddr_in addr;
     struct timeval timeout;
     unsigned long *addr_p;
     int flag = true;
                 
-    memset (c, 0, sizeof (EIPConnection));
     c->transfer_buffer_limit = EIP_buffer_limit;
     c->millisec_timeout = millisec_timeout;
-    c->sock = 0;
     c->slot = slot;
     timeout.tv_sec = millisec_timeout/1000;
     timeout.tv_usec = (millisec_timeout-timeout.tv_sec*1000)*1000;
@@ -1655,6 +1676,8 @@ static eip_bool EIP_init_and_connect (EIPConnection *c,
             return false;
         }
     }
+    if (c->sock != 0)
+        EIP_printf (2, "EIP_connect found open socket\n");
     /* Create socket and set it to no-delay */
     c->sock = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (c->sock == INVALID_SOCKET)
@@ -1877,11 +1900,11 @@ static CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
     CN_USINT *buf;
     
     if (! EIP_reserve_buffer((void **)&c->buffer, &c->size,
-                             sizeof (EncapsulationHeader) + length))
+                             sizeof_EncapsulationHeader + length))
     {
         EIP_printf(1, "EIP make_EncapsulationHeader: "
                    "no memory for %d bytes\n",
-                   sizeof (EncapsulationHeader) + length);
+                   sizeof_EncapsulationHeader + length);
         return false;
     }
     buf = c->buffer;
@@ -2261,7 +2284,8 @@ eip_bool EIP_startup(EIPConnection *c,
                  int slot,
                  size_t millisec_timeout)
 {
-    if (! EIP_init_and_connect(c, ip_addr, port, slot, millisec_timeout))
+    check_sizes();
+    if (! EIP_connect(c, ip_addr, port, slot, millisec_timeout))
         return false;
 
     if (! EIP_list_services(c)  ||

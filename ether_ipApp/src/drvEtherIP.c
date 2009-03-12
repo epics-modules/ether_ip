@@ -308,6 +308,12 @@ static PLC *new_PLC(const char *name)
         EIP_printf (0, "new_PLC (%s): Cannot create mutex\n", name);
         return 0;
     }
+    plc->connection = EIP_init();
+    if (! plc->connection)
+    {
+        EIP_printf (0, "new_PLC (%s): EIP_init failed\n", name);
+        return 0;
+    }
     return plc;
 }
 
@@ -319,6 +325,7 @@ static void free_PLC(PLC *plc)
     ScanList *list;
     
     epicsMutexDestroy(plc->lock);
+    EIP_dispose(plc->connection);
     free(plc->name);
     free(plc->ip_addr);
     while ((list = DLL_decap(&plc->scanlists)) != 0)
@@ -358,7 +365,7 @@ static eip_bool complete_PLC_ScanList_TagInfos(PLC *plc)
             }
             /* Need to get the read sizes */
             ++tried;
-            data = EIP_read_tag(&plc->connection,
+            data = EIP_read_tag(plc->connection,
                                 info->tag, info->elements,
                                 NULL /* data_size */,
                                 &info->cip_r_request_size,
@@ -436,9 +443,9 @@ static void invalidate_PLC_tags(PLC *plc)
 
 static void disconnect_PLC(PLC *plc)
 {
-    if (plc->connection.sock)
+    if (plc->connection->sock)
     {
-        EIP_shutdown(&plc->connection);
+        EIP_shutdown(plc->connection);
         invalidate_PLC_tags(plc);
     }
 }   
@@ -446,9 +453,9 @@ static void disconnect_PLC(PLC *plc)
 /* Test if we are connected, if not try to connect to PLC */
 static eip_bool assert_PLC_connect(PLC *plc)
 {
-    if (plc->connection.sock)
+    if (plc->connection->sock)
         return true;
-    if (! EIP_startup(&plc->connection, plc->ip_addr,
+    if (! EIP_startup(plc->connection, plc->ip_addr,
                       ETHERIP_PORT, plc->slot, ETHERIP_TIMEOUT))
     {
         errlogPrintf("EIP connection failed for %s:%d\n", 
@@ -786,7 +793,7 @@ static void PLC_scan_task(PLC *plc)
         if (epicsTimeLessThanEqual(&list->scheduled_time, &start_time))
         {
             epicsTimeGetCurrent(&list->scan_time);
-            transfer_ok = process_ScanList(&plc->connection, list);
+            transfer_ok = process_ScanList(plc->connection, list);
             epicsTimeGetCurrent(&end_time);
             list->last_scan_time =
                 epicsTimeDiffInSeconds(&end_time, &list->scan_time);
@@ -999,7 +1006,7 @@ long drvEtherIP_report(int level)
         printf ("* PLC '%s', IP '%s'\n", plc->name, plc->ip_addr);
         if (level > 1)
         {
-            ident = &plc->connection.info;
+            ident = &plc->connection->info;
             printf("  Interface name        : %s\n", ident->name);
             printf("  Interface vendor      : 0x%X\n", ident->vendor);
             printf("  Interface type        : 0x%X\n", ident->device_type);
@@ -1030,7 +1037,7 @@ long drvEtherIP_report(int level)
             if (level > 3)
             {
                 printf("** ");
-                EIP_dump_connection(&plc->connection);
+                EIP_dump_connection(plc->connection);
             }
             if (level > 4)
             {
@@ -1286,25 +1293,26 @@ int drvEtherIP_read_tag(const char *ip_addr,
                         int elements,
                         int timeout)
 {
-    EIPConnection  c;
+    EIPConnection  *c = EIP_init();
     unsigned short port = ETHERIP_PORT;
     size_t         millisec_timeout = timeout;
     ParsedTag      *tag;
     const CN_USINT *data;
     size_t         data_size;
             
-    if (! EIP_startup(&c, ip_addr, port, slot,
+    if (! EIP_startup(c, ip_addr, port, slot,
                       millisec_timeout))
         return -1;
     tag = EIP_parse_tag(tag_name);
     if (tag)
     {
-        data = EIP_read_tag(&c, tag, elements, &data_size, 0, 0);
+        data = EIP_read_tag(c, tag, elements, &data_size, 0, 0);
         if (data)
             dump_raw_CIP_data(data, elements);
         EIP_free_ParsedTag(tag);
     }
-    EIP_shutdown(&c);
+    EIP_shutdown(c);
+    EIP_dispose(c);
     return 0;
 }
 

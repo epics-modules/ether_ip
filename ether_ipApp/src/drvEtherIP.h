@@ -62,7 +62,7 @@ struct __PLC
     int           slot;         /* slot in ControlLogix Backplane: 0, ... */
     size_t        plc_errors;   /* # of communication errors              */
     size_t        slow_scans;   /* Count: scan task is getting late       */
-    EIPConnection connection;
+    EIPConnection *connection;
     DL_List       scanlists;    /* List of struct ScanList */ 
     epicsThreadId scan_task_id;
 };

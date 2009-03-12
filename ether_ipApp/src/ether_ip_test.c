@@ -300,12 +300,13 @@ void usage(const char *progname)
     fprintf(stderr, "    -t timeout (ms)\n");
     fprintf(stderr, "    -a array size\n");
     fprintf(stderr, "    -w <double value to write>\n");
+    fprintf(stderr, "    -T times-to-do-all-this (default: 1)\n");
     exit(-1);
 }
 
 int main (int argc, const char *argv[])
 {
-    EIPConnection   c;
+    EIPConnection   *c = EIP_init();
     const char      *ip = "172.31.72.94";
     unsigned short  port = 0xAF12;
     int             slot = 0;
@@ -316,7 +317,7 @@ int main (int argc, const char *argv[])
     size_t          i;
     CN_REAL         writeval;
     eip_bool        write = false;
-    size_t          test_runs = 0;
+    size_t          test_runs = 1;
 #ifndef _WIN32    
     struct timeval  now;
 #endif
@@ -374,6 +375,8 @@ int main (int argc, const char *argv[])
             case 'T':
             GETARG
                 test_runs = atol(arg);
+                if (test_runs <= 0)
+                    test_runs = 1;
                 break;
             default:
                 usage (argv[0]);
@@ -391,54 +394,48 @@ int main (int argc, const char *argv[])
         EIP_copy_ParsedTag(buffer, tag);
         EIP_printf(3, "Tag '%s'\n", buffer);
     }
-    if (! EIP_startup(&c, ip, port, slot, timeout_ms))
-        return 0;
-    if (tag)
+#ifdef _WIN32    
+    start = (double) time(0);
+#else
+    gettimeofday(&now, NULL);
+    start = now.tv_sec + now.tv_usec/1000000.0;
+#endif
+    for (i=0; i<test_runs; ++i)
     {
-        const CN_USINT *data = 0;
-        size_t data_len;
-        if (write)
+        if (! EIP_startup(c, ip, port, slot, timeout_ms))
+            return 0;
+        if (tag)
         {
-            CN_REAL real_buffer;
-            pack_REAL((CN_USINT *)&real_buffer, writeval);         
-            EIP_write_tag(&c, tag, T_CIP_REAL, 1,(CN_USINT*) &real_buffer, 0, 0);
-        }
-        else
-        {
-            if (test_runs > 0)
+            const CN_USINT *data = 0;
+            size_t data_len;
+            if (write)
             {
-#ifdef _WIN32    
-                start = (double) time(0);
-#else
-                gettimeofday(&now, NULL);
-                start = now.tv_sec + now.tv_usec/1000000.0;
-#endif
-                for (i=0; i<test_runs; ++i)
-                {
-                    data = EIP_read_tag(&c, tag, elements, &data_len, 0, 0);
-                }
-#ifdef _WIN32    
-                end = (double) time(0);
-#else
-                gettimeofday(&now, NULL);
-                end = now.tv_sec + now.tv_usec/1000000.0;
-#endif
-                duration = (double)(end - start);
-                printf("%d test runs, %g seconds -> %f ms / tag\n",
-                       (unsigned)test_runs,
-                       duration,
-                       duration / test_runs * 1000.0);
+                CN_REAL real_buffer;
+                pack_REAL((CN_USINT *)&real_buffer, writeval);         
+                EIP_write_tag(c, tag, T_CIP_REAL, 1,(CN_USINT*) &real_buffer, 0, 0);
             }
             else
-                data = EIP_read_tag (&c, tag, elements, &data_len, 0, 0);
+                data = EIP_read_tag(c, tag, elements, &data_len, 0, 0);
             if (data)
                 dump_raw_CIP_data (data, elements);
         }
-        EIP_free_ParsedTag (tag);
-        tag = 0;
+        EIP_shutdown (c);
     }
+    EIP_free_ParsedTag (tag);
+    tag = 0;
+#ifdef _WIN32    
+    end = (double) time(0);
+#else
+    gettimeofday(&now, NULL);
+    end = now.tv_sec + now.tv_usec/1000000.0;
+#endif
+    duration = (double)(end - start);
+    printf("%d test runs, %g seconds -> %f ms / tag\n",
+           (unsigned)test_runs,
+           duration,
+           duration / test_runs * 1000.0);
 
-    EIP_shutdown (&c);
+    EIP_dispose(c);
 
 #ifdef _WIN32
     /* Win32 socket shutdown */
