@@ -14,7 +14,6 @@ SHARE=/ade/epics/supTop/share/$(EPICS_VER)
 EPICS_EXTENSIONS=/ade/epics/supTop/extensions/$(EPICS_VER)
 
 EPICS_BASE=$(EPICS_BASE_RELEASE)
-ETHER_IP=$(SHARE)/ether_ip/Development
-#ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-17
+ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-17
 
 # MSI=$(EPICS_EXTENSIONS)/bin/$(EPICS_HOST_ARCH)/msi
