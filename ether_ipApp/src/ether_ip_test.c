@@ -402,9 +402,7 @@ int main (int argc, const char *argv[])
 #endif
     for (i=0; i<test_runs; ++i)
     {
-        if (! EIP_startup(c, ip, port, slot, timeout_ms))
-            return 0;
-        if (tag)
+        if (EIP_startup(c, ip, port, slot, timeout_ms) && tag)
         {
             const CN_USINT *data = 0;
             size_t data_len;

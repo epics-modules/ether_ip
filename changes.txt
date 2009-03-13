@@ -7,11 +7,20 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
-* 2008, March 12 ether_ip-2-17
+* 2008, March 13 ether_ip-2-17
 EIP_init_and_connect always re-initialized the EIPConnection
 with zeros, so a previously allocated EIPConnection->buffer
 was lost and then re-allocated, resulting in a memory leak
 after PLC disconnects or read/write errors.
+The memory leak could be about 500 bytes per reconnect,
+i.e. every 5 seconds with the default reconnection time.
+
+New code (ether_ip_test and example softIoc reading a
+bunch of records and writing one) ran under valgrind
+for a while, including network disconnects of the PLC
+and drvEtherIP_restart calls from the IOC shell without
+errors or "definitely lost" memory reports from valgrind
+after exiting the IOC shell.
 
 * 2007, July 19 ether_ip-2-16_3-14-9
 R3.14.9
