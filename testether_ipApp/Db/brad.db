@@ -1,5 +1,37 @@
 # EPICS Database file                    -*- shell-script -*-
 
+record(ai, "$(IOC):aiREAL1")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_RealArray_10[1]")
+    field(PREC, "3")
+}
+
+record(ai, "$(IOC):aiREAL2")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_RealArray_10[2]")
+    field(PREC, "3")
+}
+
+record(ai, "$(IOC):aiREAL3")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_RealArray_10[3]")
+    field(PREC, "3")
+}
+
+record(ai, "$(IOC):aiREAL5")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_RealArray_10[5]")
+    field(PREC, "3")
+}
+
 record(ai, "$(IOC):aiREAL2")
 {
     field(SCAN, "1 second")
@@ -31,6 +63,29 @@ record(ao, "$(IOC):error")
     field(OUT, "@$(PLC) K_RealArray_10[4] S 1")
 }
 
+
+record(ai, "$(IOC):aiDINT5")
+{
+    field(SCAN, "5 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_DintArray_10[5]")
+    field(PREC, "3")
+}
+
+record(ai, "$(IOC):aiDINT9")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_DintArray_10[9]")
+    field(PREC, "3")
+}
+
+record(ao, "$(IOC):aoDINT5")
+{
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) K_DintArray_10[5] S 1")
+    field(PREC, "3")
+}
 
 record(stringin, "$(IOC):stringin")
 {

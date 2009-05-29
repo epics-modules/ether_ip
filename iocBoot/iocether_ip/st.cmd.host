@@ -10,10 +10,10 @@ epicsEnvSet("EPICS_IOC_LOG_PORT", "6505")
 #iocLogInit
 
 # Initialize EtherIP driver, define PLCs
-EIP_buffer_limit(200)
+EIP_buffer_limit(450)
 drvEtherIP_init()
 
-EIP_verbosity(7)
+# EIP_verbosity(7)
 
 # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
 # The driver/device uses the <name> to indentify the PLC.

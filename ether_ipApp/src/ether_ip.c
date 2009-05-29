@@ -199,7 +199,7 @@ static const CN_USINT *unpack(const CN_USINT *buffer, const char *format, ...)
     return buffer;
 }
 
-int EIP_verbosity = 10;
+int EIP_verbosity = 4;
 eip_bool EIP_use_mem_string_file=0;
 
 /* printf with EIP_verbosity check */
@@ -299,11 +299,11 @@ static CN_USINT *make_CIA_path(CN_USINT *path,
         *path++ = 0x30;
         *path++ = attr;
         EIP_printf(10,
-                   "    Path: Class 0x%X (%s), instance %d, attrib. 0x%X\n",
+                   "    Path: Class(0x20) 0x%X (%s), instance(0x24) %d, attrib.(0x30) 0x%X\n",
                    cls, EIP_class_name(cls), instance, attr);
     }
     else
-        EIP_printf(10, "    Path: Class 0x%X (%s), instance %d\n",
+        EIP_printf(10, "    Path: Class(0x20) 0x%X (%s), instance(0x24) %d\n",
                    cls, EIP_class_name(cls), instance);
 
     return path;
@@ -852,7 +852,7 @@ CN_USINT *make_CM_Unconnected_Send(CN_USINT *request,
     buf = pack_UINT  (buf, message_size);
     EIP_printf(10, "    USINT tick time   = %d\n", tick_time);
     EIP_printf(10, "    USINT ticks       = %d\n", ticks);
-    EIP_printf(10, "    UINT message size = %d\n", message_size);
+    EIP_printf(10, "    UINT message size = %d (0x%04X)\n", message_size, message_size);
     EIP_printf(10, "    ... (embedded message of %d bytes)\n",
                message_size);
 
@@ -1317,7 +1317,7 @@ CN_USINT *make_CIP_WriteData (CN_USINT *buf, const ParsedTag *tag,
     {
         char buffer[EIP_MAX_TAG_LENGTH];
         EIP_copy_ParsedTag(buffer, tag);
-        EIP_printf(10, "    Path: Tag '%s'", buffer);
+        EIP_printf(10, "    Path: Tag '%s'\n", buffer);
         EIP_printf(10, "    UINT type     = 0x%X\n", type);
         EIP_printf(10, "    UINT elements = %d\n", elements);
         EIP_printf(10, "    Data: ");
@@ -1394,10 +1394,16 @@ eip_bool prepare_CIP_MultiRequest (CN_USINT *request, size_t count)
                            CIA_path_size (C_MessageRouter, 1, 0));
     buf = make_CIA_path (buf, C_MessageRouter, 1, 0);
     EIP_printf(10, "    UINT count %d\n", count);
+    /* Number of embedded requests */
     buf = pack_UINT (buf, count);
 
-    /* offset is from "count" field, 2 bytes per word ! */
+    /* List of offsets from 'count' that we just wrote
+     * to the actual individual embedded requests.
+     * First embedded request:
+     * offset is from "count" field, 2 bytes per word !
+     */
     buf = pack_UINT (buf, (count+1) * 2); /* offset[0] */
+    /* Initialize remaining offsets with 0 */
     for (i=1; i<count; ++i)
         buf = pack_UINT (buf, 0); /* offset[i] */
 
@@ -1419,6 +1425,7 @@ CN_USINT *CIP_MultiRequest_item (CN_USINT *request,
     CN_USINT *offsetp, *item;
     CN_UINT  count, offset, next_no;
 
+    /* Get expected CIP_MultiRequest message count */
     offsetp = (CN_USINT *)unpack_UINT (countp, &count);
     if (request_no >= count)
     {
@@ -1426,8 +1433,10 @@ CN_USINT *CIP_MultiRequest_item (CN_USINT *request,
             request_no, count);
         return 0;
     }
-
+    /* Get offset for this sub-request */
     unpack_UINT (offsetp + 2*request_no, &offset);
+    EIP_printf(10, "    Embedded request %d/%d: offset 0x%04X\n",
+    		   request_no, count, offset);
     if (offset == 0)
     {
         EIP_printf (2, "CIP_MultiRequest_item (request_no %d): "
@@ -1436,6 +1445,8 @@ CN_USINT *CIP_MultiRequest_item (CN_USINT *request,
         return 0;
     }
     item = countp + offset;
+
+    /* Prepare offset for _next_ sub-request, if there will be one */
     next_no = request_no+1; /* place following message behind this one,*/
     if (next_no < count)    /* get byte-offset from "count"            */
         pack_UINT (offsetp+2*next_no, offset + single_request_size);
@@ -1874,8 +1885,8 @@ static void dump_EncapsulationHeader(const EncapsulationHeader *header)
 CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
                                    CN_UINT length, CN_UDINT options)
 {
-    const EncapsulationHeader *header;
-    CN_USINT *buf;
+    const EncapsulationHeader *header = (const EncapsulationHeader *)c->buffer;
+    CN_USINT *buf = c->buffer;
 
     if (sizeof_EncapsulationHeader + length > EIP_BUFFER_SIZE)
     {
@@ -1884,7 +1895,6 @@ CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
                    sizeof_EncapsulationHeader + length);
         return false;
     }
-    buf = c->buffer;
     buf = pack_UINT(buf, command);
     buf = pack_UINT(buf, length);
     buf = pack_UDINT(buf, c->session);
@@ -1900,7 +1910,6 @@ CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
     buf = pack_UDINT(buf, options);
     if (EIP_verbosity >= 10)
     {   /* 'header' used to get offset to server_context */
-        header = (const EncapsulationHeader *)c->buffer;
         EIP_printf(0, "EncapsulationHeader:\n");
         EIP_printf(0, "    UINT  command   = 0x%02X (%s)\n",
                    command, EncapsulationHeader_command(command));

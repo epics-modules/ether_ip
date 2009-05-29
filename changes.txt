@@ -7,13 +7,48 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
-
 * 2009, May 13 ether_ip-2-18
-Removed the EIP_reserve_buffer code: Driver's buffer
-is allocated on startup at full size.
+Attempt to fix crashes which look like this:
 
-Fixed select timeout initialization.
+1a1ede4 EIP_write_tag +2490: 1a1ddc4 (19fdf90)
+1a1de34 EIP_write_tag +14e0: EIP_startup (19fdfb0, 19fdf10)
+1a1c60c EIP_startup +70 : 1a1b4e0 (19fdfb0)
+1a1b534 EncapsulationHeader_status+668: 1a1b0dc (19fdfb0)
+1a1b13c EncapsulationHeader_status+270: EIP_reserve_buffer (19fdfc8, 19fdfc4, 18)
+1a1a960 EIP_reserve_buffer+9c : malloc () 
 
+Also with EIP_reserve_buffer(.., 6e) calling free(), and
+examples which don't start in EIP_startup().
+
+In general, this looks like memory corruption.
+Exact reason unclear, but started by removing the
+EIP_reserve_buffer code and instead allocating
+a full size buffer on startup.
+Also removed other uses of EIP_reserve_buffer,
+only keeping the basic idea for the allocation
+of data for individual tags.
+
+Found problem in initialization of timeout in
+select(..., timeout) for platforms like Linux
+that might update the timeout in select().
+
+Found one example where determine_MultiRequest_count
+would assemble "read" requests, but the actual
+request buffer would then contain a "write"
+request which clobbers the buffer and could
+potentially write beyond the buffer, causing
+any type of memory corruption.
+Possible scenario:
+1) Record/device support requests 'do_write'
+2) driver determines what to do, sees do_write, sets is_writing,
+   counts write size
+3) driver creates write request, clears do_write
+4) something fails in the actual send/receive/unpack-response,
+   driver disconnects, reconnects, ...
+5) driver determines what to do, does NOT see do_write,
+   so it counts the read size
+6) .. but since is_writing was left on, it actually
+   creates a write request
 
 
 
