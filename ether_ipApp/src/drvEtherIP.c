@@ -672,18 +672,6 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                         info->elements, info->data + CIP_Typecode_size);
                 info->do_write = false;
                 epicsMutexUnlock(info->data_lock);
-
-
-                /** Hack to simulate error */
-                if (strstr(info->string_tag, "K_RealArray_10"))
-                {
-                    EIP_printf(1, "EIP simulated error because writing to '%s'\n",
-                               info->string_tag);
-                    info->is_writing = false;
-                	ok = false;
-                }
-
-
             }
             else
             {   /* reading, !is_writing */
