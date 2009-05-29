@@ -1,4 +1,4 @@
-#! ../../bin/darwin-ppc/example
+#! ../../bin/linux-x86/example
 # 3.14 example startup file for a Host  -*- shell-script -*-
 
 # Load dbd, register the drvEtherIP.. commands
@@ -7,10 +7,10 @@ example_registerRecordDeviceDriver(pdbbase)
 
 epicsEnvSet("EPICS_IOC_LOG_INET", "127.0.0.1")
 epicsEnvSet("EPICS_IOC_LOG_PORT", "6505")
-iocLogInit
+#iocLogInit
 
 # Initialize EtherIP driver, define PLCs
-EIP_buffer_limit(20)
+EIP_buffer_limit(200)
 drvEtherIP_init()
 
 # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
@@ -23,7 +23,8 @@ drvEtherIP_init()
 # it resides in. The first, left-most slot in the
 # ControlLogix crate is slot 0.
 #drvEtherIP_define_PLC("plc1", "172.31.72.94", 0)
-drvEtherIP_define_PLC("plc1", "172.31.74.78", 0)
+#drvEtherIP_define_PLC("plc1", "172.31.74.78", 0)
+drvEtherIP_define_PLC("plc1", "160.91.232.217", 0)
 EIP_verbosity(7)
 
 #dbLoadRecords("db/ramp.db",    "IOC=test")
@@ -37,7 +38,8 @@ EIP_verbosity(7)
 #dbLoadRecords("db/bo.db",      "PLC=plc1,IOC=test")
 #dbLoadRecords("db/mbbo.db",    "PLC=plc1,IOC=test")
 #dbLoadRecords("../../db/test.db", "PLC=plc1,IOC=test")
-dbLoadRecords("../../db/mod.db", "PLC=plc1,IOC=test")
+#dbLoadRecords("../../db/mod.db", "PLC=plc1,IOC=test")
+dbLoadRecords("../../db/brad.db", "PLC=plc1,IOC=test")
 
 iocInit()
 

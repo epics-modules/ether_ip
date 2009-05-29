@@ -184,7 +184,7 @@ static eip_bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
     CN_UDINT       value, mask = pvt->mask;
-    
+
     *rval   = 0;
     if (!get_CIP_UDINT(pvt->tag->data, element, &value))
     {
@@ -222,7 +222,7 @@ static eip_bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
     CN_UDINT       value, mask = pvt->mask;
-    
+
     if (! get_CIP_UDINT(pvt->tag->data, element, &value))
     {
         errlogPrintf("EIP put_bits(%s), element %d failed\n",
@@ -267,7 +267,7 @@ static eip_bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
                      rec->name, (int)element);
         return false;
     }
-    
+
     return true;
 }
 
@@ -600,46 +600,59 @@ static long get_ioint_info(int cmd, dbCommon *rec, IOSCANPVT *ppvt)
 
 /* Try to parse scan period from record's SCAN field.
  * Sounds simple, but I ended up with this mess.
- * Is there a more elegant way to get this?
+ * At DB runtime, scanPeriod(rec->scan) would return
+ * the scan period in seconds, but at record initialization
+ * time scanPeriod() doesn't work, so we have to get the
+ * SCAN field text and parse the seconds ourselves.
+ *
  * Returns <= 0 for error.
  */
 static double get_period(dbCommon *rec)
 {
-    char          *buf = 0, *p;
-    size_t        buf_size = 0, len;
+	/** Buffer that can hold PV name plus ".SCAN" as well as SCAN field values */
+	char          buf[PVNAME_STRINGSZ + 10];
+    char          *p;
+    size_t        len;
     struct dbAddr scan_field;
     long          options=0, count=1;
     double        period = -1.0;
 
     if (rec->scan < SCAN_1ST_PERIODIC)
         return period;
-    
-    /* Best guess for holding SCAN field name and value */
-    if (! EIP_reserve_buffer((void**)&buf, &buf_size, 50))
-        return period;
-    /* Get SCAN field's address */
-    len = strlen (rec->name);
-    if (! EIP_reserve_buffer((void**)&buf, &buf_size, len+6))
-        goto leave;
+
+    len = strlen(rec->name);
+    if (sizeof(buf) < len+6)
+    {
+        EIP_printf(1, "EIP record name '%s' too long to access SCAN field\n", rec->name);
+    	return period;
+    }
     memcpy(buf, rec->name, len);
     memcpy(buf+len, ".SCAN", 6);
     if (dbNameToAddr(buf, &scan_field) != 0)
-        goto leave;
+	{
+		EIP_printf(1, "EIP cannot locate '%s'\n", buf);
+		return period;
+	}
 
-    /* Get value */
     len = dbBufferSize(DBR_STRING, options, count);
-    if (! EIP_reserve_buffer((void**)&buf, &buf_size, len))
-        goto leave;
+    if (sizeof(buf) <= len)
+    {
+        EIP_printf(1, "EIP value of '%s' too long\n", buf);
+    	return period;
+    }
     if (dbGet(&scan_field, DBR_STRING, buf, &options, &count, 0) != 0)
-        goto leave;
-    if (! strstr(buf, "second"))
-        goto leave;
-    period = strtod(buf, &p);
-    if (p==buf || period==HUGE_VAL || period==-HUGE_VAL)
-        period = -1.0;
-  leave:
-    free(buf);
-    return period;
+    {
+        EIP_printf(1, "EIP cannot read '%s'\n", buf);
+    	return period;
+    }
+    if (strstr(buf, "second"))
+    {
+		period = strtod(buf, &p);
+		if (p==buf || period==HUGE_VAL || period==-HUGE_VAL)
+			period = -1.0;
+    }
+    EIP_printf(6, "EIP record '%s' scans at %.1lf secs\n", rec->name, period);
+	return period;
 }
 
 /* Given string "s", return next token and end of token
@@ -653,7 +666,7 @@ static char *find_token(char *s, char **end)
 
     if (*s == '\0')
         return 0;
-    
+
     *end = strchr(s, ' ');
     if (*end == NULL)
         *end = s + strlen(s);
@@ -683,7 +696,7 @@ static long analyze_link(dbCommon *rec,
     double         period = 0.0;
     eip_bool       single_element = false;
     SpecialOptions special = 0;
-    
+
     if (! EIP_strdup(&pvt->link_text, link->value.instio.string,
                      strlen (link->value.instio.string)))
     {
@@ -718,7 +731,7 @@ static long analyze_link(dbCommon *rec,
         errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
         return S_dev_noMemory;
     }
-    
+
     /* Check for more flags */
     while ((p = find_token(end, &end)))
     {
@@ -775,7 +788,7 @@ static long analyze_link(dbCommon *rec,
             return S_db_badField;
         }
     }
-    
+
     pvt->special = special;
     if (period <= 0.0) /* no scan flag-> get SCAN field: */
     {
@@ -792,7 +805,7 @@ static long analyze_link(dbCommon *rec,
             errlogPrintf("please complete the record configuration\n");
         }
     }
-    
+
     /* Parsed link_text into PLC_name, string_tag, special flags.
      * Analyse further */
     pvt->element = 0;
@@ -884,7 +897,7 @@ static long analyze_link(dbCommon *rec,
     }
     else
         drvEtherIP_add_callback(pvt->plc, pvt->tag, cbtype, rec);
-    
+
     return 0;
 }
 
@@ -947,7 +960,7 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
     }
     scanIoInit(&pvt->ioscanpvt);
     rec->dpvt = pvt;
-    
+
     return analyze_link(rec, cbtype, link, count, bits);
 }
 
@@ -1023,7 +1036,7 @@ static long mbbo_init_record(mbboRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
-static long mbbo_direct_init_record(mbboDirectRecord *rec) 
+static long mbbo_direct_init_record(mbboDirectRecord *rec)
 {
     long status = init_record((dbCommon *)rec, check_mbbo_direct_callback,
                               &rec->out, 1, rec->nobt);
@@ -1052,7 +1065,7 @@ static long ai_read(aiRecord *rec)
     {
         /* Most common case: ai reads a tag from PLC */
         if (pvt->special < SPCO_PLC_ERRORS)
-        {   
+        {
             if (pvt->tag->valid_data_size>0 && pvt->tag->elements>pvt->element)
             {
                 if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
@@ -1112,7 +1125,7 @@ static long bi_read(biRecord *rec)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
     eip_bool ok;
-    
+
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1, 1);
@@ -1127,11 +1140,11 @@ static long bi_read(biRecord *rec)
         epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
-        ok = false;    
+        ok = false;
     if (ok)
         rec->udf = FALSE;
     else
-        recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);    
+        recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
     return 0;
 }
 
@@ -1140,7 +1153,7 @@ static long mbbi_read (mbbiRecord *rec)
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long status;
     eip_bool ok;
-    
+
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
     status = check_link ((dbCommon *)rec, scan_callback,
@@ -1213,7 +1226,7 @@ static long si_read(stringinRecord *rec)
         epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
-        ok = false;    
+        ok = false;
     if (ok)
         rec->udf = FALSE;
     else
@@ -1431,7 +1444,7 @@ static long bo_write(boRecord *rec)
     if (ok)
         rec->udf = FALSE;
     else
-        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);    
+        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
     return 0;
 }
 
@@ -1474,7 +1487,7 @@ static long mbbo_write (mbboRecord *rec)
         epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
-        ok = false;    
+        ok = false;
     if (ok)
         rec->udf = FALSE;
     else
@@ -1661,6 +1674,6 @@ epicsExportAddress(dset,devBoEtherIP);
 epicsExportAddress(dset,devMbboEtherIP);
 epicsExportAddress(dset,devMbboDirectEtherIP);
 #endif
-                   
+
 /* EOF devEtherIP.c */
 

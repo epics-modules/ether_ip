@@ -7,7 +7,17 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
-* 2008, March 13 ether_ip-2-17
+
+* 2009, May 13 ether_ip-2-18
+Removed the EIP_reserve_buffer code: Driver's buffer
+is allocated on startup at full size.
+
+Fixed select timeout initialization.
+
+
+
+
+* 2009, March 13 ether_ip-2-17
 EIP_init_and_connect always re-initialized the EIPConnection
 with zeros, so a previously allocated EIPConnection->buffer
 was lost and then re-allocated, resulting in a memory leak

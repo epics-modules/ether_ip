@@ -1,0 +1,16 @@
+# EPICS Database file                    -*- shell-script -*-
+
+record(ai, "$(IOC):aiREAL2")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_RealArray_10[2]")
+    field(PREC, "3")
+}
+
+record(ao, "$(IOC):aoREAL1")
+{
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) K_RealArray_10[1] S 1")
+}
