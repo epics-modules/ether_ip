@@ -132,9 +132,10 @@ static void dump_TagInfo(const TagInfo *info, int level)
 static TagInfo *new_TagInfo(const char *string_tag, size_t elements)
 {
     TagInfo *info = (TagInfo *) calloc(sizeof(TagInfo), 1);
-    if (!info ||
-        !EIP_strdup(&info->string_tag,
-                    string_tag, strlen(string_tag)))
+    if (!info)
+    	return 0;
+    info->string_tag = EIP_strdup(string_tag);
+    if (! info->string_tag)
         return 0;
     info->tag = EIP_parse_tag(string_tag);
     if (! info->tag)
@@ -162,11 +163,17 @@ eip_bool reserve_tag_data(TagInfo *info, size_t requested_size)
 {
 	if (info->data_size >= requested_size)
 		return true;
-	if (info->data_size != 0  ||  info->data != 0)
+	if (requested_size >= EIP_BUFFER_SIZE)
 	{
-        EIP_printf(2, "EIP reserve_tag_data: tag '%s' already has buffer for %d bytes, but asked for %d\n",
-                   info->string_tag, info->data_size, requested_size);
+        EIP_printf(2, "EIP reserve_tag_data: rejecting tag '%s' data size of %d bytes\n",
+                   info->string_tag, requested_size);
 		return false;
+	}
+	if (info->data_size != 0  &&  info->data != 0)
+	{
+        EIP_printf(2, "EIP reserve_tag_data: tag '%s' value buffer grows from %d to %d bytes\n",
+                   info->string_tag, info->data_size, requested_size);
+        free(info->data);
 	}
 	info->data = (CN_USINT *) calloc(1, requested_size);
 	if (! info->data)
@@ -327,7 +334,10 @@ static TagInfo *add_ScanList_Tag(ScanList *scanlist,
 static PLC *new_PLC(const char *name)
 {
     PLC *plc = (PLC *) calloc (sizeof (PLC), 1);
-    if (! (plc && EIP_strdup (&plc->name, name, strlen(name))))
+    if (! plc)
+    	return 0;
+    plc->name = EIP_strdup(name);
+    if (! plc->name)
         return 0;
     DLL_init (&plc->scanlists);
     plc->lock = epicsMutexCreate();
@@ -662,6 +672,18 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                         info->elements, info->data + CIP_Typecode_size);
                 info->do_write = false;
                 epicsMutexUnlock(info->data_lock);
+
+
+                /** Hack to simulate error */
+                if (strstr(info->string_tag, "K_RealArray_10"))
+                {
+                    EIP_printf(1, "EIP simulated error because writing to '%s'\n",
+                               info->string_tag);
+                    info->is_writing = false;
+                	ok = false;
+                }
+
+
             }
             else
             {   /* reading, !is_writing */
@@ -1146,11 +1168,16 @@ eip_bool drvEtherIP_define_PLC(const char *PLC_name,
     plc = get_PLC(PLC_name, true);
     if (plc)
     {
-        EIP_strdup(&plc->ip_addr, ip_addr, strlen(ip_addr));
+    	if (plc->ip_addr)
+    	{
+    		EIP_printf(1, "Redefining IP address of PLC %s?\n", PLC_name);
+    		free(plc->ip_addr);
+    	}
+    	plc->ip_addr = EIP_strdup(ip_addr);
         plc->slot = slot;
     }
     epicsMutexUnlock(drvEtherIP_private.lock);
-    return plc != 0;
+    return plc  &&  plc->ip_addr;
 }
 
 /* Returns PLC or 0 if not found */

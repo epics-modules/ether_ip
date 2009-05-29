@@ -390,8 +390,8 @@ struct __ParsedTag
     }           type;
     union
     {
-        char    *name;
-        size_t  element;
+        char   *name;
+        size_t element;
     }           value;
     ParsedTag   *next;
 };
@@ -695,10 +695,11 @@ eip_bool EIP_send_connection_buffer(EIPConnection *c);
  */
 eip_bool EIP_read_connection_buffer(EIPConnection *c);
 
-/* A tad like the original strdup (not available for vxWorks),
- * but frees the original string if occupied
- * -> has to be 0-initialized */
-eip_bool EIP_strdup(char **ptr, const char *text, size_t len);
+/* VxWorks has no strdup */
+char *EIP_strdup(const char *text);
+
+/* Like EIP_strdup, but only copies the first 'len' chars */
+char *EIP_strdup_n(const char *text, size_t len);
 
 /* Read a single tag in a single CIP_ReadData request,
  * report data & data_length

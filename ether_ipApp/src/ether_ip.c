@@ -309,22 +309,22 @@ static CN_USINT *make_CIA_path(CN_USINT *path,
     return path;
 }
 
-/* A tad like the original strdup (not available for vxWorks),
- * but frees the original string if occupied
- * -> has to be 0-initialized */
-eip_bool EIP_strdup(char **ptr, const char *text, size_t len)
+char *EIP_strdup(const char *text)
 {
-    if (*ptr)
-        free(*ptr);
-    *ptr = malloc(len+1);
-    if (! *ptr)
+	return EIP_strdup_n(text, strlen(text));
+}
+
+char *EIP_strdup_n(const char *text, size_t len)
+{
+    char *ptr = malloc(len+1);
+    if (! ptr)
     {
-        EIP_printf(0, "no mem in EIP_strdup (%d bytes)\n", len);
-        return false;
+        EIP_printf(0, "no mem in EIP_strdup (%s, %d bytes)\n", text, len);
+        return 0;
     }
-    memcpy(*ptr, text, len);
-    (*ptr)[len] = '\0';
-    return true;
+    memcpy(ptr, text, len);
+    ptr[len] = '\0';
+    return ptr;
 }
 
 /* Append new node to ParsedTag */
@@ -358,7 +358,8 @@ ParsedTag *EIP_parse_tag(const char *tag)
         if (! node)
             return 0;
         node->type = te_name;
-        if (! EIP_strdup(&node->value.name, tag, len))
+        node->value.name = EIP_strdup_n(tag, len);
+        if (! node->value.name)
             return 0;
         append_tag(&tl, node);
 #ifdef DEBUG_PARSE

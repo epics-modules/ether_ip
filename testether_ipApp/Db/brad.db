@@ -8,9 +8,34 @@ record(ai, "$(IOC):aiREAL2")
     field(PREC, "3")
 }
 
+record(ai, "$(IOC):aiREAL9")
+{
+    field(SCAN, "5 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_RealArray_10[9]")
+    field(PREC, "3")
+}
+
+
 record(ao, "$(IOC):aoREAL1")
 {
     field(SCAN, "Passive")
     field(DTYP, "EtherIP")
     field(OUT, "@$(PLC) K_RealArray_10[1] S 1")
 }
+
+record(ao, "$(IOC):error")
+{
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) K_RealArray_10[4] S 1")
+}
+
+
+record(stringin, "$(IOC):stringin")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_String")
+}
+

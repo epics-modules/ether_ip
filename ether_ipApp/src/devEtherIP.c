@@ -697,8 +697,13 @@ static long analyze_link(dbCommon *rec,
     eip_bool       single_element = false;
     SpecialOptions special = 0;
 
-    if (! EIP_strdup(&pvt->link_text, link->value.instio.string,
-                     strlen (link->value.instio.string)))
+    if (pvt->link_text)
+    {
+    	EIP_printf(3, "EIP link changed for record %s\n", rec->name);
+    	free(pvt->link_text);
+    }
+    pvt->link_text = EIP_strdup(link->value.instio.string);
+    if (! pvt->link_text)
     {
         errlogPrintf("devEtherIP (%s): Cannot copy link\n", rec->name);
         return S_dev_noMemory;
@@ -711,7 +716,15 @@ static long analyze_link(dbCommon *rec,
                      rec->name, pvt->link_text);
         return S_db_badField;
     }
-    if (! EIP_strdup(&pvt->PLC_name, p, end-p))
+
+
+    if (pvt->PLC_name)
+    {
+    	EIP_printf(3, "EIP PLC changed for record %s\n", rec->name);
+    	free(pvt->PLC_name);
+    }
+    pvt->PLC_name = EIP_strdup_n(p, end-p);
+    if (! pvt->PLC_name)
     {
         errlogPrintf("devEtherIP (%s): Cannot copy PLC\n", rec->name);
         return S_dev_noMemory;
@@ -726,7 +739,15 @@ static long analyze_link(dbCommon *rec,
         return(S_db_badField);
     }
     tag_len = end-p;
-    if (! EIP_strdup(&pvt->string_tag, p, tag_len))
+
+
+    if (pvt->string_tag)
+    {
+    	EIP_printf(3, "EIP tag changed for record %s\n", rec->name);
+    	free(pvt->string_tag);
+    }
+    pvt->string_tag = EIP_strdup_n(p, tag_len);
+    if (! pvt->string_tag)
     {
         errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
         return S_dev_noMemory;
