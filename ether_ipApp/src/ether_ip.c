@@ -876,7 +876,9 @@ CN_USINT *make_CM_Unconnected_Send(CN_USINT *request,
  * AB document 1756-RM005A-EN-E
  ********************************************************/
 
-/* Determine byte size of CIP_Type */
+/* Determine byte size of CIP_Type.
+ * Does not handle strings!
+ */
 size_t CIP_Type_size(CIP_Type type)
 {
     switch (type)
@@ -1001,7 +1003,6 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
             {
                 EIP_printf(0, "Unknown CIP struct (type 0x%04X) 0x%04X: ",
                            type, vi);
-                EIP_hexdump(0, buf, elements*CIP_Type_size(type));
             }
             break;
         default:
@@ -1539,6 +1540,7 @@ const CN_USINT *get_CIP_MultiRequest_Response (const CN_USINT *response,
     if (reply_no >= count)
         return 0;
     unpack_UINT (offsetp + 2*reply_no, &offset);
+    EIP_printf(10, "MultiRequest reply at offset 0x%X: ", (unsigned int) offset);
     mem = countp + offset;
     if (reply_size)
     {
