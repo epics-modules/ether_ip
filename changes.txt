@@ -7,7 +7,7 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
-* 2009, May 13 ether_ip-2-18
+* 2009, June 1 ether_ip-2-18
 Attempt to fix crashes which look like this:
 
 1a1ede4 EIP_write_tag +2490: 1a1ddc4 (19fdf90)
@@ -20,30 +20,21 @@ Attempt to fix crashes which look like this:
 Also with EIP_reserve_buffer(.., 6e) calling free(), and
 examples which don't start in EIP_startup().
 
-In general, this looks like memory corruption.
-Exact reason unclear, but started by removing the
-EIP_reserve_buffer code and instead allocating
-a full size buffer on startup.
+Exact reason for memory corruption is unclear,
+but to reduce the likelyhood of getting the symptom
+the EIP_reserve_buffer code for the communication buffer
+was removed, instead allocating a full size buffer on startup.
 Also removed other uses of EIP_reserve_buffer,
 only keeping the basic idea for the allocation
 of data for individual tags.
 The 'mem string buffer' for logging was also removed,
 since I never used it
 
-Found problem in initialization of timeout in
-select(..., timeout) for platforms like Linux
-that might update the timeout in select().
-
-Found one example where determine_MultiRequest_count
-would assemble "read" requests, but the actual
-request buffer would then contain a "write"
-request which clobbers the buffer and could
-potentially write beyond the buffer, causing
-any type of memory corruption.
-Possible scenario:
-1) Record/device support requests 'do_write'
+Found a possible memory corruption scenario when a "write"
+cycle was interrupted by an error:
+1) Record/device support requests 'do_write' for a tag
 2) driver determines what to do, sees do_write, sets is_writing,
-   counts write size
+   counts write size towards expected packet sizes
 3) driver creates write request, clears do_write
 4) something fails in the actual send/receive/unpack-response,
    driver disconnects, reconnects, ...
@@ -51,8 +42,24 @@ Possible scenario:
    so it counts the read size
 6) .. but since is_writing was left on, it actually
    creates a write request
+The mismatch between the expected "send" packet size
+in steps 5 and 6 can cause step 6 to write beyond
+the communication buffer size.
 
+Found problem in initialization of timeout in
+select(..., timeout) for platforms like Linux
+that might update the timeout in select().
+On such platforms, the driver could have reported
+timeouts because it would in fact not wait for the
+desired timeout period.
+Unrelated to the memory corruption, also unlikely
+to affect vxWorks.
 
+Attempted some cleanup in the EIP_verbosity and printouts.
+drvEtherIP_report output is a bit shorter,
+some error messages contain a time stamp,
+and EIP_verbosity=4 is now the default value which
+should give basic initialization and error messages.
 
 * 2009, March 13 ether_ip-2-17
 EIP_init_and_connect always re-initialized the EIPConnection

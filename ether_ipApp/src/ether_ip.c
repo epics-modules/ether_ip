@@ -1018,7 +1018,7 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
                 /* String: A0 02 CE 0F (len L) (len H) 00 00 (chars...) */
                 buf = unpack_UINT(buf, &len);
                 buf = unpack_UINT(buf, &vi);
-                EIP_printf(0, "STRING '%s'\n", (const char *)buf);
+                EIP_printf(0, "STRING '%s'", (const char *)buf);
             }
             else
             {

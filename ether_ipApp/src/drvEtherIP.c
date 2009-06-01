@@ -1007,6 +1007,7 @@ void drvEtherIP_help()
     printf("        9: Hexdump each sent/received buffer\n");
     printf("        6: show driver details\n");
     printf("        5: show write-related operations\n");
+    printf("        4: DEFAULT: show basic startup plus error messages\n");
     printf("        2: show more error info\n");
     printf("        1: show severe error messages\n");
 	printf("        0: keep quiet\n");
@@ -1014,8 +1015,9 @@ void drvEtherIP_help()
     printf("    -  define the default scan rate\n");
     printf("       (if neither SCAN nor INP/OUT provide one)\n");
     printf("    int EIP_buffer_limit = <bytes> (currently %d)\n", EIP_buffer_limit);
-    printf("    -  define the buffer limit. Default: %d\n", EIP_DEFAULT_BUFFER_LIMIT);
+    printf("    -  Set buffer limit enforced by driver. Default: %d\n", EIP_DEFAULT_BUFFER_LIMIT);
     printf("       The actual PLC limit is unknown, it might depend on the PLC or ENET model.\n");
+    printf("       Can only be set before driver starts up.\n");
     printf("    drvEtherIP_define_PLC <name>, <ip_addr>, <slot>\n");
     printf("    -  define a PLC name (used by EPICS records) as IP\n");
     printf("       (DNS name or dot-notation) and slot (0...)\n");
