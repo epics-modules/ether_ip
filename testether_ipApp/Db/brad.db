@@ -72,11 +72,19 @@ record(ai, "$(IOC):aiDINT5")
     field(PREC, "3")
 }
 
+record(ai, "$(IOC):aiDINT6")
+{
+    field(SCAN, "5 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) K_DintArray_10[6]")
+    field(PREC, "3")
+}
+
 record(ai, "$(IOC):aiDINT9")
 {
     field(SCAN, "1 second")
     field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_DintArray_10[9]")
+    field(INP, "@$(PLC) K_DintArray_10[9] E")
     field(PREC, "3")
 }
 
@@ -84,6 +92,21 @@ record(ao, "$(IOC):aoDINT5")
 {
     field(DTYP, "EtherIP")
     field(OUT, "@$(PLC) K_DintArray_10[5] S 1")
+    field(PREC, "3")
+}
+
+record(ao, "$(IOC):aoDINT6")
+{
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) K_DintArray_10[6] S 5")
+    field(PREC, "3")
+}
+
+
+record(ao, "$(IOC):aoDINT9")
+{
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) K_DintArray_10[9] E S 5")
     field(PREC, "3")
 }
 
