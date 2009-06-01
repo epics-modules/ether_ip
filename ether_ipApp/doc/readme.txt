@@ -810,27 +810,8 @@ and device support will report various levels of detail:
 
 A LOT of output is generated at levels 9 & 10, resulting
 in a significant CPU load and - when viewed in a telnet
-session - network traffic. Therefore all output can be
-redirected into a memory string file (ring buffer, see mem_string_file.h):
+session - network traffic.
 
-    # Redirect EIP diagnostics output to ring buffer,
-    # enable full diag. messages:
-    EIP_use_mem_string_file=1
-    EIP_verbosity=10
-
-The idea is to keep writing into the ring buffer until
-you believe you caught what you were after. Now
-stop recording (and overwriting) by setting EIP_verbosity=0.
-To view (& clear) the current buffer on stdout:
-    msfDump(0)
-Copy the current buffer into file (& clear the buffer):
-    f=fopen("/tmp/eip.log", "w")
-    msfDump(f)
-    fclose(f)      
-
-The size of the memory string file defaults to 2MB.
-It can be changed in the IOC startup file:
-    msfInitialBufferSize=10*1024*1024
 
 * Driver Operation Details
 Example:

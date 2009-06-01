@@ -9,14 +9,12 @@ SRCS.c += ../R314Compat.c
 SRCS.c += ../ether_ip.c
 SRCS.c += ../drvEtherIP.c
 SRCS.c += ../devEtherIP.c
-SRCS.c += ../mem_string_file.c
 
 LIBOBJS += dl_list.o
 LIBOBJS += R314Compat.o
 LIBOBJS += ether_ip.o
 LIBOBJS += drvEtherIP.o
 LIBOBJS += devEtherIP.o
-LIBOBJS += mem_string_file.o
 
 LIBNAME = ether_ipLib
 

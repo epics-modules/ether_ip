@@ -89,7 +89,7 @@ record(ao, "$(IOC):aoDINT5")
 
 record(stringin, "$(IOC):stringin")
 {
-    field(SCAN, "1 second")
+    field(SCAN, "5 second")
     field(DTYP, "EtherIP")
     field(INP, "@$(PLC) K_String")
 }

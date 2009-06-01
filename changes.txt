@@ -27,6 +27,8 @@ a full size buffer on startup.
 Also removed other uses of EIP_reserve_buffer,
 only keeping the basic idea for the allocation
 of data for individual tags.
+The 'mem string buffer' for logging was also removed,
+since I never used it
 
 Found problem in initialization of timeout in
 select(..., timeout) for platforms like Linux

@@ -651,7 +651,7 @@ static double get_period(dbCommon *rec)
 		if (p==buf || period==HUGE_VAL || period==-HUGE_VAL)
 			period = -1.0;
     }
-    EIP_printf(6, "EIP record '%s' scans at %.1lf secs\n", rec->name, period);
+    EIP_printf(8, "EIP record '%s' scans at %.1lf secs\n", rec->name, period);
 	return period;
 }
 

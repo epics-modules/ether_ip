@@ -32,11 +32,10 @@ DLL_LIBS = ca Com
 SYS_DLL_LIBS = wsock32
 ether_ip_RCS_WIN32 = ether_ip.rc
 
-ether_ip_SRCS += dl_list.c 
-ether_ip_SRCS += mem_string_file.c
-ether_ip_SRCS += ether_ip.c 
-ether_ip_SRCS += drvEtherIP.c 
-ether_ip_SRCS += devEtherIP.c 
+ether_ip_SRCS += dl_list.c
+ether_ip_SRCS += ether_ip.c
+ether_ip_SRCS += drvEtherIP.c
+ether_ip_SRCS += devEtherIP.c
 ether_ip_SRCS += drvEtherIPRegister.cpp
 
 # The PROD_IOC_vxWorks is built from the same srcs and must include

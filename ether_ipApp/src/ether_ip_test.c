@@ -13,7 +13,6 @@
 #include<stddef.h>
 #include<time.h>
 #include"ether_ip.c"
-#include"mem_string_file.c"
 
 #ifdef DEFINE_CONNECTED_METHODS
 
@@ -23,7 +22,7 @@ eip_bool ForwardOpen(EIPConnection *c)
     MR_Request  *request;
     EncapsulationRRData      *data;
     CM_Forward_Open_Good_Response   *open_response;
- 
+
     calc_tick_time (245760,
                     &c->params.priority_and_tick,
                     &c->params.connection_timeout_ticks);
@@ -86,7 +85,7 @@ eip_bool ForwardClose(EIPConnection *c)
     MR_Request  *request;
     EncapsulationRRData      *data;
     CM_Forward_Close_Good_Response  *close_response;
-    
+
     request = EIP_make_SendRRData (c, request_size);
     if (! request)
         return false;
@@ -137,13 +136,13 @@ eip_bool ForwardClose(EIPConnection *c)
     CHECK (vendor_ID)
     CHECK (originator_serial)
 #undef CHECK
-    
+
     return true;
 }
 
 eip_bool ReadConnected(EIPConnection *c, size_t count, const ParsedTag *tag[])
 {
-    size_t  i, msg_size[40], requests_size = 0, multi_size, 
+    size_t  i, msg_size[40], requests_size = 0, multi_size,
             single_response_size;
     MR_Request  *multi_request, *single_request;
     const MR_Response  *response, *single_response;
@@ -202,7 +201,7 @@ eip_bool ReadConnected(EIPConnection *c, size_t count, const ParsedTag *tag[])
                                            &single_response_size);
         if (! single_response)
             return false;
-    
+
         if (check_CIP_ReadData_Response (single_response, single_response_size))
         {
             data = EIP_raw_MR_Response_data (single_response, single_response_size,
@@ -210,7 +209,7 @@ eip_bool ReadConnected(EIPConnection *c, size_t count, const ParsedTag *tag[])
             dump_raw_CIP_data (data, data_size);
         }
     }
-    
+
     return true;
 }
 
@@ -318,11 +317,11 @@ int main (int argc, const char *argv[])
     CN_REAL         writeval;
     eip_bool        write = false;
     size_t          test_runs = 1;
-#ifndef _WIN32    
+#ifndef _WIN32
     struct timeval  now;
 #endif
     double          start, end, duration;
- 
+
 #ifdef _WIN32
     /* Win32 socket init. */
     WORD wVersionRequested;
@@ -394,7 +393,7 @@ int main (int argc, const char *argv[])
         EIP_copy_ParsedTag(buffer, tag);
         EIP_printf(3, "Tag '%s'\n", buffer);
     }
-#ifdef _WIN32    
+#ifdef _WIN32
     start = (double) time(0);
 #else
     gettimeofday(&now, NULL);
@@ -409,7 +408,7 @@ int main (int argc, const char *argv[])
             if (write)
             {
                 CN_REAL real_buffer;
-                pack_REAL((CN_USINT *)&real_buffer, writeval);         
+                pack_REAL((CN_USINT *)&real_buffer, writeval);
                 EIP_write_tag(c, tag, T_CIP_REAL, 1,(CN_USINT*) &real_buffer, 0, 0);
             }
             else
@@ -421,7 +420,7 @@ int main (int argc, const char *argv[])
     }
     EIP_free_ParsedTag (tag);
     tag = 0;
-#ifdef _WIN32    
+#ifdef _WIN32
     end = (double) time(0);
 #else
     gettimeofday(&now, NULL);
@@ -439,6 +438,6 @@ int main (int argc, const char *argv[])
     /* Win32 socket shutdown */
     WSACleanup( );
 #endif
- 
+
     return 0;
 }

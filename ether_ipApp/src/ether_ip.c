@@ -13,7 +13,7 @@
  * kasemir@lanl.gov
  */
 
-#include"ether_ip.h"
+/* System */
 #include<stdio.h>
 #include<stdarg.h>
 #include<string.h>
@@ -23,7 +23,12 @@
 #ifndef vxWorks
 #include<memory.h>
 #endif
-#include"mem_string_file.h"
+
+/* EPICS */
+#include<epicsTime.h>
+
+/* Local */
+#include"ether_ip.h"
 
 int EIP_buffer_limit =  EIP_DEFAULT_BUFFER_LIMIT;
 
@@ -202,17 +207,33 @@ static const CN_USINT *unpack(const CN_USINT *buffer, const char *format, ...)
 int EIP_verbosity = 4;
 eip_bool EIP_use_mem_string_file=0;
 
-/* printf with EIP_verbosity check */
 void EIP_printf(int level, const char *format, ...)
 {
     va_list ap;
     if (level > EIP_verbosity)
         return;
     va_start(ap, format);
-    if (EIP_use_mem_string_file)
-        msfPrint(format, ap);
-    else
-        vfprintf(stderr, format, ap);
+	vfprintf(stderr, format, ap);
+    va_end(ap);
+}
+
+
+void EIP_printf_time(int level, const char *format, ...)
+{
+	epicsTimeStamp now;
+    char  tsString[50];
+    va_list ap;
+    if (level > EIP_verbosity)
+        return;
+
+    /* Time stamp */
+    epicsTimeGetCurrent(&now);
+    epicsTimeToStrftime(tsString, sizeof(tsString),
+                        "%Y/%m/%d %H:%M:%S.%04f", &now);
+    fprintf(stderr, "%s ", tsString);
+    /* Message */
+    va_start(ap, format);
+	vfprintf(stderr, format, ap);
     va_end(ap);
 }
 
