@@ -12,17 +12,15 @@ EPICS_VER=R3.14.8.2
 EPICS_BASE_RELEASE=/ade/epics/supTop/base/$(EPICS_VER)
 SHARE=/ade/epics/supTop/share/$(EPICS_VER)
 EPICS_EXTENSIONS=/ade/epics/supTop/extensions/$(EPICS_VER)
-
-EPICS_BASE=$(EPICS_BASE_RELEASE)
-ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-17
-
+ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-18
 
 # Development Setup
-EPICS_VER=R3.14.9
-EPICS_BASE_RELEASE=/ade/epics/$(EPICS_VER)/base
-SHARE=/ade/epics/$(EPICS_VER)/apps
+#EPICS_VER=R3.14.9
+#EPICS_BASE_RELEASE=/ade/epics/$(EPICS_VER)/base
+#SHARE=/ade/epics/$(EPICS_VER)/apps
+#ETHER_IP=$(SHARE)/ether_ip
+
 
 EPICS_BASE=$(EPICS_BASE_RELEASE)
-ETHER_IP=$(SHARE)/ether_ip
 
 
