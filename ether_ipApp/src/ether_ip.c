@@ -1776,6 +1776,14 @@ eip_bool EIP_send_connection_buffer(EIPConnection *c)
     return ok;
 }
 
+/** TODO Somehow remember how much was read,
+ *  and zero the buffer before reading?
+ *  Currently, we read into the buffer
+ *  and leave the 'rest' of the buffer as it was,
+ *  so it might contain information from
+ *  previous communications after the end
+ *  of the latest message.
+ */
 eip_bool EIP_read_connection_buffer(EIPConnection *c)
 {
     eip_bool ok = true;       /* OK, no errors so far? */
@@ -1805,6 +1813,10 @@ eip_bool EIP_read_connection_buffer(EIPConnection *c)
             break;
         }
         /* Select shows there's data, read some */
+        /* TODO Read exact message size.
+         * Once the 'needed' message size is known, maybe
+         * we should only read up to that message size?
+         */
         part = recv(c->sock, ((char *)c->buffer + got), EIP_BUFFER_SIZE - got, 0);
         if (part <= 0)
         {
