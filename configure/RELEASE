@@ -8,11 +8,12 @@
 # the full path to your R3.14.7 or R3.14.8.2 base etc.
 
 # EPICS_BASE usually appears last so other apps can override stuff:
+# EPICS_VER=R3.14.7
 EPICS_VER=R3.14.8.2
 EPICS_BASE_RELEASE=/ade/epics/supTop/base/$(EPICS_VER)
 SHARE=/ade/epics/supTop/share/$(EPICS_VER)
 EPICS_EXTENSIONS=/ade/epics/supTop/extensions/$(EPICS_VER)
-ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-18
+ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-19
 
 # Development Setup
 #EPICS_VER=R3.14.9

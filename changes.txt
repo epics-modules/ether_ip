@@ -7,6 +7,11 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2009, Sept 1 ether_ip-2-19
+'do_write' flag got lost when a tag marked for writing
+didn't fit into a network request and was moved into
+the next one.
+
 * 2009, June 1 ether_ip-2-18
 Attempt to fix crashes which look like this:
 

@@ -557,10 +557,12 @@ static size_t determine_MultiRequest_count(size_t limit,
                        info->string_tag);
             return 0;
         }
-        /* Did device suppport request a 'write' cycle? */
-        info->is_writing = info->do_write;
+        /* Did device suppport request a 'write' cycle?
+         * Or are we in one that's not completed?
+         */
+        info->is_writing = info->do_write | info->is_writing;
         if (info->is_writing)
-        {	/* Yes, clear the flag, compute size of write command/reply */
+        {   /* Yes, clear the flag, compute size of write command/reply */
             info->do_write = false;
             try_req  = *requests_size  + info->cip_w_request_size;
             try_resp = *responses_size + info->cip_w_response_size;
@@ -572,7 +574,7 @@ static size_t determine_MultiRequest_count(size_t limit,
                        (unsigned long)info->cip_w_response_size);
         }
         else
-        {	/* Read cycle. Device support may set 'do_write' between now
+        {   /* Read cycle. Device support may set 'do_write' between now
              * and when we actually read, but we go by 'is_writing      */
             try_req  = *requests_size  + info->cip_r_request_size;
             try_resp = *responses_size + info->cip_r_response_size;
