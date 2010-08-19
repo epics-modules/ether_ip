@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2010, Aug 19
+No new version, but sources moved to Source Forge.
+
 * 2009, Sept 1 ether_ip-2-19
 'do_write' flag got lost when a tag marked for writing
 didn't fit into a network request and was moved into
