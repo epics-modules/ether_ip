@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: drvEtherIP.c,v 1.45 2009/09/01 21:21:04 kasemir Exp $
  *
  * drvEtherIP
  *
@@ -21,6 +21,10 @@
 #ifdef HAVE_314_API
 /* Base */
 #include "epicsExport.h"
+#include "initHooks.h"
+
+/* See drvEtherIP_initHook() */
+static int databaseIsReady = false;
 #endif
 
 double drvEtherIP_default_rate = 0.0;
@@ -1041,6 +1045,7 @@ void drvEtherIP_help()
     printf("\n");
 }
 
+/* Public, also driver's report routine */
 long drvEtherIP_report(int level)
 {
     PLC *plc;
@@ -1293,6 +1298,7 @@ void drvEtherIP_remove_callback (PLC *plc, TagInfo *info,
     epicsMutexUnlock(plc->lock);
 }
 
+
 /* (Re-)connect to IOC,
  * (Re-)start scan tasks, one per PLC.
  * Returns number of tasks spawned.
@@ -1306,6 +1312,16 @@ int drvEtherIP_restart()
 
     if (drvEtherIP_private.lock == 0) return 0;
     epicsMutexLock(drvEtherIP_private.lock);
+
+#ifdef HAVE_314_API
+    if (!databaseIsReady) {
+        epicsMutexUnlock(drvEtherIP_private.lock);
+        EIP_printf(4, "drvEtherIP: Delaying launch of scan task for PLC '%s' until database ready\n",
+                   plc->name);
+        return 0;
+    }
+#endif
+
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
          plc;  plc = DLL_next(PLC,plc))
     {
@@ -1386,17 +1402,55 @@ int drvEtherIP_read_tag(const char *ip_addr,
     return 0;
 }
 
+
+/* Jeff Hill noticed that driver could invoke for example ao record callbacks,
+ * i.e. call scanOnce() on a record, while the IOC is still starting up
+ * and the "onceQ" ring buffer is not initalized.
+ *
+ * drvEtherIP_restart will therefore not perform anything until the database
+ * is available as indicated by the init hook setting databaseIsReady
+ */
+#ifdef HAVE_314_API
+void drvEtherIP_initHook ( initHookState state )
+{
+    if (drvEtherIP_private.lock == 0) return;
+    if ( state == initHookAfterScanInit ) {
+        epicsMutexLock(drvEtherIP_private.lock);
+        databaseIsReady = true;
+        epicsMutexUnlock(drvEtherIP_private.lock);
+        drvEtherIP_restart();
+    }
+}
+#endif
+
+static long drvEtherIP_drvInit ()
+{
+    /*
+     * astonished to discover that initHookRegister is
+     * in initHooks.h in R3.13, but not in iocCore
+     * object file in R3.13
+     */
+#ifdef HAVE_314_API
+    int status = initHookRegister ( drvEtherIP_initHook );
+    if ( status ) {
+        errlogPrintf (
+              "drvEtherIP_drvInit: init hook install failed\n" );
+    }
+#endif
+    return 0;
+}
+
 /* EPICS driver support entry table */
 struct
 {
     long number;
     long (* report) ();
-    long (* inie) ();
+    long (* init) ();
 } drvEtherIP =
 {
     2,
     drvEtherIP_report,
-    NULL
+    drvEtherIP_drvInit
 };
 
 #ifdef HAVE_314_API

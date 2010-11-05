@@ -26,8 +26,7 @@ drvEtherIP_init()
 # ControlLogix crate is slot 0.
 #drvEtherIP_define_PLC("plc1", "172.31.72.94", 0)
 #drvEtherIP_define_PLC("plc1", "172.31.74.78", 0)
-drvEtherIP_define_PLC("plc1", "160.91.232.217", 0)
-drvEtherIP_define_PLC("plc1", "160.91.232.217", 0)
+drvEtherIP_define_PLC("plc1", "10.1.2.2", 0)
 
 #dbLoadRecords("db/ramp.db",    "IOC=test")
 #dbLoadRecords("db/eip_stat.db","PLC=plc1,IOC=test,TAG=REAL")

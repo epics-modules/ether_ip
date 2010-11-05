@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: devEtherIP.c,v 1.25 2009/06/01 14:25:49 kasemir Exp $
  *
  * devEtherIP
  *
@@ -284,6 +284,22 @@ static void scan_callback(void *arg)
     scanIoRequest(pvt->ioscanpvt);
 }
 
+static void etherIP_scanOnce(void * pRec)
+{
+    /*
+     * astonished to discover that initHookRegister is in
+     * initHooks.h in R3.13, but initHookRegister isnt
+     * in iocCore object file in R3.13, so we resort
+     * to an archaic brute force approach
+     */
+#   ifndef HAVE_314_API
+    while ( ! interruptAccept ) {
+        epicsThreadSleep  ( 0.1 );
+    }
+#   endif
+    scanOnce ( pRec );
+}
+
 /* Callback from driver for every received tag, for ao record:
  * Check if
  *
@@ -414,7 +430,7 @@ static void check_ao_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce(rec);
+        etherIP_scanOnce(rec);
 }
 
 /* Callback for bo, see ao_callback comments */
@@ -466,7 +482,7 @@ static void check_bo_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce(rec);
+        etherIP_scanOnce(rec);
 }
 
 /* Callback for mbbo */
@@ -536,7 +552,7 @@ static void check_mbbo_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce (rec);
+        etherIP_scanOnce (rec);
 }
 
 /* Callback for mbboDirect */
@@ -586,7 +602,7 @@ static void check_mbbo_direct_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce(rec);
+        etherIP_scanOnce(rec);
 }
 
 /* device support routine get_ioint_info */

@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: drvEtherIP.h,v 1.30 2009/09/10 17:36:31 kasemir Exp $
  *
  * drvEtherIP
  *
@@ -15,7 +15,7 @@
 #include "dl_list.h"
 
 #define ETHERIP_MAYOR 2
-#define ETHERIP_MINOR 19
+#define ETHERIP_MINOR 20
 
 /* For timing */
 #define EIP_MIN_TIMEOUT         0.1  /* second */

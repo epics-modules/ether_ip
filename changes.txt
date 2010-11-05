@@ -7,6 +7,12 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2010, Nov 5 ether_ip-2-20
+Jeff Hill noticed that driver could invoke for example ao record callbacks,
+i.e. call scanOnce() on a record, while the IOC is still starting up
+and the "onceQ" ring buffer is not initalized.
+Driver now waits until IOC startup is 'done'.
+
 * 2010, Aug 19
 No new version, but sources moved to Source Forge.
 
