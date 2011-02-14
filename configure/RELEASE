@@ -2,25 +2,13 @@
 # Run "gnumake clean uninstall install" in the application
 # top directory each time this file is changed.
 
-# Once upon a time, SNS used an ADE setup that allowed
-# macros in here.
-# That is no longer the case, so you need to specify
-# the full path to your R3.14.7 or R3.14.8.2 base etc.
-
-# EPICS_BASE usually appears last so other apps can override stuff:
-# EPICS_VER=R3.14.7
-EPICS_VER=R3.14.8.2
-EPICS_BASE_RELEASE=/ade/epics/supTop/base/$(EPICS_VER)
-SHARE=/ade/epics/supTop/share/$(EPICS_VER)
-EPICS_EXTENSIONS=/ade/epics/supTop/extensions/$(EPICS_VER)
-ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-19
-
-# Development Setup
-#EPICS_VER=R3.14.9
-#EPICS_BASE_RELEASE=/ade/epics/$(EPICS_VER)/base
-#SHARE=/ade/epics/$(EPICS_VER)/apps
-#ETHER_IP=$(SHARE)/ether_ip
-
+# Specify the full path to your EPICS base location
+# as well as the 'share' section where the EtherIP driver
+# is located
+EPICS_VER=R3.14.11
+EPICS_BASE_RELEASE=/Kram/epics/$(EPICS_VER)/base
+SHARE=/Kram/epics/$(EPICS_VER)/share
+ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-21
 
 EPICS_BASE=$(EPICS_BASE_RELEASE)
 

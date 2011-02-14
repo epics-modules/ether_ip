@@ -37,13 +37,31 @@
 #include <boRecord.h>
 #include <mbboRecord.h>
 #include <mbboDirectRecord.h>
+#include <errlog.h>
+
 /* Local */
 #include "drvEtherIP.h"
 
 #ifdef HAVE_314_API
 /* Base */
-#include "epicsExport.h"
+#  include "epicsExport.h"
+
+   /* Contributed by Janet Anderson:
+    * Compatibility for R3.14.10 change in RVAL type
+    */
+#  define GE_EPICSBASE(v,r,l) ((EPICS_VERSION>=(v)) && (EPICS_REVISION>=(r)) && (EPICS_MODIFICATION>=(l)))
+#  if GE_EPICSBASE(3,14,10)
+#    define RVALTYPE epicsUInt32
+#    define RVALFMT "u"
+#  else
+#    define RVALTYPE unsigned long
+#    define RVALFMT "lu"
+#  endif
+#else
+#  define RVALTYPE unsigned long
+#  define RVALFMT "lu"
 #endif
+
 
 /* Flags that pick special values instead of the tag's "value" */
 typedef enum
@@ -179,7 +197,7 @@ static eip_bool check_data(const dbCommon *rec)
  * 1) NOBT might change but MASK is only set once
  * 2) MASK doesn't help when reading bits accross UDINT boundaries
  */
-static eip_bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
+static eip_bool get_bits(dbCommon *rec, size_t bits, RVALTYPE *rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
@@ -217,7 +235,7 @@ static eip_bool get_bits(dbCommon *rec, size_t bits, unsigned long *rval)
 }
 
 /* Pendant to get_bits */
-static eip_bool put_bits(dbCommon *rec, size_t bits, unsigned long rval)
+static eip_bool put_bits(dbCommon *rec, size_t bits, RVALTYPE rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
@@ -439,7 +457,7 @@ static void check_bo_callback(void *arg)
     boRecord      *rec = (boRecord *) arg;
     struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    unsigned long rval;
+    RVALTYPE      rval;
     eip_bool      process = false;
 
     /* We are about the check and even set val, & rval -> lock */
@@ -461,7 +479,7 @@ static void check_bo_callback(void *arg)
         (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("'%s': got %lu from driver\n", rec->name, rval);
+            printf("'%s': got %"RVALFMT" from driver\n", rec->name, rval);
         if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
@@ -491,7 +509,7 @@ static void check_mbbo_callback(void *arg)
     mbboRecord    *rec = (mbboRecord *) arg;
     struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    unsigned long rval, *state_val;
+    RVALTYPE      rval, *state_val;
     size_t        i;
     eip_bool      process = false;
 
@@ -514,7 +532,7 @@ static void check_mbbo_callback(void *arg)
         (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("'%s': got %lu from driver\n", rec->name, rval);
+            printf("'%s': got %"RVALFMT" from driver\n", rec->name, rval);
         if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
@@ -561,7 +579,7 @@ static void check_mbbo_direct_callback(void *arg)
     mbboDirectRecord *rec = (mbboDirectRecord *) arg;
     struct rset      *rset= (struct rset *)(rec->rset);
     DevicePrivate    *pvt = (DevicePrivate *)rec->dpvt;
-    unsigned long    rval;
+    RVALTYPE         rval;
     eip_bool         process = false;
 
     /* We are about the check and even set val, & rval -> lock */
@@ -583,7 +601,7 @@ static void check_mbbo_direct_callback(void *arg)
         (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("'%s': got %lu from driver\n",
+            printf("'%s': got %"RVALFMT" from driver\n",
                    rec->name, rval);
         if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
@@ -1440,7 +1458,7 @@ static long bo_write(boRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
-    unsigned long rval;
+    RVALTYPE      rval;
     eip_bool      ok = true;
 
     if (rec->pact)
@@ -1465,7 +1483,7 @@ static long bo_write(boRecord *rec)
             if (rec->rval != rval)
             {
                 if (rec->tpro)
-                    printf("'%s': write %lu\n", rec->name, rec->rval);
+                    printf("'%s': write %"RVALFMT"\n", rec->name, rec->rval);
                 ok = put_bits((dbCommon *)rec, 1, rec->rval);
                 if (pvt->tag->do_write)
                     EIP_printf(6,"'%s': already writing\n", rec->name);
@@ -1489,7 +1507,7 @@ static long mbbo_write (mbboRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
-    unsigned long rval;
+    RVALTYPE      rval;
     eip_bool      ok = true;
 
     if (rec->pact)
@@ -1513,7 +1531,7 @@ static long mbbo_write (mbboRecord *rec)
         if (get_bits((dbCommon *)rec, rec->nobt, &rval) && rec->rval != rval)
         {
             if (rec->tpro)
-                printf("'%s': write %lu\n", rec->name, rec->rval);
+                printf("'%s': write %"RVALFMT"\n", rec->name, rec->rval);
             ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
             if (pvt->tag->do_write)
                 EIP_printf(6,"'%s': already writing\n", rec->name);
@@ -1536,7 +1554,7 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
-    unsigned long rval;
+    RVALTYPE      rval;
     eip_bool      ok = true;
 
     if (rec->pact)
@@ -1560,7 +1578,7 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
         if (get_bits((dbCommon *)rec, rec->nobt, &rval)  &&  rec->rval != rval)
         {
             if (rec->tpro)
-                printf("'%s': write %lu\n", rec->name, rec->rval);
+                printf("'%s': write %"RVALFMT"\n", rec->name, rec->rval);
             ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
             if (pvt->tag->do_write)
                 EIP_printf(6,"'%s': already writing\n", rec->name);

@@ -7,6 +7,11 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2011, Feb 14 ether_ip-2-21
+Janet Anderson contributed patches to avoid compile errors from
+EPICS base R3.14.10 on where the RVAL field was changed from unsigned long
+to epicsUInt32. 
+
 * 2010, Nov 5 ether_ip-2-20
 Jeff Hill noticed that driver could invoke for example ao record callbacks,
 i.e. call scanOnce() on a record, while the IOC is still starting up

@@ -1,6 +1,4 @@
-/* $Id: drvEtherIP.h,v 1.30 2009/09/10 17:36:31 kasemir Exp $
- *
- * drvEtherIP
+/* drvEtherIP
  *
  * IOC driver that uses ether_ip routines,
  * keeping lists of PLCs and tags and scanlists etc.
@@ -15,7 +13,7 @@
 #include "dl_list.h"
 
 #define ETHERIP_MAYOR 2
-#define ETHERIP_MINOR 20
+#define ETHERIP_MINOR 21
 
 /* For timing */
 #define EIP_MIN_TIMEOUT         0.1  /* second */
