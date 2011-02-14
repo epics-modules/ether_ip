@@ -1,3 +1,0 @@
-#CONFIG
-# Add any changes to make rules here
-CROSS_COMPILER_TARGET_ARCHS = ppc603
