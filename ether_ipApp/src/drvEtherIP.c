@@ -1316,8 +1316,15 @@ int drvEtherIP_restart()
 #ifdef HAVE_314_API
     if (!databaseIsReady) {
         epicsMutexUnlock(drvEtherIP_private.lock);
-        EIP_printf(4, "drvEtherIP: Delaying launch of scan task for PLC '%s' until database ready\n",
+        for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
+             plc;  plc = DLL_next(PLC,plc))
+        {
+            if (plc->name)
+            {
+                EIP_printf(4, "drvEtherIP: Delaying launch of scan task for PLC '%s' until database ready\n",
                    plc->name);
+            }
+        }
         return 0;
     }
 #endif

@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2011, Mar 31 ether_ip-2-22
+John Sinclair sent fix for EIP_printf(4, .. call with possible null argument
+
 * 2011, Feb 14 ether_ip-2-21
 Janet Anderson contributed patches to avoid compile errors from
 EPICS base R3.14.10 on where the RVAL field was changed from unsigned long
