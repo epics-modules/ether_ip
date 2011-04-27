@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ether_ip.c,v 1.10 2011/04/12 18:08:48 saa Exp $
  *
  * ether_ip
  *
@@ -1007,7 +1007,7 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
             for (i=0; i<elements; ++i)
             {
                 buf = unpack_UDINT(buf, &vd);
-                EIP_printf(0, " 0x%08X", (unsigned int)vd);
+                EIP_printf(0, " 0x%08X", vd);
             }
             break;
         case T_CIP_STRUCT:
@@ -1561,7 +1561,7 @@ const CN_USINT *get_CIP_MultiRequest_Response (const CN_USINT *response,
     if (reply_no >= count)
         return 0;
     unpack_UINT (offsetp + 2*reply_no, &offset);
-    EIP_printf(10, "MultiRequest reply at offset 0x%X: ", (unsigned int) offset);
+    EIP_printf(10, "MultiRequest reply at offset 0x%X: ", offset);
     mem = countp + offset;
     if (reply_size)
     {
@@ -1591,8 +1591,8 @@ void EIP_dump_connection (const EIPConnection *c)
     printf ("    SOCKET          : %d\n", c->sock);
     printf ("    buffer_limit    : %u\n", (unsigned int)c->transfer_buffer_limit);
     printf ("    millisec_timeout: %u\n", (unsigned int)c->millisec_timeout);
-    printf ("    CN_UDINT session: 0x%08lX\n", c->session);
-    printf ("    buffer location : 0x%08lX\n", (unsigned long)c->buffer);
+    printf ("    CN_UDINT session: 0x%08X\n", c->session);
+    printf ("    buffer location : 0x%lX\n", (unsigned long)c->buffer);
     printf ("    buffer size     : %u\n", (unsigned int)EIP_BUFFER_SIZE);
 }
 

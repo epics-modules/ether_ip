@@ -1,4 +1,4 @@
-/* $Id$
+/* $Id: ether_ip.h,v 1.10 2011/04/12 18:08:48 saa Exp $
  *
  * ether_ip
  *
@@ -202,8 +202,8 @@ typedef signed char    CN_SINT;
 typedef unsigned char  CN_USINT;
 typedef unsigned short CN_UINT;
 typedef short          CN_INT;
-typedef unsigned long  CN_UDINT;
-typedef long           CN_DINT;
+typedef unsigned int   CN_UDINT;
+typedef int            CN_DINT;
 typedef float          CN_REAL;
 
 typedef enum

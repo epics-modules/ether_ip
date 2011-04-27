@@ -1,4 +1,4 @@
-/* $Id: devEtherIP.c,v 1.25 2009/06/01 14:25:49 kasemir Exp $
+/* $Id: devEtherIP.c,v 1.12 2011/04/12 18:08:48 saa Exp $
  *
  * devEtherIP
  *
@@ -142,9 +142,9 @@ static void dump_DevicePrivate(const dbCommon *rec)
     printf("   string_tag : '%s', element %d\n",
            pvt->string_tag, (int)pvt->element);
     printf("   mask       : 0x%08X    spec. opts.: %d\n",
-           (unsigned int)pvt->mask, pvt->special);
-    printf("   plc        : 0x%08X    tag        : 0x%08X\n",
-           (unsigned int)pvt->plc, (unsigned int)pvt->tag);
+           pvt->mask, pvt->special);
+    printf("   plc        : 0x%lX    tag        : 0x%lX\n",
+           (unsigned long)pvt->plc, (unsigned long)pvt->tag);
 }
 
 /* Helper: check for valid DevicePrivate, lock data
@@ -229,7 +229,7 @@ static eip_bool get_bits(dbCommon *rec, size_t bits, RVALTYPE *rval)
             }
         }
         if (value & mask)
-            *rval |= (unsigned long)1 << i;
+            *rval |= 1 << (RVALTYPE)i;
     }
     return true;
 }
@@ -403,8 +403,8 @@ static void check_ao_callback(void *arg)
             (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != dint))
         {
             if (rec->tpro)
-                printf("AO '%s': got %ld from driver\n",
-                       rec->name, (long)dint);
+                printf("AO '%s': got %d from driver\n",
+                       rec->name, dint);
             if (!rec->udf  &&  pvt->special & SPCO_FORCE)
             {
                 if (rec->tpro)
@@ -1354,7 +1354,7 @@ static long wf_read(waveformRecord *rec)
             {   /* CIP data is something other than REAL and SINT */
                 if (rec->ftvl == menuFtypeLONG)
                 {
-                    dint = (long *)rec->bptr;
+                    dint = (CN_DINT *)rec->bptr;
                     for (i=0; ok && i<rec->nelm; ++i, ++dint)
                         ok = get_CIP_DINT(pvt->tag->data, i, dint);
                     if (ok)

@@ -1,4 +1,4 @@
-/* $Id: drvEtherIP.c,v 1.45 2009/09/01 21:21:04 kasemir Exp $
+/* $Id: drvEtherIP.c,v 1.14 2011/04/12 18:08:48 saa Exp $
  *
  * drvEtherIP
  *
@@ -94,11 +94,11 @@ DrvEtherIP_Private drvEtherIP_private = { {NULL, NULL}, 0 };
 static void dump_TagInfo(const TagInfo *info, int level)
 {
     char buffer[EIP_MAX_TAG_LENGTH];
-    printf("*** Tag '%s' @ 0x%X:\n", info->string_tag, (unsigned int)info);
+    printf("*** Tag '%s' @ 0x%lX:\n", info->string_tag, (unsigned long)info);
     if (level > 3)
     {
-        printf("  scanlist            : 0x%X\n",
-               (unsigned int)info->scanlist);
+        printf("  scanlist            : 0x%lX\n",
+               (unsigned long)info->scanlist);
         EIP_copy_ParsedTag(buffer, info->tag);
         printf("  compiled tag        : '%s', %d elements\n",
         	   buffer, (unsigned)info->elements);
@@ -106,8 +106,8 @@ static void dump_TagInfo(const TagInfo *info, int level)
         	   (unsigned)info->cip_r_request_size, (unsigned)info->cip_r_response_size);
         printf("  cip write req./resp.: %u / %u\n",
         	   (unsigned)info->cip_w_request_size, (unsigned)info->cip_w_response_size);
-        printf("  data_lock ID        : 0x%X\n",
-               (unsigned int) info->data_lock);
+        printf("  data_lock ID        : 0x%lX\n",
+               (unsigned long) info->data_lock);
     }
     if (epicsMutexLock(info->data_lock) == epicsMutexLockOK)
     {
@@ -226,8 +226,8 @@ static void dump_ScanList(const ScanList *list, int level)
 {
     const TagInfo *info;
     char      tsString[50];
-    printf("Scanlist %g secs @ 0x%X:\n",
-           list->period, (unsigned int)list);
+    printf("Scanlist %g secs @ 0x%lX:\n",
+           list->period, (unsigned long)list);
     printf("  Status        : %s\n",
            (list->enabled ? "enabled" : "DISABLED"));
     epicsTimeToStrftime(tsString, sizeof(tsString),
@@ -633,7 +633,7 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
 {
     TagInfo             *info, *info_position;
     size_t              count, requests_size, responses_size;
-    size_t              multi_request_size, multi_response_size;
+    size_t              multi_request_size = 0, multi_response_size = 0;
     size_t              send_size, i, elements;
     CN_USINT            *send_request, *multi_request, *request;
     const CN_USINT      *response, *single_response, *data;
@@ -1068,8 +1068,8 @@ long drvEtherIP_report(int level)
         return 0;
     }
     if (level > 1)
-        printf("  Mutex lock: 0x%X\n",
-               (unsigned int) drvEtherIP_private.lock);
+        printf("  Mutex lock: 0x%lX\n",
+               (unsigned long) drvEtherIP_private.lock);
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
          plc;  plc = DLL_next(PLC,plc))
     {
@@ -1089,10 +1089,10 @@ long drvEtherIP_report(int level)
         }
         if (level > 2)
         {
-            printf("  Mutex lock            : 0x%X\n",
-                   (unsigned int)plc->lock);
-            printf("  scan task ID          : 0x%X (%s)\n",
-                   (unsigned int) plc->scan_task_id,
+            printf("  Mutex lock            : 0x%lX\n",
+                   (unsigned long)plc->lock);
+            printf("  scan task ID          : 0x%lX (%s)\n",
+                   (unsigned long) plc->scan_task_id,
                    (plc->scan_task_id==0 ? "-dead-" :
 #ifdef HAVE_314_API
                     epicsThreadIsSuspended(plc->scan_task_id)!=0 ? "suspended":
