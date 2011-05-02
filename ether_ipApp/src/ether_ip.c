@@ -26,6 +26,7 @@
 
 /* EPICS */
 #include<epicsTime.h>
+#include<osiSock.h>
 
 /* Local */
 #include"ether_ip.h"
@@ -1597,10 +1598,10 @@ void EIP_dump_connection (const EIPConnection *c)
 }
 
 /* set socket to non-blocking */
-static void set_nonblock (SOCKET s, eip_bool nonblock)
+static void set_nonblock (EIP_SOCKET s, eip_bool nonblock)
 {
     int yesno = nonblock;
-    socket_ioctl(s, FIONBIO, &yesno);
+    EIP_socket_ioctl(s, FIONBIO, &yesno);
 }
 
 #ifndef vxWorks
@@ -1610,7 +1611,7 @@ static void set_nonblock (SOCKET s, eip_bool nonblock)
  *
  * Return codea ala vxWorks: OK == 0, ERROR == -1
  */
-static int connectWithTimeout (SOCKET s, const struct sockaddr *addr,
+static int connectWithTimeout (EIP_SOCKET s, const struct sockaddr *addr,
                                int addr_size,
                                struct timeval *timeout)
 {
@@ -1620,8 +1621,8 @@ static int connectWithTimeout (SOCKET s, const struct sockaddr *addr,
     set_nonblock (s, true);
     if (connect (s, addr, addr_size) < 0)
     {
-        error = SOCKERRNO;
-        if (error == SOCK_EWOULDBLOCK || error == SOCK_EINPROGRESS)
+        error = EIP_SOCKERRNO;
+        if (error == EIP_SOCK_EWOULDBLOCK || error == EIP_SOCK_EINPROGRESS)
         {
             /* Wait for connection until timeout:
              * success is reported in writefds */
@@ -1636,20 +1637,6 @@ static int connectWithTimeout (SOCKET s, const struct sockaddr *addr,
     set_nonblock (s, false);
 
     return 0;
-}
-
-/*
- * NOTE: base/src/libCom/osi/os/<arch>/osdSock.c defines hostToIPAddr which
- * could be used by EIP_connect instead.
- */
-static unsigned long hostGetByName (const char *ip_addr)
-{
-    struct hostent *hostent;
-
-    hostent = gethostbyname (ip_addr);
-    if (!hostent)
-        return -1;
-    return *((unsigned long *) hostent->h_addr);
 }
 
 #endif
@@ -1690,7 +1677,6 @@ eip_bool EIP_connect(EIPConnection *c,
 {
     struct sockaddr_in addr;
     struct timeval timeout;
-    unsigned long *addr_p;
     int flag = true;
 
     c->transfer_buffer_limit = EIP_buffer_limit;
@@ -1703,27 +1689,16 @@ eip_bool EIP_connect(EIPConnection *c,
     memset (&addr, 0, sizeof (addr));
     addr.sin_family = AF_INET;
     addr.sin_port = htons (port);
-#ifdef _WIN32
-    addr_p = &addr.sin_addr.S_un.S_addr;
-#else
-    addr_p =(unsigned long *) &addr.sin_addr.s_addr;
-#endif
-    *addr_p = inet_addr((char *)ip_addr);
-    if (*addr_p == -1)
-    {   /* ... or DNS */
-        *addr_p = hostGetByName ((char *)ip_addr);
-        if (*addr_p == -1)
-        {
+    if(hostToIPAddr(ip_addr, &addr.sin_addr) < 0) {
             EIP_printf (2, "EIP cannot find IP for '%s'\n",
                         ip_addr);
             return false;
-        }
-    }
+    }    
     if (c->sock != 0)
         EIP_printf (2, "EIP_connect found open socket\n");
     /* Create socket and set it to no-delay */
     c->sock = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (c->sock == INVALID_SOCKET)
+    if (c->sock == EIP_INVALID_SOCKET)
     {
         EIP_printf (2, "EIP cannot create socket\n");
         c->sock = 0;
@@ -1733,7 +1708,7 @@ eip_bool EIP_connect(EIPConnection *c,
                    (char *) &flag, sizeof ( flag )) < 0)
     {
         EIP_printf(2, "EIP cannot set socket option to TCP_NODELAY\n");
-        socket_close(c->sock);
+        EIP_socket_close(c->sock);
         c->sock = 0;
         return false;
     }
@@ -1743,7 +1718,7 @@ eip_bool EIP_connect(EIPConnection *c,
                            sizeof (addr), &timeout) != 0)
     {
         EIP_printf (3, "EIP cannot connect to %s:0x%04X\n", ip_addr, port);
-        socket_close (c->sock);
+        EIP_socket_close (c->sock);
         c->sock = 0;
         return false;
     }
@@ -1756,7 +1731,7 @@ static void EIP_disconnect (EIPConnection *c)
 {
     EIP_printf (9, "EIP disconnecting socket %d\n", c->sock);
 
-    socket_close (c->sock);
+    EIP_socket_close (c->sock);
     c->sock = 0;
 }
 

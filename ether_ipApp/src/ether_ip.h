@@ -27,12 +27,13 @@
 #include <winsock2.h>
 #pragma pack(push, 1)
 
-#define SOCKERRNO       WSAGetLastError()
-#define socket_close(S) closesocket(S)
-#define socket_ioctl(A,B,C) ioctlsocket(A,B,C)
-typedef u_long FAR osiSockIoctl_t;
-#define SOCK_EWOULDBLOCK WSAEWOULDBLOCK
-#define SOCK_EINPROGRESS WSAEINPROGRESS
+#define EIP_SOCKET          SOCKET
+#define EIP INVALID_SOCKET  INVALID_SOCKET
+#define EIP_SOCKERRNO       WSAGetLastError()
+#define EIP_socket_close(S) closesocket(S)
+#define EIP_socket_ioctl(A,B,C) ioctlsocket(A,B,C)
+#define EIP_SOCK_EWOULDBLOCK WSAEWOULDBLOCK
+#define EIP_SOCK_EINPROGRESS WSAEINPROGRESS
 /* end of Win32 settings */
 
 #else
@@ -56,14 +57,13 @@ typedef u_long FAR osiSockIoctl_t;
 #include <selectLib.h>
 #include <ctype.h>
 #include <tickLib.h>
-typedef int               SOCKET;
-#define INVALID_SOCKET    (-1)
-#define SOCKET_ERROR      (-1)
-#define SOCKERRNO         errno
-#define socket_close(S)   close(S)
-#define socket_ioctl(A,B,C) ioctl(A,B,(int)C)
-#define SOCK_EWOULDBLOCK  EWOULDBLOCK
-#define SOCK_EINPROGRESS  EINPROGRESS
+typedef int               EIP_SOCKET;
+#define EIP INVALID_SOCKET    (-1)
+#define EIP_SOCKERRNO         errno
+#define EIP_socket_close(S)   close(S)
+#define EIP_socket_ioctl(A,B,C) ioctl(A,B,(int)C)
+#define EIP_SOCK_EWOULDBLOCK  EWOULDBLOCK
+#define EIP_SOCK_EINPROGRESS  EINPROGRESS
 /* end of vxWorks settings */
 
 #else
@@ -80,14 +80,13 @@ typedef int               SOCKET;
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-typedef int               SOCKET;
-#define INVALID_SOCKET    (-1)
-#define SOCKET_ERROR      (-1)
-#define SOCKERRNO         errno
-#define socket_close(S)   close(S)
-#define socket_ioctl(A,B,C) ioctl(A,B,C)
-#define SOCK_EWOULDBLOCK  EWOULDBLOCK
-#define SOCK_EINPROGRESS  EINPROGRESS
+typedef int               EIP_SOCKET;
+#define EIP_INVALID_SOCKET    (-1)
+#define EIP_SOCKERRNO         errno
+#define EIP_socket_close(S)   close(S)
+#define EIP_socket_ioctl(A,B,C) ioctl(A,B,C)
+#define EIP_SOCK_EWOULDBLOCK  EWOULDBLOCK
+#define EIP_SOCK_EINPROGRESS  EINPROGRESS
 
 #ifdef SOLARIS
 #include <sys/filio.h>
@@ -640,7 +639,7 @@ typedef struct
  * sock == 0 is used to detect unused/shutdown connections. */
 typedef struct
 {
-    SOCKET                  sock;       /* silk or nylon */
+    EIP_SOCKET              sock;       /* silk or nylon */
     int                     slot;       /* PLC's slot on backplane */
     size_t                  transfer_buffer_limit; /* PLC limit */
     size_t                  millisec_timeout; /* .. for socket calls */
