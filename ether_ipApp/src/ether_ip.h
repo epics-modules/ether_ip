@@ -28,7 +28,7 @@
 #pragma pack(push, 1)
 
 #define EIP_SOCKET          SOCKET
-#define EIP INVALID_SOCKET  INVALID_SOCKET
+#define EIP_INVALID_SOCKET  INVALID_SOCKET
 #define EIP_SOCKERRNO       WSAGetLastError()
 #define EIP_socket_close(S) closesocket(S)
 #define EIP_socket_ioctl(A,B,C) ioctlsocket(A,B,C)
@@ -58,7 +58,7 @@
 #include <ctype.h>
 #include <tickLib.h>
 typedef int               EIP_SOCKET;
-#define EIP INVALID_SOCKET    (-1)
+#define EIP_INVALID_SOCKET    (-1)
 #define EIP_SOCKERRNO         errno
 #define EIP_socket_close(S)   close(S)
 #define EIP_socket_ioctl(A,B,C) ioctl(A,B,(int)C)
@@ -90,7 +90,6 @@ typedef int               EIP_SOCKET;
 
 #ifdef SOLARIS
 #include <sys/filio.h>
-#define INADDR_NONE (-1)
 #endif
 
 /* end of Unix settings */
