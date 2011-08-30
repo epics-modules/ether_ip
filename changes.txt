@@ -7,6 +7,11 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2011, Aug 30 ether_ip-2-23
+Stephanie Allison added support for 64 bit.
+Andrew Johnson reported successful test of the changes at APS
+and updated the Makefiles for parallel build via "make -j".
+
 * 2011, Mar 31 ether_ip-2-22
 John Sinclair sent fix for EIP_printf(4, .. call with possible null argument
 
