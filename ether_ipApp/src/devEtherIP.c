@@ -79,29 +79,30 @@ typedef enum
     SPCO_LIST_MAX_SCAN_TIME  = (1<<10),
     SPCO_TAG_TRANSFER_TIME   = (1<<11),
     SPCO_LIST_TIME           = (1<<12),
-    SPCO_INVALID             = (1<<13)
+    SPCO_INDEX_INCLUDED      = (1<<13),
+    SPCO_INVALID             = (1<<14)
 } SpecialOptions;
 
 static struct
 {
     const char *text;
-    size_t      len;
+	SpecialOptions mask;
 } special_options[] =
 {
-  { "E",                   1 },
-  { "S ",                  2 }, /* note <space> */
-  { "B ",                  2 }, /* note <space> */
-  { "FORCE",               5 }, /* Force output records to write when!=tag */
-  { "PLC_ERRORS",         10 }, /* Connection error count for tag's PLC */
-  { "PLC_TASK_SLOW",      13 }, /* How often scan task had no time to wait */
-  { "LIST_ERRORS",        11 }, /* Error count for tag's list */
-  { "LIST_TICKS",         10 }, /* 3.13-Ticktime when tag's list was checked */
-  { "LIST_SCAN_TIME",     14 }, /* Time for handling scanlist */
-  { "LIST_MIN_SCAN_TIME", 18 }, /* min. of '' */
-  { "LIST_MAX_SCAN_TIME", 18 }, /* max. of '' */
-  { "TAG_TRANSFER_TIME",  17 }, /* Time for last round-trip data request */
-  { "LIST_TIME",           9 }, /* 3.14-# of seconds since 0000 Jan 1, 1990 */
-                                /*      when tag's list was checked */
+  { "E",                  SPCO_READ_SINGLE_ELEMENT }, /* Force a SCAN for a single element */
+  { "S ",                 SPCO_SCAN_PERIOD        }, /* note <space> Set SCAN period for I/O */
+  { "B ",                 SPCO_BIT                }, /* note <space>  Select Bit out of element */
+  { "FORCE",              SPCO_FORCE              }, /* Force output records to write when!=tag */
+  { "PLC_ERRORS",         SPCO_PLC_ERRORS         }, /* Connection error count for tag's PLC */
+  { "PLC_TASK_SLOW",      SPCO_PLC_TASK_SLOW      }, /* How often scan task had no time to wait */
+  { "LIST_ERRORS",        SPCO_LIST_ERRORS        }, /* Error count for tag's list */
+  { "LIST_TICKS",         SPCO_LIST_TICKS         }, /* 3.13-Ticktime when tag's list was checked */
+  { "LIST_SCAN_TIME",     SPCO_LIST_SCAN_TIME     }, /* Time for handling scanlist */
+  { "LIST_MIN_SCAN_TIME", SPCO_LIST_MIN_SCAN_TIME }, /* min. of '' */
+  { "LIST_MAX_SCAN_TIME", SPCO_LIST_MAX_SCAN_TIME }, /* max. of '' */
+  { "TAG_TRANSFER_TIME",  SPCO_TAG_TRANSFER_TIME  }, /* Time for last round-trip data request */
+  { "LIST_TIME",          SPCO_LIST_TIME          }, /* 3.14-# of seconds since 0000 Jan 1, 1990 */
+  { "",                   0                       }, /*      when tag's list was checked */
 };
 
 /* Device Private:
@@ -252,7 +253,7 @@ static eip_bool put_bits(dbCommon *rec, size_t bits, RVALTYPE rval)
     if (rval & 1)
         value |= mask;
     else
-        value &= ~mask;
+        value = (value | mask) ^ mask;		/* Force the bit ON, then turn it off */
     for (i=1/*!*/; i<bits; ++i)
     {
         rval >>= 1;
@@ -285,7 +286,6 @@ static eip_bool put_bits(dbCommon *rec, size_t bits, RVALTYPE rval)
                      rec->name, (int)element);
         return false;
     }
-
     return true;
 }
 
@@ -726,15 +726,14 @@ static long analyze_link(dbCommon *rec,
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     char           *p, *end;
     size_t         i, tag_len, last_element, bit=0;
-    unsigned long  mask;
     double         period = 0.0;
     eip_bool       single_element = false;
-    SpecialOptions special = 0;
 
     if (pvt->link_text)
     {
     	EIP_printf(3, "EIP link changed for record %s\n", rec->name);
     	free(pvt->link_text);
+		pvt->link_text = NULL;
     }
     pvt->link_text = EIP_strdup(link->value.instio.string);
     if (! pvt->link_text)
@@ -752,17 +751,22 @@ static long analyze_link(dbCommon *rec,
     }
 
 
-    if (pvt->PLC_name)
+    if (pvt->PLC_name && strncmp(pvt->PLC_name, p, end-p) )
     {
     	EIP_printf(3, "EIP PLC changed for record %s\n", rec->name);
     	free(pvt->PLC_name);
+		pvt->PLC_name = NULL;
     }
-    pvt->PLC_name = EIP_strdup_n(p, end-p);
-    if (! pvt->PLC_name)
-    {
-        errlogPrintf("devEtherIP (%s): Cannot copy PLC\n", rec->name);
-        return S_dev_noMemory;
-    }
+	
+	if(!pvt->PLC_name)
+	{
+		pvt->PLC_name = EIP_strdup_n(p, end-p);
+		if (! pvt->PLC_name)
+    	{
+       		errlogPrintf("devEtherIP (%s): Cannot copy PLC\n", rec->name);
+        	return S_dev_noMemory;
+	    }
+	}
 
     /* Find Tag */
     p = find_token(end, &end);
@@ -775,31 +779,37 @@ static long analyze_link(dbCommon *rec,
     tag_len = end-p;
 
 
-    if (pvt->string_tag)
+    if (pvt->string_tag && strncmp(pvt->string_tag, p, tag_len) )
     {
     	EIP_printf(3, "EIP tag changed for record %s\n", rec->name);
     	free(pvt->string_tag);
+		pvt->string_tag = NULL;
     }
-    pvt->string_tag = EIP_strdup_n(p, tag_len);
-    if (! pvt->string_tag)
-    {
-        errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
-        return S_dev_noMemory;
-    }
+	
+	if(!pvt->string_tag)
+	{
+    	pvt->string_tag = EIP_strdup_n(p, tag_len);
+    	if (! pvt->string_tag)
+   		{
+        	errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
+        	return S_dev_noMemory;
+    	}
+	}
 
     /* Check for more flags */
+	pvt->special = 0;  /* Init special options */
     while ((p = find_token(end, &end)))
     {
-        for (i=0, mask=1;
-             mask < SPCO_INVALID;
-             ++i, mask=mask<<1)
+        for (i=0;
+             special_options[i].mask;
+             ++i)
         {
             if (strncmp(p,
                         special_options[i].text,
-                        special_options[i].len) == 0)
+                        strlen(special_options[i].text) ) == 0)
             {
-                special |= mask;
-                if (mask==SPCO_READ_SINGLE_ELEMENT)
+                pvt->special |= special_options[i].mask;
+                if (special_options[i].mask==SPCO_READ_SINGLE_ELEMENT)
                 {
                     if (count != 1)
                     {
@@ -811,7 +821,7 @@ static long analyze_link(dbCommon *rec,
                     }
                     single_element = true;
                 }
-                else if (mask==SPCO_SCAN_PERIOD)
+                else if (special_options[i].mask==SPCO_SCAN_PERIOD)
                 {
                     period = strtod(p+2, &end);
                     if (end==p || period==HUGE_VAL || period==-HUGE_VAL)
@@ -822,7 +832,7 @@ static long analyze_link(dbCommon *rec,
                         return S_db_badField;
                     }
                 }
-                else if (mask==SPCO_BIT)
+                else if (special_options[i].mask==SPCO_BIT)
                 {
                     bit = strtod(p+2, &end);
                     if (end==p || period==HUGE_VAL || period==-HUGE_VAL)
@@ -836,7 +846,7 @@ static long analyze_link(dbCommon *rec,
                 break;
             }
         }
-        if (mask >= SPCO_INVALID)
+        if (!special_options[i].mask)
         {
             errlogPrintf("devEtherIP (%s): Invalid flag '%s' in link '%s'\n",
                          rec->name, p, pvt->link_text);
@@ -844,7 +854,6 @@ static long analyze_link(dbCommon *rec,
         }
     }
 
-    pvt->special = special;
     if (period <= 0.0) /* no scan flag-> get SCAN field: */
     {
         period = get_period(rec);
@@ -886,6 +895,9 @@ static long analyze_link(dbCommon *rec,
                              rec->name, pvt->link_text);
                 return S_db_badField;
             }
+			/* Show that this definition included an index reference */
+			pvt->special |= SPCO_INDEX_INCLUDED;
+			
             /* remove element number text from tag */
             *p = '\0';
         }
@@ -899,26 +911,31 @@ static long analyze_link(dbCommon *rec,
         return S_db_badField;
     }
 
-    if (count > 1 && (bits > 0  || (special & SPCO_BIT)))
+    if (count > 1 && (bits > 0  || (pvt->special & SPCO_BIT)))
     {
         errlogPrintf("devEtherIP (%s): cannot access bits for array records\n",
                      rec->name);
         return S_db_badField;
     }
-    /* For Element==0 the following makes no difference, only
-     * for binary records (bits=1 or more)
-     * Options:
-     * a) assume BOOL array (default)
-     * b) non-BOOL, SPCO_BIT selected a bit in INT, DINT, ...
-     */
-    if (bits>0 && !(special & SPCO_BIT))
+
+    if (bits>0 && !(pvt->special & SPCO_BIT))
     {
-        /* For element>0, assume that it's a BOOL array,
-         * so the data is packed into UDINTs (CIP "BITS").
-         * The actual element requested is the UDINT index,
-         * not the bit#.
-         * Pick the bits within the UDINT via the mask. */
-        pvt->mask = 1U << (pvt->element & 0x1F); /* 0x1F == 31 */
+		/* This is defining a boolean object that didn't have a bit number */
+		if(pvt->special & SPCO_INDEX_INCLUDED)
+		{
+			/* If an index was supplied, it's a BOOL array,
+        	 * so the data is packed into UDINTs (CIP "BITS").
+        	 * The actual element requested is the UDINT index,
+        	 * not the bit#.
+        	 * Pick the bits within the UDINT via the mask.
+        	 */
+        	pvt->mask = 1U << (pvt->element & 0x1F); /* 0x1F == 31 */
+		}
+		else
+		{
+			/* There was no index, so it's just a plain BOOLEAN reference */
+			pvt->mask = 255;
+		}
         last_element = pvt->element + bits - 1;
         pvt->element >>= 5;
         last_element >>= 5;

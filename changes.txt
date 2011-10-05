@@ -7,6 +7,21 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2011, Oct 5 ether_ip-2-24
+David Dudley provided a fix for BOOL tags.
+BOOL[] and bits-in-DINT worked fine, but when attaching
+a bo record to an individual BOOL tag the following could happen:
+
+bo writes 'true' as 0x1 (bit #0 set)
+-> BOOL on PLC changes into 0xFF (all bits set).
+bo reads that back.
+When the bo now tried to write 'false',
+it used 0xFE (bit #0 cleared), which the PLC still
+considered 'true' (0xFF).
+With this patch the driver will write 0x00 (all bits cleared)
+for BOOL tags.
+
+
 * 2011, Aug 30 ether_ip-2-23
 Stephanie Allison added support for 64 bit.
 Andrew Johnson reported successful test of the changes at APS
