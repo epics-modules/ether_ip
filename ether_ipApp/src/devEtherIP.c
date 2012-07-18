@@ -70,17 +70,17 @@ typedef enum
     SPCO_SCAN_PERIOD         = (1<<1),
     SPCO_BIT                 = (1<<2),
     SPCO_FORCE               = (1<<3),
-    SPCO_PLC_ERRORS          = (1<<4),
-    SPCO_PLC_TASK_SLOW       = (1<<5),
-    SPCO_LIST_ERRORS         = (1<<6),
-    SPCO_LIST_TICKS          = (1<<7),
-    SPCO_LIST_SCAN_TIME      = (1<<8),
-    SPCO_LIST_MIN_SCAN_TIME  = (1<<9),
-    SPCO_LIST_MAX_SCAN_TIME  = (1<<10),
-    SPCO_TAG_TRANSFER_TIME   = (1<<11),
-    SPCO_LIST_TIME           = (1<<12),
-    SPCO_INDEX_INCLUDED      = (1<<13),
-    SPCO_INVALID             = (1<<14)
+    SPCO_INDEX_INCLUDED      = (1<<4),
+    SPCO_PLC_ERRORS          = (1<<6),
+    SPCO_PLC_TASK_SLOW       = (1<<7),
+    SPCO_LIST_ERRORS         = (1<<8),
+    SPCO_LIST_TICKS          = (1<<9),
+    SPCO_LIST_SCAN_TIME      = (1<<10),
+    SPCO_LIST_MIN_SCAN_TIME  = (1<<11),
+    SPCO_LIST_MAX_SCAN_TIME  = (1<<12),
+    SPCO_TAG_TRANSFER_TIME   = (1<<13),
+    SPCO_LIST_TIME           = (1<<14),
+    SPCO_INVALID             = (1<<15)
 } SpecialOptions;
 
 static struct

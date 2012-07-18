@@ -13,7 +13,7 @@ epicsEnvSet("EPICS_IOC_LOG_PORT", "6505")
 EIP_buffer_limit(450)
 drvEtherIP_init()
 
-# EIP_verbosity(7)
+#EIP_verbosity(10)
 
 # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
 # The driver/device uses the <name> to indentify the PLC.
@@ -26,7 +26,7 @@ drvEtherIP_init()
 # ControlLogix crate is slot 0.
 #drvEtherIP_define_PLC("plc1", "172.31.72.94", 0)
 #drvEtherIP_define_PLC("plc1", "172.31.74.78", 0)
-drvEtherIP_define_PLC("plc1", "10.1.2.2", 0)
+drvEtherIP_define_PLC("plc1", "160.91.236.42", 0)
 
 #dbLoadRecords("db/ramp.db",    "IOC=test")
 #dbLoadRecords("db/eip_stat.db","PLC=plc1,IOC=test,TAG=REAL")
