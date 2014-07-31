@@ -7,6 +7,13 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2014, Jul 31 ether_ip-2-25
+Hovanes Egiyan found bug in mbboDirect support,
+similar to what Rod Nussbaumer found in a modbus driver (http://www.aps.anl.gov/epics/tech-talk/2012/msg02155.php):
+EtherIP would read PLC updates into mbboDirect.VAL and RVAL, but when record processes, it updates those from
+its B0, B1, B2, .. fields.
+Now EtherIP will also update B0, B1, B2, .. when receiving PLC updates for mbboDirect.
+
 * 2012, Jul 18 ether_ip-2.24.1
 David Dudley provided correction to fix interfernce between BOOL tags
 and register array access.  Boolean tag flag was in the wrong location,

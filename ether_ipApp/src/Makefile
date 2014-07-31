@@ -9,6 +9,9 @@ include $(TOP)/configure/CONFIG
 HOST_OPT=NO
 CROSS_OPT=NO
 
+# On Darwin, got errors about unused assignment in recGblSetSevr
+USR_CFLAGS += -Wno-unused-value
+
 # On WIN32, have to add socket library
 # to build the test program
 SYS_PROD_LIBS_WIN32 = wsock32

@@ -26,6 +26,7 @@
 #include <link.h>
 #include <dbScan.h>
 #include <menuConvert.h>
+#include <menuOmsl.h>
 #include <aiRecord.h>
 #include <biRecord.h>
 #include <mbbiRecord.h>
@@ -612,8 +613,19 @@ static void check_mbbo_direct_callback(void *arg)
         else
         {
             rec->rval= rval;
-            rec->val = (unsigned int) rval;
+            rec->val = (epicsUInt16) rval;
             rec->udf = false;
+
+            if (rec->omsl == menuOmslsupervisory)
+            {   /* Record's process routine will read B0, B1, .. into VAL.
+                 * Update those to prevent clobbering VAL just fetched from the PLC.
+                 */
+                unsigned int i;
+                epicsUInt8 *bits = &rec->b0;
+                epicsUInt16 mask = 1;
+                for (i=0;  i<16;  ++i, mask<<=1)
+                    bits[i] = !!(rval & mask);
+            }
         }
         process = true;
     }

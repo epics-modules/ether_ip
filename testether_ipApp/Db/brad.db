@@ -1,119 +1,74 @@
 # EPICS Database file                    -*- shell-script -*-
 
-record(ai, "$(IOC):aiREAL1")
+record(ai, "$(IOC):ai")
 {
     field(SCAN, "1 second")
     field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_RealArray_10[1]")
+    field(INP, "@$(PLC) bool_array")
     field(PREC, "3")
 }
 
-record(ai, "$(IOC):aiREAL2")
+record(mbbiDirect, "$(IOC):mbbiDirect")
 {
     field(SCAN, "1 second")
     field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_RealArray_10[2]")
-    field(PREC, "3")
+    field(NOBT, "3")
+    field(INP, "@$(PLC) bool_array[1] S 3")
 }
 
-record(ai, "$(IOC):aiREAL3")
+record(mbboDirect, "$(IOC):mbboDirect")
 {
-    field(SCAN, "1 second")
     field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_RealArray_10[3]")
-    field(PREC, "3")
+    field(NOBT, "3")
+    field(OUT, "@$(PLC) bool_array[1] S 3")
+    field(TPRO, "1")
 }
 
-record(ai, "$(IOC):aiREAL5")
+record(bo, "$(IOC):b0")
 {
-    field(SCAN, "1 second")
     field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_RealArray_10[5]")
-    field(PREC, "3")
+    field(OUT, "@$(PLC) bool_array[0] S 3")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
 }
 
-record(ai, "$(IOC):aiREAL2")
+record(bo, "$(IOC):b1")
 {
-    field(SCAN, "1 second")
     field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_RealArray_10[2]")
-    field(PREC, "3")
+    field(OUT, "@$(PLC) bool_array[1] S 3")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
 }
 
-record(ai, "$(IOC):aiREAL9")
+record(bo, "$(IOC):b2")
 {
-    field(SCAN, "5 second")
     field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_RealArray_10[9]")
-    field(PREC, "3")
+    field(OUT, "@$(PLC) bool_array[2] S 3")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
 }
 
-
-record(ao, "$(IOC):aoREAL1")
+record(bo, "$(IOC):b3")
 {
-    field(SCAN, "Passive")
     field(DTYP, "EtherIP")
-    field(OUT, "@$(PLC) K_RealArray_10[1] S 1")
+    field(OUT, "@$(PLC) bool_array[3] S 3")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
 }
 
-record(ao, "$(IOC):error")
+record(bo, "$(IOC):b4")
 {
-    field(SCAN, "Passive")
     field(DTYP, "EtherIP")
-    field(OUT, "@$(PLC) K_RealArray_10[4] S 1")
+    field(OUT, "@$(PLC) bool_array[4] S 3")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
 }
 
-
-record(ai, "$(IOC):aiDINT5")
-{
-    field(SCAN, "5 second")
-    field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_DintArray_10[5]")
-    field(PREC, "3")
-}
-
-record(ai, "$(IOC):aiDINT6")
-{
-    field(SCAN, "5 second")
-    field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_DintArray_10[6]")
-    field(PREC, "3")
-}
-
-record(ai, "$(IOC):aiDINT9")
-{
-    field(SCAN, "1 second")
-    field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_DintArray_10[9] E")
-    field(PREC, "3")
-}
-
-record(ao, "$(IOC):aoDINT5")
+record(bo, "$(IOC):b5")
 {
     field(DTYP, "EtherIP")
-    field(OUT, "@$(PLC) K_DintArray_10[5] S 1")
-    field(PREC, "3")
-}
-
-record(ao, "$(IOC):aoDINT6")
-{
-    field(DTYP, "EtherIP")
-    field(OUT, "@$(PLC) K_DintArray_10[6] S 5")
-    field(PREC, "3")
-}
-
-
-record(ao, "$(IOC):aoDINT9")
-{
-    field(DTYP, "EtherIP")
-    field(OUT, "@$(PLC) K_DintArray_10[9] E S 5")
-    field(PREC, "3")
-}
-
-record(stringin, "$(IOC):stringin")
-{
-    field(SCAN, "5 second")
-    field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) K_String")
+    field(OUT, "@$(PLC) bool_array[5] S 3")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
 }
 
