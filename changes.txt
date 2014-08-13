@@ -7,6 +7,15 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2014, Aug 13 ether_ip-2-26
+Renamed the 'example' IOC into 'eipIoc', adding command line options to
+allow use similar to the EPICS base 'softIoc'.
+
+Example for defining a PLC, defining macros, loading a database:
+
+    eipIoc -p MyPLC=10.0.1.47 -m "PLC=MyPLC,IOC=test" -d /path/to/some.db
+
+ 
 * 2014, Jul 31 ether_ip-2-25
 Hovanes Egiyan found bug in mbboDirect support,
 similar to what Rod Nussbaumer found in a modbus driver (http://www.aps.anl.gov/epics/tech-talk/2012/msg02155.php):

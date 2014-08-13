@@ -7,8 +7,6 @@
 # is located
 EPICS_VER=R3.14.12.2
 EPICS_BASE_RELEASE=/Kram/epics/$(EPICS_VER)/base
-SHARE=/Kram/epics/$(EPICS_VER)/share
-ETHER_IP=$(SHARE)/ether_ip/ether_ip-2-21
 
 EPICS_BASE=$(EPICS_BASE_RELEASE)
 

@@ -1,9 +1,9 @@
-#! ../../bin/linux-x86/example
+#! ../../bin/linux-x86/eipIoc
 # 3.14 example startup file for a Host  -*- shell-script -*-
 
 # Load dbd, register the drvEtherIP.. commands
-dbLoadDatabase("../../dbd/example.dbd")
-example_registerRecordDeviceDriver(pdbbase)
+dbLoadDatabase("../../dbd/eipIoc.dbd")
+eipIoc_registerRecordDeviceDriver(pdbbase)
 
 epicsEnvSet("EPICS_IOC_LOG_INET", "127.0.0.1")
 epicsEnvSet("EPICS_IOC_LOG_PORT", "6505")
