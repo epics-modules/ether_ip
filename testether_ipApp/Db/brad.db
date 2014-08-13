@@ -4,7 +4,27 @@ record(ai, "$(IOC):ai")
 {
     field(SCAN, "1 second")
     field(DTYP, "EtherIP")
-    field(INP, "@$(PLC) bool_array")
+    field(INP, "@$(PLC) kay_int")
+    field(PREC, "3")
+}
+record(bi, "$(IOC):ai1")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) kay_int[1]")
+}
+record(bi, "$(IOC):ai1b")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) kay_int[0] B 1")
+}
+
+record(ao, "$(IOC):ao")
+{
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) kay_int S 0")
     field(PREC, "3")
 }
 
@@ -27,7 +47,7 @@ record(mbboDirect, "$(IOC):mbboDirect")
 record(bo, "$(IOC):b0")
 {
     field(DTYP, "EtherIP")
-    field(OUT, "@$(PLC) bool_array[0] S 3")
+    field(OUT, "@$(PLC) bool_array[0] E S 1")
     field(ZNAM, "Off")
     field(ONAM, "On")
 }
