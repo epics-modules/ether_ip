@@ -4,3 +4,6 @@ Interfaces Allen Bradley ControlLogix 5000 PLCs as well as Compact Logix devices
 
 See http://ics-web.sns.ornl.gov/kasemir/etherip/index.html for more.
 
+See https://github.com/EPICSTools/ether_ip for a Java version of the basic communication library,
+not connected to an EPCIS IOC.
+
