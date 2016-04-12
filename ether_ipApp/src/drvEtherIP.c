@@ -689,7 +689,7 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                 }
                 ok = request &&
                     make_CIP_WriteData(
-                        request, info->tag,
+                        request, info->cip_w_request_size, info->tag,
                         (CIP_Type)get_CIP_typecode(info->data),
                         info->elements, info->data + CIP_Typecode_size);
                 epicsMutexUnlock(info->data_lock);

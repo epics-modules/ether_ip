@@ -451,7 +451,7 @@ const CN_USINT *check_CIP_ReadData_Response(const CN_USINT *response,
  * Also copies data into buffer,
  * data has to be in network format already!
  */
-CN_USINT *make_CIP_WriteData(CN_USINT *buf, const ParsedTag *tag,
+CN_USINT *make_CIP_WriteData(CN_USINT *buf, size_t buf_size, const ParsedTag *tag,
                              CIP_Type type, size_t elements,
                              CN_USINT *raw_data);
 void dump_CIP_WriteRequest(const CN_USINT *request);
@@ -497,6 +497,12 @@ eip_bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
 eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
                   size_t element, CN_DINT value);
 
+/*
+ * Fill raw_type_and_data with data and data length.  Leave
+ * the other portion of it unchanged.
+ */
+eip_bool put_CIP_STRING(const CN_USINT *raw_type_and_data,
+                  char *value, size_t size);
 
 /********************************************************
  * Encapsulation
