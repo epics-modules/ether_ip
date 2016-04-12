@@ -9,6 +9,9 @@ include $(TOP)/configure/CONFIG
 HOST_OPT=NO
 CROSS_OPT=NO
 
+# On Darwin, got errors about unused assignment in recGblSetSevr
+USR_CFLAGS += -Wno-unused-value
+
 # On WIN32, have to add socket library
 # to build the test program
 SYS_PROD_LIBS_WIN32 = wsock32
@@ -22,6 +25,12 @@ ether_ip_test_SYS_LIBS_solaris += nsl
 DBD = ether_ip.dbd
 
 LIBRARY_IOC = ether_ip
+
+INC += R314Compat.h
+INC += eip_bool.h
+INC += dl_list.h
+INC += ether_ip.h
+INC += drvEtherIP.h
 
 # create munch file for dynamic loading will install in <bin>
 PROD_IOC_vxWorks += ether_ipLib

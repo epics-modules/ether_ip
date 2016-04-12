@@ -7,6 +7,42 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2014, Aug 13 ether_ip-2-26
+Renamed the 'example' IOC into 'eipIoc', adding command line options to
+allow use similar to the EPICS base 'softIoc'.
+
+Example for defining a PLC, defining macros, loading a database:
+
+    eipIoc -p MyPLC=10.0.1.47 -m "PLC=MyPLC,IOC=test" -d /path/to/some.db
+
+ 
+* 2014, Jul 31 ether_ip-2-25
+Hovanes Egiyan found bug in mbboDirect support,
+similar to what Rod Nussbaumer found in a modbus driver (http://www.aps.anl.gov/epics/tech-talk/2012/msg02155.php):
+EtherIP would read PLC updates into mbboDirect.VAL and RVAL, but when record processes, it updates those from
+its B0, B1, B2, .. fields.
+Now EtherIP will also update B0, B1, B2, .. when receiving PLC updates for mbboDirect.
+
+* 2012, Jul 18 ether_ip-2.24.1
+David Dudley provided correction to fix interfernce between BOOL tags
+and register array access.  Boolean tag flag was in the wrong location,
+and would prevent access to variable array elements.
+
+* 2011, Oct 5 ether_ip-2-24
+David Dudley provided a fix for BOOL tags.
+BOOL[] and bits-in-DINT worked fine, but when attaching
+a bo record to an individual BOOL tag the following could happen:
+
+bo writes 'true' as 0x1 (bit #0 set)
+-> BOOL on PLC changes into 0xFF (all bits set).
+bo reads that back.
+When the bo now tried to write 'false',
+it used 0xFE (bit #0 cleared), which the PLC still
+considered 'true' (0xFF).
+With this patch the driver will write 0x00 (all bits cleared)
+for BOOL tags.
+
+
 * 2011, Aug 30 ether_ip-2-23
 Stephanie Allison added support for 64 bit.
 Andrew Johnson reported successful test of the changes at APS
