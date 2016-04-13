@@ -7,6 +7,10 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2016, Apr 13 ether_ip-2-27
+Credit to William Lu for stringout support code.  Works with 40-char limit of 
+EPICS stringout.  Version merging and testing (R3.14.12.5) by Wesley Moore.
+
 * 2014, Aug 13 ether_ip-2-26
 Renamed the 'example' IOC into 'eipIoc', adding command line options to
 allow use similar to the EPICS base 'softIoc'.
