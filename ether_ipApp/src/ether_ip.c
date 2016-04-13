@@ -1294,6 +1294,41 @@ eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
     return false;
 }
 
+/*
+ * Set the data size and fill the data buffer of the CIP structure.  Leave the
+ * other portion of the CIP structure unchanged.
+ */
+eip_bool put_CIP_STRING(const CN_USINT *raw_type_and_data,
+          char *value, size_t size)
+{
+    CN_UINT  type, subtype, len, no_idea_what_this_is;
+    CN_USINT *buf, *plen;
+
+    buf = (CN_USINT *) unpack_UINT(raw_type_and_data, &type);
+    if (type != T_CIP_STRUCT)
+    {
+        EIP_printf(1, "EIP put_CIP_STRING: unknown type %d\n", (int) type);
+        return false;
+    }
+    plen = buf = (CN_USINT *) unpack_UINT(buf, &subtype);
+    if (subtype != T_CIP_STRUCT_STRING)
+    {
+        EIP_printf(1, "EIP put_CIP_STRING: unknown subtype %d\n",
+                   (int) subtype);
+        return false;
+    }
+    buf = (CN_USINT *) unpack_UINT(buf, &len);
+    buf = (CN_USINT *) unpack_UINT(buf, &no_idea_what_this_is);
+
+    len = (CN_UINT) strlen(value);
+    if (len + (buf - raw_type_and_data) >= size)
+        len = size - (buf - raw_type_and_data) - 1;
+    pack_UINT(plen, len);
+    memcpy(buf, value, len);
+    *(buf+len) = '\0';
+    return true;
+}
+
 /* Test CIP_ReadData response, returns data and fills data_size if so */
 const CN_USINT *check_CIP_ReadData_Response(const CN_USINT *response,
                                             size_t response_size,
@@ -1325,16 +1360,48 @@ static size_t CIP_WriteData_size (const ParsedTag *tag, size_t data_size)
  * Also copies data into buffer,
  * data has to be in network format already!
  */
-CN_USINT *make_CIP_WriteData (CN_USINT *buf, const ParsedTag *tag,
+CN_USINT *make_CIP_WriteData (CN_USINT *request, size_t buf_size, const ParsedTag *tag,
                               CIP_Type type, size_t elements,
                               CN_USINT *raw_data)
 {
-    size_t data_size = CIP_Type_size (type) * elements;
-    buf = make_MR_Request (buf, S_CIP_WriteData, tag_path_size (tag));
-    buf = make_tag_path (buf, tag);
-    buf = pack_UINT (buf, type);
-    buf = pack_UINT (buf, elements);
-    memcpy (buf, raw_data, data_size);
+    size_t data_size;
+    CN_USINT *buf = request;
+    /* type is 1 byte but T_CIP_STRUCT is 2 bytes.  So I can only compare
+     * the first byte of T_CIP_STRUCT.  This is not a good way to check string
+     * type, but I also don't want to change the get_CIP_typecode() because I
+     * don't know why it has been written that way (only return 1 byte). -W.L.
+     */
+    if (type == (T_CIP_STRUCT & 0xFF))
+    {
+        /* string value is always terminated with '\0' which is inserted
+         * by record support so_write() (by calling put_CIP_STRING()).
+         * Below, +6 to skip the T_CIP_STRUCT_STRING, length, and reserved byte.
+         */
+        data_size = strlen((char*)raw_data + 6);
+        buf = make_MR_Request (buf, S_CIP_WriteData, tag_path_size (tag));
+        buf = make_tag_path (buf, tag);
+        buf = pack_UINT(buf, T_CIP_STRUCT);
+        buf = pack_UINT(buf, T_CIP_STRUCT_STRING);
+        buf = pack_UINT(buf, elements);
+        buf = pack_UINT(buf, data_size); /* string length */
+        buf = pack_UINT(buf, 0); /* this might be a reserved word */
+        if (buf - request + data_size >= buf_size)
+        {
+            data_size = buf_size - (buf - request) - 1;
+            EIP_printf(2, "%s is too long to fit in request package.  Truncated to %d bytes\n",
+                    raw_data, data_size);
+        }
+        memcpy (buf, raw_data + 6, data_size);
+        buf[data_size++] = '\0'; /* increase data_size by 1 to be consistent with the other types */
+    }
+    else {
+        data_size = CIP_Type_size (type) * elements;
+        buf = make_MR_Request (buf, S_CIP_WriteData, tag_path_size (tag));
+        buf = make_tag_path (buf, tag);
+        buf = pack_UINT (buf, type);
+        buf = pack_UINT (buf, elements);
+        memcpy (buf, raw_data, data_size);
+    }
 
     if (EIP_verbosity >= 10)
     {
@@ -2728,7 +2795,7 @@ eip_bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
                                            c->slot);
     if (! msg_request)
         return 0;
-    if (! make_CIP_WriteData(msg_request, tag, type, elements, data))
+    if (! make_CIP_WriteData(msg_request, EIP_BUFFER_SIZE, tag, type, elements, data))
         return 0;
     if (! EIP_send_connection_buffer(c))
     {
