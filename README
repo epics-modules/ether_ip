@@ -1,6 +1,10 @@
 "EtherIP" driver/device support module for EPICS.
 
-Interfaces Allen Bradley ControlLogix 5000 PLCs as well as Compact Logix devices (see www.ab.com) via Ethernet to EPICS IOCs under EPICS R3.13 or R3.14.
+Interfaces Allen Bradley PLCs (see www.ab.com) via Ethernet to EPICS IOCs under EPICS R3.13 or R3.14:
+ * ControlLogix 5000,
+   both original versions with separate controller and ENET module,
+   and L8x series that includes a network port in the controller.
+ * Compact Logix devices
 
 See http://ics-web.sns.ornl.gov/kasemir/etherip/index.html for more.
 

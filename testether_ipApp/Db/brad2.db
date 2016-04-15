@@ -1,0 +1,43 @@
+# EPICS Database file                    -*- shell-script -*-
+
+record(ai, "$(IOC):ai")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) L85E_RealArray40[0]")
+    field(PREC, "3")
+}
+record(bi, "$(IOC):ai1")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) L85E_RealArray40[1]")
+}
+record(bi, "$(IOC):ai1b")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) L85E_DINTArray40[0] B 1")
+}
+
+record(ao, "$(IOC):ao")
+{
+    field(SCAN, "Passive")
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) L85E_RealArray40[0] S 1")
+    field(PREC, "3")
+}
+
+record(stringin, "$(IOC):si")
+{
+    field(SCAN, "1 second")
+    field(DTYP, "EtherIP")
+    field(INP, "@$(PLC) L85E_String1")
+}
+
+record(stringout, "$(IOC):so")
+{
+    field(DTYP, "EtherIP")
+    field(OUT, "@$(PLC) L85E_String1 S 1")
+}
+
