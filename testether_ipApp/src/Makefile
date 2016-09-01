@@ -24,14 +24,6 @@ eipIoc_SRCS_vxWorks += -nil-
 #The following adds support from base/src/vxWorks
 eipIoc_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
 
-# Use win32 object libs for registered support
-eipIoc_LIBS_win32 += recIocObj
-eipIoc_LIBS_win32 += softDevIocObj
-eipIoc_LIBS_win32 += testDevIocObj
-eipIoc_LIBS_DEFAULT += recIoc
-eipIoc_LIBS_DEFAULT += softDevIoc
-eipIoc_LIBS_DEFAULT += testDevIoc
-
 eipIoc_LIBS += ether_ip
 ether_ip_DIR = $(INSTALL_LIB)
 
