@@ -5,9 +5,10 @@
 # Specify the full path to your EPICS base location
 # as well as the 'share' section where the EtherIP driver
 # is located
-EPICS_VER=master
-EPICS_BASE_RELEASE=/home/controls/epics/base/$(EPICS_VER)
 
-EPICS_BASE=$(EPICS_BASE_RELEASE)
+#EPICS_VER=master
+#EPICS_BASE_RELEASE=/home/controls/epics/base/$(EPICS_VER)
+#EPICS_BASE=$(EPICS_BASE_RELEASE)
 
-
+# Use local settings (if present)
+-include $(TOP)/../RELEASE.local
