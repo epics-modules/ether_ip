@@ -8,8 +8,10 @@ include $(TOP)/configure/CONFIG
 # <name>.dbd will be created from <name>Include.dbd
 DBD += eipIoc.dbd
 
-#=============================
+eipIoc_DBD += base.dbd
+eipIoc_DBD += ether_ip.dbd
 
+# Hard-code location of DBD in product
 FINAL_LOCATION = $(shell $(PERL) $(TOOLS)/fullPathName.pl $(INSTALL_LOCATION))
 EIP_DBD = $(FINAL_LOCATION)/dbd/eipIoc.dbd
 USR_CPPFLAGS += -DEIP_DBD=\"$(EIP_DBD)\"
