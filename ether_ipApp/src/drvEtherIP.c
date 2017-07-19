@@ -984,6 +984,11 @@ static eip_bool find_PLC_tag(PLC *plc,
     return false;
 }
 
+int drvEtherIP_initialized()
+{
+    return drvEtherIP_private.lock != NULL;
+}
+
 /* ------------------------------------------------------------
  * public interface
  * ------------------------------------------------------------ */

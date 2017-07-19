@@ -1086,6 +1086,11 @@ static long init(int run)
 static long init_record(dbCommon *rec, EIPCallback cbtype,
                         const DBLINK *link, size_t count, size_t bits)
 {
+    if (! drvEtherIP_initialized())
+    {
+        errlogPrintf("devEtherIP (%s): Failed to all drvEtherIP_init()\n", rec->name);
+        return S_db_badField;
+    }
     DevicePrivate *pvt = calloc (sizeof (DevicePrivate), 1);
     if (! pvt)
     {

@@ -138,6 +138,8 @@ extern double drvEtherIP_default_rate;
 
 void drvEtherIP_help();
 
+int drvEtherIP_initialized();
+
 void drvEtherIP_init();
 
 long drvEtherIP_report(int level);
