@@ -1086,9 +1086,9 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
     return analyze_link(rec, cbtype, link, count, bits);
 }
 
-static long ai_add_record(aiRecord *rec)
+static long ai_add_record(dbCommon *rec)
 {
-    return init_record((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
+    return init_record(rec, scan_callback, &((aiRecord *)rec)->inp, 1, 0);
 }
 
 static long ai_del_record(dbCommon *rec)
@@ -1154,12 +1154,33 @@ static long wf_init_record(waveformRecord *rec)
     return status;
 }
 
+static long ao_add_record(dbCommon *rec)
+{
+    return init_record(rec, check_ao_callback, &((aoRecord *)rec)->out, 1, 0);
+}
+
+static long ao_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, check_ao_callback, rec);
+    free(pvt);
+
+    return 0;
+}
+
+static struct dsxt ao_ext = { ao_add_record, ao_del_record };
+
+static long ao_init(int run)
+{
+    if (run == 0)
+        devExtend(&ao_ext);
+    return init(run);
+}
+
 static long ao_init_record(aoRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, check_ao_callback,
-                              &rec->out, 1, 0);
-    if (status)
-        return status;
     return 2; /* don't convert, we have no value, yet */
 }
 
@@ -1814,7 +1835,7 @@ DSET devAoEtherIP =
 {
     6,
     NULL,
-    init,
+    ao_init,
     ao_init_record,
     NULL,
     ao_write,
