@@ -1178,14 +1178,28 @@ static long mbbi_direct_init_record(mbbiDirectRecord *rec)
 
 // ----------------------------------
 
+static long si_add_record(dbCommon *rec)
+{
+    return init_record(rec, scan_callback, &((stringinRecord *)rec)->inp, 1, 0);
+}
+
+static struct dsxt si_ext = { si_add_record, del_scan_callback_record };
+
+static long si_init(int run)
+{
+    if (run == 0)
+        devExtend(&si_ext);
+    return init(run);
+}
+
 static long si_init_record(stringinRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, scan_callback,
-                              &rec->inp, 1, 0);
-    return status;
+    return 0;
 }
 
 // ----------------------------------
+
+
 
 static long wf_init_record(waveformRecord *rec)
 {
@@ -1341,16 +1355,10 @@ static long ai_read(aiRecord *rec)
 static long bi_read(biRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status = 0;
     eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    if (status)
-    {
-        recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
-        return status;
-    }
     if (lock_data((dbCommon *)rec))
     {
         ok = get_bits((dbCommon *)rec, 1, &rec->rval);
@@ -1368,16 +1376,10 @@ static long bi_read(biRecord *rec)
 static long mbbi_read (mbbiRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status = 0;
     eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
-    if (status)
-    {
-        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-        return status;
-    }
     if (lock_data((dbCommon *)rec))
     {
         ok = get_bits((dbCommon *)rec, rec->nobt, &rec->rval);
@@ -1395,16 +1397,10 @@ static long mbbi_read (mbbiRecord *rec)
 static long mbbi_direct_read (mbbiDirectRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status = 0;
     eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    if (status)
-    {
-        recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
-        return status;
-    }
     if (lock_data((dbCommon *)rec))
     {
         ok = get_bits((dbCommon *)rec, rec->nobt, &rec->rval);
@@ -1422,17 +1418,10 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
 static long si_read(stringinRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status;
     eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
-    if (status)
-    {
-        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-        return status;
-    }
     if (lock_data((dbCommon *)rec))
     {
         ok = get_CIP_STRING(pvt->tag->data, &rec->val[0], MAX_STRING_SIZE);
@@ -1444,7 +1433,7 @@ static long si_read(stringinRecord *rec)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-    return status;
+    return 0;
 }
 
 static long wf_read(waveformRecord *rec)
@@ -1862,7 +1851,7 @@ DSET devSiEtherIP =
 {
     5,
     NULL,
-    init,
+    si_init,
     si_init_record,
     get_ioint_info,
     si_read
