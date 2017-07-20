@@ -428,7 +428,7 @@ static void check_ao_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce(rec);
+        scanOnce((dbCommon *)rec);
 }
 
 /* Callback for bo, see ao_callback comments */
@@ -480,7 +480,7 @@ static void check_bo_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce(rec);
+        scanOnce((dbCommon *)rec);
 }
 
 /* Callback for mbbo */
@@ -550,7 +550,7 @@ static void check_mbbo_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce (rec);
+        scanOnce ((dbCommon *)rec);
 }
 
 /* Callback for mbboDirect */
@@ -611,7 +611,7 @@ static void check_mbbo_direct_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce(rec);
+        scanOnce((dbCommon *)rec);
 }
 
 /* callback for stringout record */
@@ -665,7 +665,7 @@ static void check_so_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        scanOnce(rec);
+        scanOnce((dbCommon *)rec);
 }
 
 /* device support routine get_ioint_info */
@@ -1086,13 +1086,37 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
     return analyze_link(rec, cbtype, link, count, bits);
 }
 
+static long ai_add_record(aiRecord *rec)
+{
+    return init_record((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
+}
+
+static long ai_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, scan_callback, rec);
+    free(pvt);
+
+    return 0;
+}
+
+static struct dsxt ai_ext = { ai_add_record, ai_del_record };
+
+static long ai_init(int run)
+{
+    if (run == 0)
+        devExtend(&ai_ext);
+    return init(run);
+}
+
 static long ai_init_record(aiRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
     /* Make sure record processing routine does not perform any conversion*/
     if (rec->linr != menuConvertSLOPE)
         rec->linr = 0;
-    return status;
+    return 0;
 }
 
 static long bi_init_record(biRecord *rec)
@@ -1180,18 +1204,12 @@ static long so_init_record(stringoutRecord *rec)
 static long ai_read(aiRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status;
+    long status = 0;
     eip_bool ok;
     CN_DINT rval;
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1, 0);
-    if (status)
-    {
-        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-        return status;
-    }
     if ((ok = lock_data((dbCommon *)rec)))
     {
         /* Most common case: ai reads a tag from PLC */
@@ -1732,7 +1750,7 @@ DSET devAiEtherIP =
 {
     6,
     NULL,
-    init,
+    ai_init,
     ai_init_record,
     get_ioint_info,
     ai_read,
