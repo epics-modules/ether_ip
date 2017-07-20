@@ -47,18 +47,6 @@
 /* Base */
 #  include "epicsExport.h"
 
-   /* Contributed by Janet Anderson:
-    * Compatibility for R3.14.10 change in RVAL type
-    */
-#  define GE_EPICSBASE(v,r,l) ((EPICS_VERSION>=(v)) && (EPICS_REVISION>=(r)) && (EPICS_MODIFICATION>=(l)))
-#  if GE_EPICSBASE(3,14,10)
-#    define RVALTYPE epicsUInt32
-#    define RVALFMT "u"
-#  else
-#    define RVALTYPE unsigned long
-#    define RVALFMT "lu"
-#  endif
-
 /* Flags that pick special values instead of the tag's "value" */
 typedef enum
 {
@@ -194,7 +182,7 @@ static eip_bool check_data(const dbCommon *rec)
  * 1) NOBT might change but MASK is only set once
  * 2) MASK doesn't help when reading bits accross UDINT boundaries
  */
-static eip_bool get_bits(dbCommon *rec, size_t bits, RVALTYPE *rval)
+static eip_bool get_bits(dbCommon *rec, size_t bits, epicsUInt32 *rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
@@ -226,13 +214,13 @@ static eip_bool get_bits(dbCommon *rec, size_t bits, RVALTYPE *rval)
             }
         }
         if (value & mask)
-            *rval |= 1 << (RVALTYPE)i;
+            *rval |= 1 << (epicsUInt32)i;
     }
     return true;
 }
 
 /* Pendant to get_bits */
-static eip_bool put_bits(dbCommon *rec, size_t bits, RVALTYPE rval)
+static eip_bool put_bits(dbCommon *rec, size_t bits, epicsUInt32 rval)
 {
     DevicePrivate  *pvt = (DevicePrivate *)rec->dpvt;
     size_t         i, element = pvt->element;
@@ -437,7 +425,7 @@ static void check_bo_callback(void *arg)
     boRecord      *rec = (boRecord *) arg;
     struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    RVALTYPE      rval;
+    epicsUInt32   rval;
     eip_bool      process = false;
 
     /* We are about the check and even set val, & rval -> lock */
@@ -459,7 +447,7 @@ static void check_bo_callback(void *arg)
         (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("'%s': got %"RVALFMT" from driver\n", rec->name, rval);
+            printf("'%s': got %u from driver\n", rec->name, rval);
         if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
@@ -489,7 +477,7 @@ static void check_mbbo_callback(void *arg)
     mbboRecord    *rec = (mbboRecord *) arg;
     struct rset   *rset= (struct rset *)(rec->rset);
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    RVALTYPE      rval, *state_val;
+    epicsUInt32   rval, *state_val;
     size_t        i;
     eip_bool      process = false;
 
@@ -512,7 +500,7 @@ static void check_mbbo_callback(void *arg)
         (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("'%s': got %"RVALFMT" from driver\n", rec->name, rval);
+            printf("'%s': got %u from driver\n", rec->name, rval);
         if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
@@ -559,7 +547,7 @@ static void check_mbbo_direct_callback(void *arg)
     mbboDirectRecord *rec = (mbboDirectRecord *) arg;
     struct rset      *rset= (struct rset *)(rec->rset);
     DevicePrivate    *pvt = (DevicePrivate *)rec->dpvt;
-    RVALTYPE         rval;
+    epicsUInt32      rval;
     eip_bool         process = false;
 
     /* We are about the check and even set val, & rval -> lock */
@@ -581,7 +569,7 @@ static void check_mbbo_direct_callback(void *arg)
         (rec->udf || rec->sevr == INVALID_ALARM || rec->rval != rval))
     {
         if (rec->tpro)
-            printf("'%s': got %"RVALFMT" from driver\n",
+            printf("'%s': got %u from driver\n",
                    rec->name, rval);
         if (!rec->udf  &&  pvt->special & SPCO_FORCE)
         {
@@ -1098,7 +1086,6 @@ static long ai_del_record(dbCommon *rec)
     if (pvt->plc && pvt->tag)
         drvEtherIP_remove_callback(pvt->plc, pvt->tag, scan_callback, rec);
     free(pvt);
-
     return 0;
 }
 
@@ -1119,9 +1106,34 @@ static long ai_init_record(aiRecord *rec)
     return 0;
 }
 
+static long bi_add_record(dbCommon *rec)
+{
+    return init_record(rec, scan_callback, &((biRecord *)rec)->inp, 1, 1);
+}
+
+static long bi_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, scan_callback, rec);
+    free(pvt);
+    return 0;
+}
+
+static struct dsxt bi_ext = { bi_add_record, bi_del_record };
+
+static long bi_init(int run)
+{
+    if (run == 0)
+        devExtend(&bi_ext);
+    return init(run);
+}
+
 static long bi_init_record(biRecord *rec)
 {
-    return init_record((dbCommon *)rec, scan_callback, &rec->inp, 1, 1);
+    // Handled by bi_add_record
+    return 0;
 }
 
 static long mbbi_init_record(mbbiRecord *rec)
@@ -1569,7 +1581,7 @@ static long bo_write(boRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
-    RVALTYPE      rval;
+    epicsUInt32   rval;
     eip_bool      ok = true;
 
     if (rec->pact)
@@ -1594,7 +1606,7 @@ static long bo_write(boRecord *rec)
             if (rec->rval != rval)
             {
                 if (rec->tpro)
-                    printf("'%s': write %"RVALFMT"\n", rec->name, rec->rval);
+                    printf("'%s': write %u\n", rec->name, rec->rval);
                 ok = put_bits((dbCommon *)rec, 1, rec->rval);
                 if (pvt->tag->do_write)
                     EIP_printf(6,"'%s': already writing\n", rec->name);
@@ -1618,7 +1630,7 @@ static long mbbo_write (mbboRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
-    RVALTYPE      rval;
+    epicsUInt32   rval;
     eip_bool      ok = true;
 
     if (rec->pact)
@@ -1642,7 +1654,7 @@ static long mbbo_write (mbboRecord *rec)
         if (get_bits((dbCommon *)rec, rec->nobt, &rval) && rec->rval != rval)
         {
             if (rec->tpro)
-                printf("'%s': write %"RVALFMT"\n", rec->name, rec->rval);
+                printf("'%s': write %u\n", rec->name, rec->rval);
             ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
             if (pvt->tag->do_write)
                 EIP_printf(6,"'%s': already writing\n", rec->name);
@@ -1665,7 +1677,7 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     long          status;
-    RVALTYPE      rval;
+    epicsUInt32   rval;
     eip_bool      ok = true;
 
     if (rec->pact)
@@ -1689,7 +1701,7 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
         if (get_bits((dbCommon *)rec, rec->nobt, &rval)  &&  rec->rval != rval)
         {
             if (rec->tpro)
-                printf("'%s': write %"RVALFMT"\n", rec->name, rec->rval);
+                printf("'%s': write %u\n", rec->name, rec->rval);
             ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
             if (pvt->tag->do_write)
                 EIP_printf(6,"'%s': already writing\n", rec->name);
@@ -1782,7 +1794,7 @@ DSET devBiEtherIP =
 {
     6,
     NULL,
-    init,
+    bi_init,
     bi_init_record,
     get_ioint_info,
     bi_read,
