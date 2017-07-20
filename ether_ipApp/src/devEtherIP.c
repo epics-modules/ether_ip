@@ -298,11 +298,6 @@ static void scan_callback(void *arg)
     scanIoRequest(pvt->ioscanpvt);
 }
 
-static void etherIP_scanOnce(void * pRec)
-{
-    scanOnce ( pRec );
-}
-
 /* Callback from driver for every received tag, for ao record:
  * Check if
  *
@@ -433,7 +428,7 @@ static void check_ao_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        etherIP_scanOnce(rec);
+        scanOnce(rec);
 }
 
 /* Callback for bo, see ao_callback comments */
@@ -485,7 +480,7 @@ static void check_bo_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        etherIP_scanOnce(rec);
+        scanOnce(rec);
 }
 
 /* Callback for mbbo */
@@ -555,7 +550,7 @@ static void check_mbbo_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        etherIP_scanOnce (rec);
+        scanOnce (rec);
 }
 
 /* Callback for mbboDirect */
@@ -616,7 +611,7 @@ static void check_mbbo_direct_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        etherIP_scanOnce(rec);
+        scanOnce(rec);
 }
 
 /* callback for stringout record */
@@ -670,7 +665,7 @@ static void check_so_callback(void *arg)
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
-        etherIP_scanOnce(rec);
+        scanOnce(rec);
 }
 
 /* device support routine get_ioint_info */
