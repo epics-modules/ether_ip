@@ -1074,6 +1074,8 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
     return analyze_link(rec, cbtype, link, count, bits);
 }
 
+// ----------------------------------
+
 static long ai_add_record(dbCommon *rec)
 {
     return init_record(rec, scan_callback, &((aiRecord *)rec)->inp, 1, 0);
@@ -1106,6 +1108,8 @@ static long ai_init_record(aiRecord *rec)
     return 0;
 }
 
+// ----------------------------------
+
 static long bi_add_record(dbCommon *rec)
 {
     return init_record(rec, scan_callback, &((biRecord *)rec)->inp, 1, 1);
@@ -1125,6 +1129,8 @@ static long bi_init_record(biRecord *rec)
     // Handled by bi_add_record
     return 0;
 }
+
+// ----------------------------------
 
 static long mbbi_add_record(dbCommon *rec)
 {
@@ -1147,13 +1153,30 @@ static long mbbi_init_record(mbbiRecord *rec)
     return 0;
 }
 
+// ----------------------------------
+
+static long mbbi_direct_add_record(dbCommon *rec)
+{
+    mbbiDirectRecord *mbbi = (mbbiDirectRecord *)rec;
+    return init_record(rec, scan_callback, &mbbi->inp, 1, mbbi->nobt);
+}
+
+static struct dsxt mbbi_direct_ext = { mbbi_direct_add_record, del_scan_callback_record };
+
+static long mbbi_direct_init(int run)
+{
+    if (run == 0)
+        devExtend(&mbbi_direct_ext);
+    return init(run);
+}
+
 static long mbbi_direct_init_record(mbbiDirectRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, scan_callback,
-                              &rec->inp, 1, rec->nobt);
     rec->shft = 0;
-    return status;
+    return 0;
 }
+
+// ----------------------------------
 
 static long si_init_record(stringinRecord *rec)
 {
@@ -1162,12 +1185,16 @@ static long si_init_record(stringinRecord *rec)
     return status;
 }
 
+// ----------------------------------
+
 static long wf_init_record(waveformRecord *rec)
 {
     long status = init_record((dbCommon *)rec, scan_callback, &rec->inp,
                               rec->nelm, 0);
     return status;
 }
+
+// ----------------------------------
 
 static long ao_add_record(dbCommon *rec)
 {
@@ -1199,6 +1226,8 @@ static long ao_init_record(aoRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
+// ----------------------------------
+
 static long bo_init_record(boRecord *rec)
 {
     long status = init_record((dbCommon *)rec, check_bo_callback,
@@ -1207,6 +1236,8 @@ static long bo_init_record(boRecord *rec)
         return status;
     return 2; /* don't convert, we have no value, yet */
 }
+
+// ----------------------------------
 
 static long mbbo_init_record(mbboRecord *rec)
 {
@@ -1218,6 +1249,8 @@ static long mbbo_init_record(mbboRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
+// ----------------------------------
+
 static long mbbo_direct_init_record(mbboDirectRecord *rec)
 {
     long status = init_record((dbCommon *)rec, check_mbbo_direct_callback,
@@ -1228,6 +1261,8 @@ static long mbbo_direct_init_record(mbboDirectRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
+// ----------------------------------
+
 static long so_init_record(stringoutRecord *rec)
 {
     long status = init_record((dbCommon *)rec, check_so_callback,
@@ -1236,6 +1271,8 @@ static long so_init_record(stringoutRecord *rec)
         return status;
     return 2; /* don't convert, we have no value, yet */
 }
+
+// ----------------------------------
 
 static long ai_read(aiRecord *rec)
 {
@@ -1358,13 +1395,11 @@ static long mbbi_read (mbbiRecord *rec)
 static long mbbi_direct_read (mbbiDirectRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status;
+    long status = 0;
     eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, scan_callback,
-                        &rec->inp, 1, rec->nobt);
     if (status)
     {
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
@@ -1816,7 +1851,7 @@ DSET devMbbiDirectEtherIP =
 {
     6,
     NULL,
-    init,
+    mbbi_direct_init,
     mbbi_direct_init_record,
     get_ioint_info,
     mbbi_direct_read,
