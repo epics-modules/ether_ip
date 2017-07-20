@@ -1199,13 +1199,24 @@ static long si_init_record(stringinRecord *rec)
 
 // ----------------------------------
 
+static long wf_add_record(dbCommon *rec)
+{
+    waveformRecord *wf = (waveformRecord *) rec;
+    return init_record(rec, scan_callback, &wf->inp, wf->nelm, 0);
+}
 
+static struct dsxt wf_ext = { wf_add_record, del_scan_callback_record };
+
+static long wf_init(int run)
+{
+    if (run == 0)
+        devExtend(&wf_ext);
+    return init(run);
+}
 
 static long wf_init_record(waveformRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, scan_callback, &rec->inp,
-                              rec->nelm, 0);
-    return status;
+    return 0;
 }
 
 // ----------------------------------
@@ -1439,7 +1450,6 @@ static long si_read(stringinRecord *rec)
 static long wf_read(waveformRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status;
     eip_bool ok;
     CN_DINT *dint;
     CN_DINT dint_val;
@@ -1450,13 +1460,6 @@ static long wf_read(waveformRecord *rec)
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, scan_callback, &rec->inp,
-                        rec->nelm, 0);
-    if (status)
-    {
-        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-        return status;
-    }
     if ((ok = lock_data((dbCommon *)rec)))
     {
         if (pvt->tag->valid_data_size > 0 &&  pvt->tag->elements >= rec->nelm)
@@ -1531,7 +1534,7 @@ static long wf_read(waveformRecord *rec)
     }
     if (!ok)
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
-    return status;
+    return 0;
 }
 
 static long ao_write(aoRecord *rec)
@@ -1861,7 +1864,7 @@ DSET devWfEtherIP =
 {
     5,
     NULL,
-    init,
+    wf_init,
     wf_init_record,
     get_ioint_info,
     wf_read
