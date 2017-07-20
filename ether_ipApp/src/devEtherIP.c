@@ -1079,7 +1079,7 @@ static long ai_add_record(dbCommon *rec)
     return init_record(rec, scan_callback, &((aiRecord *)rec)->inp, 1, 0);
 }
 
-static long ai_del_record(dbCommon *rec)
+static long del_scan_callback_record(dbCommon *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     printf("Updating link for %s\n", rec->name);
@@ -1089,7 +1089,7 @@ static long ai_del_record(dbCommon *rec)
     return 0;
 }
 
-static struct dsxt ai_ext = { ai_add_record, ai_del_record };
+static struct dsxt ai_ext = { ai_add_record, del_scan_callback_record };
 
 static long ai_init(int run)
 {
@@ -1111,17 +1111,7 @@ static long bi_add_record(dbCommon *rec)
     return init_record(rec, scan_callback, &((biRecord *)rec)->inp, 1, 1);
 }
 
-static long bi_del_record(dbCommon *rec)
-{
-    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    printf("Updating link for %s\n", rec->name);
-    if (pvt->plc && pvt->tag)
-        drvEtherIP_remove_callback(pvt->plc, pvt->tag, scan_callback, rec);
-    free(pvt);
-    return 0;
-}
-
-static struct dsxt bi_ext = { bi_add_record, bi_del_record };
+static struct dsxt bi_ext = { bi_add_record, del_scan_callback_record };
 
 static long bi_init(int run)
 {
@@ -1136,12 +1126,25 @@ static long bi_init_record(biRecord *rec)
     return 0;
 }
 
+static long mbbi_add_record(dbCommon *rec)
+{
+    mbbiRecord *mbbi = (mbbiRecord *)rec;
+    return init_record(rec, scan_callback, &mbbi->inp, 1, mbbi->nobt);
+}
+
+static struct dsxt mbbi_ext = { mbbi_add_record, del_scan_callback_record };
+
+static long mbbi_init(int run)
+{
+    if (run == 0)
+        devExtend(&mbbi_ext);
+    return init(run);
+}
+
 static long mbbi_init_record(mbbiRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, scan_callback,
-                              &rec->inp, 1, rec->nobt);
     rec->shft = 0;
-    return status;
+    return 0;
 }
 
 static long mbbi_direct_init_record(mbbiDirectRecord *rec)
@@ -1301,12 +1304,11 @@ static long ai_read(aiRecord *rec)
 static long bi_read(biRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status;
+    long status = 0;
     eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, scan_callback, &rec->inp, 1, 1);
     if (status)
     {
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
@@ -1329,13 +1331,11 @@ static long bi_read(biRecord *rec)
 static long mbbi_read (mbbiRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long status;
+    long status = 0;
     eip_bool ok;
 
     if (rec->tpro)
         dump_DevicePrivate ((dbCommon *)rec);
-    status = check_link ((dbCommon *)rec, scan_callback,
-                         &rec->inp, 1, rec->nobt);
     if (status)
     {
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
@@ -1805,7 +1805,7 @@ DSET devMbbiEtherIP =
 {
     6,
     NULL,
-    init,
+    mbbi_init,
     mbbi_init_record,
     get_ioint_info,
     mbbi_read,
