@@ -44,7 +44,6 @@
 /* Local */
 #include "drvEtherIP.h"
 
-#ifdef HAVE_314_API
 /* Base */
 #  include "epicsExport.h"
 
@@ -59,11 +58,6 @@
 #    define RVALTYPE unsigned long
 #    define RVALFMT "lu"
 #  endif
-#else
-#  define RVALTYPE unsigned long
-#  define RVALFMT "lu"
-#endif
-
 
 /* Flags that pick special values instead of the tag's "value" */
 typedef enum
@@ -306,17 +300,6 @@ static void scan_callback(void *arg)
 
 static void etherIP_scanOnce(void * pRec)
 {
-    /*
-     * astonished to discover that initHookRegister is in
-     * initHooks.h in R3.13, but initHookRegister isnt
-     * in iocCore object file in R3.13, so we resort
-     * to an archaic brute force approach
-     */
-#   ifndef HAVE_314_API
-    while ( ! interruptAccept ) {
-        epicsThreadSleep  ( 0.1 );
-    }
-#   endif
     scanOnce ( pRec );
 }
 
@@ -1248,11 +1231,7 @@ static long ai_read(aiRecord *rec)
                 rec->val = (double) pvt->tag->scanlist->list_errors;
             else if ((pvt->special & SPCO_LIST_TICKS) ||
                      (pvt->special & SPCO_LIST_TIME))
-#ifdef HAVE_314_API
                 rec->val = (double) pvt->tag->scanlist->scan_time.secPastEpoch;
-#else
-                rec->val = (double) pvt->tag->scanlist->scan_time;
-#endif
             else if (pvt->special & SPCO_LIST_SCAN_TIME)
                 rec->val = pvt->tag->scanlist->last_scan_time;
             else if (pvt->special & SPCO_LIST_MIN_SCAN_TIME)
@@ -1873,7 +1852,6 @@ DSET devSoEtherIP =
     NULL
 };
 
-#ifdef HAVE_314_API
 epicsExportAddress(dset,devAiEtherIP);
 epicsExportAddress(dset,devBiEtherIP);
 epicsExportAddress(dset,devMbbiEtherIP);
@@ -1885,7 +1863,6 @@ epicsExportAddress(dset,devBoEtherIP);
 epicsExportAddress(dset,devMbboEtherIP);
 epicsExportAddress(dset,devMbboDirectEtherIP);
 epicsExportAddress(dset,devSoEtherIP);
-#endif
 
 /* EOF devEtherIP.c */
 

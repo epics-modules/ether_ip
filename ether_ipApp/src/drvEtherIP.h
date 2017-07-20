@@ -8,7 +8,11 @@
 
 #ifndef ETHERIP_MAYOR
 
-#include "R314Compat.h"
+#include "epicsMutex.h"
+#include "epicsEvent.h"
+#include "epicsThread.h"
+#include "epicsTime.h"
+
 #include "ether_ip.h"
 #include "dl_list.h"
 
@@ -174,9 +178,7 @@ int drvEtherIP_read_tag(const char *ip_addr,
                         int elements,
                         int timeout);
 
-#ifdef HAVE_314_API
 void drvEtherIP_Register();
-#endif
 
 #ifdef __cplusplus
 }

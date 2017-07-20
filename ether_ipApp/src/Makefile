@@ -26,7 +26,6 @@ DBD = ether_ip.dbd
 
 LIBRARY_IOC = ether_ip
 
-INC += R314Compat.h
 INC += eip_bool.h
 INC += dl_list.h
 INC += ether_ip.h

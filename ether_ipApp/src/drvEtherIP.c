@@ -18,14 +18,12 @@
 #include <errlog.h>
 /* Local */
 #include "drvEtherIP.h"
-#ifdef HAVE_314_API
 /* Base */
 #include "epicsExport.h"
 #include "initHooks.h"
 
 /* See drvEtherIP_initHook() */
 static int databaseIsReady = false;
-#endif
 
 double drvEtherIP_default_rate = 0.0;
 
@@ -213,14 +211,6 @@ static void free_TagInfo(TagInfo *info)
  * NOTE: None of these ScanList funcs do any locking,
  * The caller has to do that!
  */
-
-#ifndef HAVE_314_API
-void epicsTimeToStrftime(char *txt, size_t len, const char *fmt,
-                         const epicsTimeStamp *stamp)
-{
-    sprintf(txt, "%f secs", ((double)*stamp)/sysClkRateGet());
-}
-#endif
 
 static void dump_ScanList(const ScanList *list, int level)
 {
@@ -1004,9 +994,7 @@ void drvEtherIP_init ()
     if (! drvEtherIP_private.lock)
         EIP_printf (0, "drvEtherIP_init cannot create mutex!\n");
     DLL_init (&drvEtherIP_private.PLCs);
-#ifdef HAVE_314_API
     drvEtherIP_Register();
-#endif
 }
 
 void drvEtherIP_help()
@@ -1099,11 +1087,7 @@ long drvEtherIP_report(int level)
             printf("  scan task ID          : 0x%lX (%s)\n",
                    (unsigned long) plc->scan_task_id,
                    (plc->scan_task_id==0 ? "-dead-" :
-#ifdef HAVE_314_API
                     epicsThreadIsSuspended(plc->scan_task_id)!=0 ? "suspended":
-#else
-                    taskIdVerify(plc->scan_task_id) != OK   ? "-dead-" :
-#endif
                     "running"));
             epicsTimeGetCurrent(&now);
             epicsTimeToStrftime(tsString, sizeof(tsString),
@@ -1318,7 +1302,6 @@ int drvEtherIP_restart()
     if (drvEtherIP_private.lock == 0) return 0;
     epicsMutexLock(drvEtherIP_private.lock);
 
-#ifdef HAVE_314_API
     if (!databaseIsReady) {
         epicsMutexUnlock(drvEtherIP_private.lock);
         for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
@@ -1332,7 +1315,6 @@ int drvEtherIP_restart()
         }
         return 0;
     }
-#endif
 
     for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
          plc;  plc = DLL_next(PLC,plc))
@@ -1343,11 +1325,7 @@ int drvEtherIP_restart()
          * disconnect, PLC_scan_task will reconnect */
         disconnect_PLC(plc);
         /* check the scan task */
-#ifdef HAVE_314_API
         if (plc->scan_task_id==0)
-#else
-        if (plc->scan_task_id==0 || taskIdVerify(plc->scan_task_id)==ERROR)
-#endif
         {
             len = strlen(plc->name);
             if (len > 16)
@@ -1357,22 +1335,12 @@ int drvEtherIP_restart()
             taskname[2] = 'P';
             memcpy(&taskname[3], plc->name, len);
             taskname[len+3] = '\0';
-#ifdef HAVE_314_API
             plc->scan_task_id = epicsThreadCreate(
               taskname,
               epicsThreadPriorityHigh,
               epicsThreadGetStackSize(epicsThreadStackMedium),
               (EPICSTHREADFUNC)PLC_scan_task,
               (void *)plc);
-#else
-            plc->scan_task_id = taskSpawn(taskname,
-                                          EIPSCAN_PRI,
-                                          EIPSCAN_OPT,
-                                          EIPSCAN_STACK,
-                                          (FUNCPTR) PLC_scan_task,
-                                          (int) plc,
-                                          0, 0, 0, 0, 0, 0, 0, 0, 0);
-#endif
             EIP_printf(5, "drvEtherIP: launch scan task for PLC '%s'\n",
                        plc->name);
             ++tasks;
@@ -1422,7 +1390,6 @@ int drvEtherIP_read_tag(const char *ip_addr,
  * drvEtherIP_restart will therefore not perform anything until the database
  * is available as indicated by the init hook setting databaseIsReady
  */
-#ifdef HAVE_314_API
 void drvEtherIP_initHook ( initHookState state )
 {
     if (drvEtherIP_private.lock == 0) return;
@@ -1433,7 +1400,6 @@ void drvEtherIP_initHook ( initHookState state )
         drvEtherIP_restart();
     }
 }
-#endif
 
 static long drvEtherIP_drvInit ()
 {
@@ -1442,13 +1408,11 @@ static long drvEtherIP_drvInit ()
      * in initHooks.h in R3.13, but not in iocCore
      * object file in R3.13
      */
-#ifdef HAVE_314_API
     int status = initHookRegister ( drvEtherIP_initHook );
     if ( status ) {
         errlogPrintf (
               "drvEtherIP_drvInit: init hook install failed\n" );
     }
-#endif
     return 0;
 }
 
@@ -1465,7 +1429,5 @@ struct
     drvEtherIP_drvInit
 };
 
-#ifdef HAVE_314_API
 epicsExportAddress(drvet,drvEtherIP);
-#endif
 
