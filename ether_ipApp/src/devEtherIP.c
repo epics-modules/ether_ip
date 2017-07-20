@@ -1253,12 +1253,32 @@ static long ao_init_record(aoRecord *rec)
 
 // ----------------------------------
 
+static long bo_add_record(dbCommon *rec)
+{
+    return init_record(rec, check_bo_callback, &((boRecord *)rec)->out, 1, 1);
+}
+
+static long bo_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, check_bo_callback, rec);
+    free(pvt);
+    return 0;
+}
+
+static struct dsxt bo_ext = { bo_add_record, bo_del_record };
+
+static long bo_init(int run)
+{
+    if (run == 0)
+        devExtend(&bo_ext);
+    return init(run);
+}
+
 static long bo_init_record(boRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, check_bo_callback,
-                              &rec->out, 1, 1);
-    if (status)
-        return status;
     return 2; /* don't convert, we have no value, yet */
 }
 
@@ -1607,7 +1627,6 @@ static long ao_write(aoRecord *rec)
 static long bo_write(boRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long          status;
     epicsUInt32   rval;
     eip_bool      ok = true;
 
@@ -1620,12 +1639,6 @@ static long bo_write(boRecord *rec)
     }
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, check_bo_callback, &rec->out, 1, 1);
-    if (status)
-    {
-        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-        return status;
-    }
     if (lock_data((dbCommon *)rec))
     {
         if (get_bits((dbCommon *)rec, 1, &rval))
@@ -1885,7 +1898,7 @@ DSET devBoEtherIP =
 {
     6,
     NULL,
-    init,
+    bo_init,
     bo_init_record,
     NULL,
     bo_write,
