@@ -16,8 +16,8 @@
 #include "ether_ip.h"
 #include "dl_list.h"
 
-#define ETHERIP_MAYOR 2
-#define ETHERIP_MINOR 27
+#define ETHERIP_MAYOR 3
+#define ETHERIP_MINOR 0
 
 /* For timing */
 #define EIP_MIN_TIMEOUT         0.1  /* second */

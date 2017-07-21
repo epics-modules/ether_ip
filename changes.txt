@@ -7,6 +7,19 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2017, Jul 21 ether_ip-3-0
+Support "Extended Device Support" as introduced in EPICS base R3.14.8.
+
+--> REQUIRES EPICS BASE R3.14.8 OR HIGHER!
+
+This driver always permitted changing the INP or OUT links of records at runtime,
+for example to point to a different plc or tag name.
+EPICS R3.14.8 allows not only changing the INP/OUT link of records at runtime,
+but also the DTYP.
+To support this, the ether_ip device support needed to change in a way that is
+not compatible with earlier releases, so support for R3.14.7 and earlier, including R3.13.x,
+has been removed.
+
 * 2016, Apr 13 ether_ip-2-27
 Credit to William Lu for stringout support code.  Works with 40-char limit of 
 EPICS stringout.  Version merging and testing (R3.14.12.5) by Wesley Moore.
