@@ -1317,7 +1317,6 @@ static long mbbo_init_record(mbboRecord *rec)
 
 // ----------------------------------
 
-
 static long mbbo_direct_add_record(dbCommon *rec)
 {
     mbboDirectRecord *mbbo = (mbboDirectRecord *)rec;
@@ -1351,12 +1350,32 @@ static long mbbo_direct_init_record(mbboDirectRecord *rec)
 
 // ----------------------------------
 
+static long so_add_record(dbCommon *rec)
+{
+    return init_record(rec, check_so_callback, &((stringoutRecord *)rec)->out, 1, 0);
+}
+
+static long so_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, check_so_callback, rec);
+    free(pvt);
+    return 0;
+}
+
+static struct dsxt so_ext = { so_add_record, so_del_record };
+
+static long so_init(int run)
+{
+    if (run == 0)
+        devExtend(&so_ext);
+    return init(run);
+}
+
 static long so_init_record(stringoutRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, check_so_callback,
-                              &rec->out, 1, 0);
-    if (status)
-        return status;
     return 2; /* don't convert, we have no value, yet */
 }
 
@@ -1790,7 +1809,6 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
 static long so_write(stringoutRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long          status;
     eip_bool      ok = true;
     char          data[MAX_STRING_SIZE + 1];
 
@@ -1803,12 +1821,6 @@ static long so_write(stringoutRecord *rec)
     }
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, check_so_callback, &rec->out, 1, 0);
-    if (status)
-    {
-        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-        return status;
-    }
     if (lock_data((dbCommon *)rec))
     {   /* Check if record's (R)VAL is current */
         ok = get_CIP_STRING(pvt->tag->data, data, MAX_STRING_SIZE + 1);
@@ -1958,7 +1970,7 @@ DSET devSoEtherIP =
 {
     6,
     NULL,
-    init,
+    so_init,
     so_init_record,
     NULL,
     so_write,
