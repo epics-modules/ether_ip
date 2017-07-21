@@ -1317,13 +1317,35 @@ static long mbbo_init_record(mbboRecord *rec)
 
 // ----------------------------------
 
+
+static long mbbo_direct_add_record(dbCommon *rec)
+{
+    mbboDirectRecord *mbbo = (mbboDirectRecord *)rec;
+    return init_record(rec, check_mbbo_direct_callback, &mbbo->out, 1, mbbo->nobt);
+}
+
+static long mbbo_direct_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, check_mbbo_direct_callback, rec);
+    free(pvt);
+    return 0;
+}
+
+static struct dsxt mbbo_direct_ext = { mbbo_direct_add_record, mbbo_direct_del_record };
+
+static long mbbo_direct_init(int run)
+{
+    if (run == 0)
+        devExtend(&mbbo_direct_ext);
+    return init(run);
+}
+
 static long mbbo_direct_init_record(mbboDirectRecord *rec)
 {
-    long status = init_record((dbCommon *)rec, check_mbbo_direct_callback,
-                              &rec->out, 1, rec->nobt);
     rec->shft = 0;
-    if (status)
-        return status;
     return 2; /* don't convert, we have no value, yet */
 }
 
@@ -1729,7 +1751,6 @@ static long mbbo_write (mbboRecord *rec)
 static long mbbo_direct_write (mbboDirectRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
-    long          status;
     epicsUInt32   rval;
     eip_bool      ok = true;
 
@@ -1742,13 +1763,6 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
     }
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
-    status = check_link((dbCommon *)rec, check_mbbo_direct_callback,
-                         &rec->out, 1, rec->nobt);
-    if (status)
-    {
-        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
-        return status;
-    }
     if (lock_data((dbCommon *)rec))
     {
         if (get_bits((dbCommon *)rec, rec->nobt, &rval)  &&  rec->rval != rval)
@@ -1933,7 +1947,7 @@ DSET devMbboDirectEtherIP =
 {
     6,
     NULL,
-    init,
+    mbbo_direct_init,
     mbbo_direct_init_record,
     NULL,
     mbbo_direct_write,
