@@ -7,6 +7,19 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2018, Mar 19 ether_ip-3-1
+Replace the constant 'Funstuff' context marker with
+a string that cycled from '00000001' to 'FFFFFFFF',
+then starting over.
+
+John Priller had found that this can be used to detect a request/response
+mismatch that he observed when other, non-PLC devices like cameras flooded the network.
+In most cases, the driver would report timeouts or read errors, but in rare cases
+the reply seemed to contain the wrong values.
+By sending each request with a unique context marker, then comparing the context marker
+in the response, he was able to detect and then ignore some mismatched replies.
+
+
 * 2017, Jul 21 ether_ip-3-0
 Support "Extended Device Support" as introduced in EPICS base R3.14.8.
 

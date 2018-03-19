@@ -654,7 +654,9 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
         /* send <count> requests as one transfer */
         send_size = CM_Unconnected_Send_size(multi_request_size);
         EIP_printf(10, " ------------------- New Request ------------\n");
-        if (!(send_request = EIP_make_SendRRData(c, send_size)))
+        TransactionID tid;
+        generateTransactionId(&tid);
+        if (!(send_request = EIP_make_SendRRData(c, send_size, &tid)))
             return false;
         multi_request = make_CM_Unconnected_Send(send_request,
                                                  multi_request_size, c->slot);
@@ -710,6 +712,20 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
         epicsTimeGetCurrent(&end_time);
         transfer_time = epicsTimeDiffInSeconds(&end_time, &start_time);
         response = EIP_unpack_RRData(c->buffer, &rr_data);
+
+        /* Verify transmission ID */
+        TransactionID rid;
+        extractTransactionId(&rr_data.header,&rid);
+        if (! compareTransactionIds(&tid, &rid))
+        {
+            char tidText[32], gidText[32];
+            transactionIdString(&tid,tidText,sizeof(tidText));
+            transactionIdString(&rid,gidText,sizeof(gidText));
+            EIP_printf_time(2, "EIP process_ScanList: Mismatch in transaction ID\n");
+            EIP_printf(2, "expected %s received %s\n", tidText, gidText);
+            return false;
+        }
+
         if (! check_CIP_MultiRequest_Response(response, rr_data.data_length))
         {
             EIP_printf_time(2, "EIP process_ScanList: Error in response\n");

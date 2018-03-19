@@ -508,13 +508,20 @@ eip_bool put_CIP_STRING(const CN_USINT *raw_type_and_data,
  * Encapsulation
  ********************************************************/
 
+#define TRANS_ID_LEN 8
+typedef struct
+{
+    CN_USINT byte[TRANS_ID_LEN];
+}   TransactionID;
+
+
 typedef struct
 {
     CN_UINT     command;            /* Encapsulation_Command           */
     CN_UINT     length;             /* # bytes that follow this header */
     CN_UDINT    session;            /* returned by EC_RegisterSession  */
     CN_UDINT    status;
-    CN_USINT    server_context[8];  /* anything I like                 */
+    TransactionID  trans_id;        /* anything I like                 */
     CN_UDINT    options;
 }   EncapsulationHeader;
 
@@ -658,7 +665,12 @@ typedef struct
 #pragma pack(pop)
 #endif
 
-CN_USINT *EIP_make_SendRRData(EIPConnection *c, size_t length);
+void generateTransactionId(TransactionID *pid);
+int compareTransactionIds(const TransactionID *p1, const TransactionID *p2);
+void transactionIdString(const TransactionID *pId, char *str, int maxChars);
+void extractTransactionId(const EncapsulationHeader *pHeader, TransactionID *pId);
+
+CN_USINT *EIP_make_SendRRData(EIPConnection *c, size_t length, const TransactionID *pId);
 
 /* Unpack reponse to SendRRData.
  * Fills data with details, returns pointer to raw MRResponse

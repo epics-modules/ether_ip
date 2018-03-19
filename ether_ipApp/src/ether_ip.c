@@ -26,6 +26,7 @@
 
 /* EPICS */
 #include<epicsTime.h>
+#include<epicsMutex.h>
 #include<osiSock.h>
 
 /* Local */
@@ -35,6 +36,12 @@ int EIP_buffer_limit =  EIP_DEFAULT_BUFFER_LIMIT;
 
 static const CN_UINT __endian_test = 0x0001;
 #define is_little_endian (*((const CN_USINT*)&__endian_test))
+
+#define EIP_TRANS_ID_MIN_NUM  1
+#define EIP_TRANS_ID_MAX_NUM  0x7FFFFFFF
+static epicsMutexId transIdMutex = 0;
+static const char *hex_chars_array = "0123456789ABCDEF";
+static epicsUInt32 nextTransIdNum = EIP_TRANS_ID_MIN_NUM;
 
 /** Perform some size checks to assert that the protocol can "work" */
 static void check_sizes()
@@ -50,6 +57,63 @@ static void check_sizes()
         EIP_printf(1, "Structure sizes don't match expectations, code will not work\n");
         exit(-1);
     }
+}
+
+/* generate a transaction ID string
+ * we limit it to ASCII chars for ease in troubleshooting
+ */
+void generateTransactionId(TransactionID *pId)
+{
+    if (! pId)
+        return;
+
+    epicsMutexLock(transIdMutex);
+    epicsUInt32 nn = nextTransIdNum++;
+    if (nextTransIdNum >= EIP_TRANS_ID_MAX_NUM)
+        nextTransIdNum = EIP_TRANS_ID_MIN_NUM;
+    epicsMutexUnlock(transIdMutex);
+
+    int ii;
+    for (ii = 0; ii < TRANS_ID_LEN; ii++)
+    {
+        int xx = nn & 0x0F;
+        pId->byte[TRANS_ID_LEN - ii - 1] = hex_chars_array[xx];
+        nn >>= 4;
+    }
+}
+
+int compareTransactionIds(const TransactionID *p1, const TransactionID *p2)
+{
+    if ((! p1) || (! p2))
+        return false;
+    if (memcmp(p1,p2,TRANS_ID_LEN) == 0)
+        return true;
+    else
+        return false;
+}
+
+void transactionIdString(const TransactionID *pId, char *str, int maxChars)
+{
+    if (! pId)
+        return;
+
+    if (maxChars >= TRANS_ID_LEN+1)
+    {
+        memcpy(str,pId,TRANS_ID_LEN);
+        str[TRANS_ID_LEN] = 0;
+    }
+    else
+    {
+        memcpy(str,pId,maxChars-1);
+        str[maxChars-1] = 0;
+    }
+}
+
+void extractTransactionId(const EncapsulationHeader *pHeader, TransactionID *pId)
+{
+    if ((! pHeader) || (! pId))
+        return;
+    memcpy(pId,&pHeader->trans_id,TRANS_ID_LEN);
 }
 
 /* Pack binary data in ControlNet format (little endian)
@@ -1950,7 +2014,9 @@ static void dump_EncapsulationHeader(const EncapsulationHeader *header)
     EIP_printf(0, "    UDINT session   = 0x%08X\n", header->session);
     EIP_printf(0, "    UDINT status    = 0x%08X  (%s)\n",
                header->status, EncapsulationHeader_status(header->status));
-    EIP_printf(0, "    USINT context[8]= '%s'\n",   header->server_context);
+    char idtxt[32];
+    transactionIdString(&header->trans_id,idtxt,sizeof(idtxt));
+    EIP_printf(0, "    USINT context[8]= '%s'\n",   idtxt);
     EIP_printf(0, "    UDINT options   = 0x%08X\n", header->options);
 }
 
@@ -1960,7 +2026,8 @@ static void dump_EncapsulationHeader(const EncapsulationHeader *header)
  * command data as specified by "length"
  */
 CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
-                                   CN_UINT length, CN_UDINT options)
+                                   CN_UINT length, CN_UDINT options,
+                                   const TransactionID *pId)
 {
     const EncapsulationHeader *header = (const EncapsulationHeader *)c->buffer;
     CN_USINT *buf = c->buffer;
@@ -1976,14 +2043,11 @@ CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
     buf = pack_UINT(buf, length);
     buf = pack_UDINT(buf, c->session);
     buf = pack_UDINT(buf, 0);
-    buf = pack_USINT(buf, 'F');
-    buf = pack_USINT(buf, 'u');
-    buf = pack_USINT(buf, 'n');
-    buf = pack_USINT(buf, 's');
-    buf = pack_USINT(buf, 't');
-    buf = pack_USINT(buf, 'u');
-    buf = pack_USINT(buf, 'f');
-    buf = pack_USINT(buf, 'f');
+
+    int ii;
+    for (ii = 0; ii < TRANS_ID_LEN; ii++)
+        buf = pack_USINT(buf, pId->byte[ii]);
+
     buf = pack_UDINT(buf, options);
     if (EIP_verbosity >= 10)
     {   /* 'header' used to get offset to server_context */
@@ -1994,7 +2058,9 @@ CN_USINT *make_EncapsulationHeader(EIPConnection *c, CN_UINT command,
         EIP_printf(0, "    UDINT session   = 0x%08X\n", c->session);
         EIP_printf(0, "    UDINT status    = 0x%08X (%s)\n",
                    0, EncapsulationHeader_status(0));
-        EIP_printf(0, "    USINT context[8]= '%s'\n", header->server_context);
+        char idtxt[32];
+        transactionIdString(&header->trans_id,idtxt,sizeof(idtxt));
+        EIP_printf(0, "    USINT context[8]= '%s'\n", idtxt);
         EIP_printf(0, "    UDINT options   = 0x%08X\n", options);
     }
 
@@ -2011,14 +2077,14 @@ static const CN_USINT *unpack_EncapsulationHeader(const CN_USINT *buf,
                   &header->length,
                   &header->session,
                   &header->status,
-                  &header->server_context[0],
-                  &header->server_context[1],
-                  &header->server_context[2],
-                  &header->server_context[3],
-                  &header->server_context[4],
-                  &header->server_context[5],
-                  &header->server_context[6],
-                  &header->server_context[7],
+                  &header->trans_id.byte[0],
+                  &header->trans_id.byte[1],
+                  &header->trans_id.byte[2],
+                  &header->trans_id.byte[3],
+                  &header->trans_id.byte[4],
+                  &header->trans_id.byte[5],
+                  &header->trans_id.byte[6],
+                  &header->trans_id.byte[7],
                   &header->options);
     if (EIP_verbosity >= 10)
         dump_EncapsulationHeader(header);
@@ -2036,10 +2102,12 @@ static eip_bool EIP_list_services(EIPConnection *c)
     ListServicesReply reply;
     int i;
     eip_bool ok = true;
+    TransactionID tid;
 
     EIP_printf(10, "EIP sending ListServices encapsulation command\n");
+    generateTransactionId(&tid);
     if (make_EncapsulationHeader(c, EC_ListServices,
-                                 0, 0 /* length, options */) == 0)
+                                 0, 0 /* length, options */, &tid) == 0)
         return false;
     if (! EIP_send_connection_buffer(c))
     {
@@ -2058,6 +2126,20 @@ static eip_bool EIP_list_services(EIPConnection *c)
         reply.header.status != 0x0)
     {
         EIP_printf (2, "EIP list_services: Invalid response\n");
+        dump_EncapsulationHeader (&reply.header);
+        return false;
+    }
+
+    TransactionID rid;
+    extractTransactionId(&reply.header,&rid);
+
+    if (! compareTransactionIds(&tid,&rid))
+    {
+        char tid_str[32], rid_str[32];
+        transactionIdString(&tid,tid_str,sizeof(tid_str));
+        transactionIdString(&rid,rid_str,sizeof(rid_str));
+        EIP_printf (2, "EIP list_services: Transaction id mismatch, got %s expected %s\n",
+                    rid_str,tid_str);
         dump_EncapsulationHeader (&reply.header);
         return false;
     }
@@ -2115,10 +2197,12 @@ static eip_bool EIP_register_session(EIPConnection *c)
     RegisterSessionData data;
 
     EIP_printf(10, "EIP sending RegisterSession encapsulation command\n");
+    TransactionID tid;
+    generateTransactionId(&tid);
     sbuf = make_EncapsulationHeader(c, EC_RegisterSession,
                                     sizeof_RegisterSessionData
                                     - sizeof_EncapsulationHeader,
-                                    0 /* options */);
+                                    0 /* options */, &tid);
     if (! sbuf)
         return false;
     sbuf = pack_UINT(sbuf, /* protocol_version */ 1);
@@ -2146,6 +2230,20 @@ static eip_bool EIP_register_session(EIPConnection *c)
     }
     c->session = data.header.session; /* keep session ID that target sent */
 
+    TransactionID rid;
+    extractTransactionId(&data.header,&rid);
+    if (! compareTransactionIds(&tid,&rid))
+    {
+        char tid_str[32], rid_str[32];
+        transactionIdString(&tid,tid_str,sizeof(tid_str));
+        transactionIdString(&rid,rid_str,sizeof(rid_str));
+        EIP_printf (2, "EIP register_session: Transaction id mismatch, got %s expected %s\n",
+                    rid_str,tid_str);
+        if (EIP_verbosity >= 3)
+            dump_EncapsulationHeader(&data.header);
+        return false;
+    }
+
     return true;
 }
 
@@ -2154,8 +2252,10 @@ static eip_bool EIP_unregister_session(EIPConnection *c)
 {
     EIP_printf(9, "EIP sending UnRegisterSession encapsulation command,"
                " session ID 0x%08X\n", c->session);
+    TransactionID tid;
+    generateTransactionId(&tid);
     return make_EncapsulationHeader(c, EC_UnRegisterSession,
-                                    0, 0 /*length, options*/)
+                                    0, 0 /*length, options*/, &tid)
         && EIP_send_connection_buffer(c);
 }
 
@@ -2183,13 +2283,13 @@ static const char *CPF_ID(CN_UINT id)
  * length: total byte-size of MR_Request
  * Returns pointer to MR_Request to be completed.
  */
-CN_USINT *EIP_make_SendRRData(EIPConnection *c, size_t length)
+CN_USINT *EIP_make_SendRRData(EIPConnection *c, size_t length, const TransactionID *pId)
 {
     CN_USINT *buf = make_EncapsulationHeader(c, EC_SendRRData,
                                              sizeof_EncapsulationRRData
                                              - sizeof_EncapsulationHeader
                                              + length,
-                                             0 /* options */);
+                                             0 /* options */, pId);
     if (!buf)
         return 0;
     buf = pack_UDINT(buf, /* interface_handle */                   0);
@@ -2264,9 +2364,11 @@ void *EIP_Get_Attribute_Single(EIPConnection *c,
     void           *attrib;
 
     EIP_printf(10, "EIP Reading attribute\n");
+    TransactionID tid;
+    generateTransactionId(&tid);
     path_size = CIA_path_size(cls, instance, attr);
     request_size = MR_Request_size(path_size);
-    request = EIP_make_SendRRData(c, request_size);
+    request = EIP_make_SendRRData(c, request_size, &tid);
     if (! request)
         return 0;
     path = make_MR_Request(request, S_Get_Attribute_Single, path_size);
@@ -2290,6 +2392,19 @@ void *EIP_Get_Attribute_Single(EIPConnection *c,
         EIP_printf(2, "EIP_Get_Attribute_Single: error in response\n");
         if (EIP_verbosity >= 3)
             EIP_dump_raw_MR_Response(response, data.data_length);
+        return 0;
+    }
+
+    TransactionID rid;
+    extractTransactionId(&data.header,&rid);
+    if (! compareTransactionIds(&tid,&rid))
+    {
+        char tid_str[32], rid_str[32];
+        transactionIdString(&tid,tid_str,sizeof(tid_str));
+        transactionIdString(&rid,rid_str,sizeof(rid_str));
+        EIP_printf (2, "EIP_Get_Attribute_Single: Transaction id mismatch, got %s expected %s\n",
+                    rid_str,tid_str);
+        dump_EncapsulationHeader (&data.header);
         return 0;
     }
 
@@ -2348,6 +2463,9 @@ eip_bool EIP_startup(EIPConnection *c,
                  size_t millisec_timeout)
 {
     check_sizes();
+    if (! transIdMutex)
+        transIdMutex = epicsMutexCreate();
+
     if (! EIP_connect(c, ip_addr, port, slot, millisec_timeout))
         return false;
 
@@ -2722,9 +2840,12 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
      * Result is the pure CIP read response
      */
     EIP_printf(10, "EIP read tag\n");
+    TransactionID tid;
+    generateTransactionId(&tid);
+
     if (request_size)
         *request_size = msg_size;
-    send_request = EIP_make_SendRRData(c, send_size);
+    send_request = EIP_make_SendRRData(c, send_size, &tid);
     if (! send_request)
         return 0;
     msg_request = make_CM_Unconnected_Send(send_request, msg_size,
@@ -2751,6 +2872,18 @@ const CN_USINT *EIP_read_tag(EIPConnection *c,
                                        data_size);
     if (response_size)
         *response_size = rr_data.data_length;
+
+    TransactionID rid;
+    extractTransactionId(&rr_data.header,&rid);
+    if (! compareTransactionIds(&tid,&rid))
+    {
+        char tid_str[32], rid_str[32];
+        transactionIdString(&tid,tid_str,sizeof(tid_str));
+        transactionIdString(&rid,rid_str,sizeof(rid_str));
+        EIP_printf (2, "EIP_read_tag: Transaction id mismatch, got %s expected %s\n",rid_str,tid_str);
+        return 0;
+    }
+
 
     if (! data)
     {
@@ -2786,9 +2919,12 @@ eip_bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
     const CN_USINT *response;
     EncapsulationRRData rr_data;
 
+    TransactionID tid;
+    generateTransactionId(&tid);
+
     if (request_size)
         *request_size = msg_size;
-    send_request = EIP_make_SendRRData(c, send_size);
+    send_request = EIP_make_SendRRData(c, send_size, &tid);
     if (! send_request)
         return 0;
     msg_request = make_CM_Unconnected_Send(send_request, msg_size,
@@ -2811,6 +2947,20 @@ eip_bool EIP_write_tag(EIPConnection *c, const ParsedTag *tag,
     response = EIP_unpack_RRData((CN_USINT *)c->buffer, &rr_data);
     if (EIP_verbosity >= 10)
         EIP_dump_raw_MR_Response(response, rr_data.data_length);
+
+
+    TransactionID rid;
+    extractTransactionId(&rr_data.header,&rid);
+    if (! compareTransactionIds(&tid,&rid))
+    {
+        char tid_str[32], rid_str[32];
+        transactionIdString(&tid,tid_str,sizeof(tid_str));
+        transactionIdString(&rid,rid_str,sizeof(rid_str));
+        EIP_printf (1, "EIP_read_tag: Transaction id mismatch, got %s expected %s\n",
+                    rid_str,tid_str);
+        return 0;
+    }
+
 
     if (!check_CIP_WriteData_Response(response, rr_data.data_length))
     {
