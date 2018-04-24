@@ -174,7 +174,7 @@ void EIP_hexdump(int level, const void *_data, int len);
 extern int EIP_buffer_limit;
 
 /** Best estimate for EIP_buffer_limit */
-#define EIP_DEFAULT_BUFFER_LIMIT 500
+#define EIP_DEFAULT_BUFFER_LIMIT 480
 
 /** Used to be used to determine EIP_DEFAULT_BUFFER_LIMIT, but
  *  didn't work out
@@ -185,7 +185,7 @@ extern int EIP_buffer_limit;
  *  buffer size that the driver uses to allocate the initial
  *  buffer.
  */
-#define EIP_BUFFER_SIZE 600
+#define EIP_BUFFER_SIZE 580
 
 /********************************************************
  * ControlNet data types
