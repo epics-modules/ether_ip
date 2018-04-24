@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2018, Apr 24
+Default buffer size reduced from 500 to 480.
+
 * 2018, Mar 19 ether_ip-3-1
 Replace the constant 'Funstuff' context marker with
 a string that cycled from '00000001' to 'FFFFFFFF',
