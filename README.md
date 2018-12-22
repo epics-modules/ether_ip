@@ -10,7 +10,7 @@ Support EPICS R3.14.8 and higher.
 For earlier version of EPICS base, including R3.13, see tags older than ether_ip-3-0.
 
 See 
- * http://ics-web.sns.ornl.gov/kasemir/etherip/index.html for more
+ * https://controlssoftware.sns.ornl.gov/etherip for more
  * changes.txt for changes
  * https://github.com/EPICSTools/etherip for a Java version of the basic communication library, not connected to an EPCIS IOC.
 
