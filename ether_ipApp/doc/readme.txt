@@ -120,10 +120,12 @@ ether_ip.dbd looks like this:
      device(mbbi,       INST_IO, devMbbiEtherIP,       "EtherIP")
      device(mbbiDirect, INST_IO, devMbbiDirectEtherIP, "EtherIP")
      device(stringin,   INST_IO, devSiEtherIP,         "EtherIP")
+     device(waveform,   INST_IO, devWfEtherIP,         "EtherIP")
      device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
      device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
      device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")
      device(mbboDirect, INST_IO, devMbboDirectEtherIP, "EtherIP")
+     device(stringout,  INST_IO, devSoEtherIP,         "EtherIP")
 
 You can load this directly via dbLoadDatabase in the startup script.
 Usually, however, you would use something like the makeBaseApp.pl ADE,
@@ -651,6 +653,24 @@ just a limited string.
 The stringin record works only with STRING tags. Any other tag
 type will result in errors.
 Likewise, only stringin records must be used with STRING tags.
+Any other record type will fail with STRING tags.
+
+Note: The STRING tag data type was not documented!
+To the driver, a STRING tag looks like a "CIP structure" and the
+location of the string length and character data in there were
+determined from tests.
+
+* stringout String Output Records
+String output records can be connected to STRING tags
+on the PLC:
+
+        field(DTYP, "EtherIP")
+        field(INP,  "@$(PLC) text_tag")
+        field(SCAN, "1 second")
+
+The stringout record works only with STRING tags. Any other tag
+type will result in errors.
+Likewise, only stringout records must be used with STRING tags.
 Any other record type will fail with STRING tags.
 
 Note: The STRING tag data type was not documented!
