@@ -12,6 +12,7 @@
 #include <devSup.h>
 #include <dbCommon.h>
 #include <dbDefs.h>
+#include <dbBase.h>
 #include <dbAccessDefs.h>
 #include <iocInit.h>
 #include <iocsh.h>
@@ -95,7 +96,7 @@ int main(int argc,char *argv[])
         printf("# The following commands are executed from cmdline options\n");
         printf("\n");
         printf("dbLoadDatabase(\"%s\")\n", dbd_file);
-        dbLoadDatabase(dbd_file, NULL, NULL);
+        dbLoadDatabase((char *)dbd_file, NULL, NULL);
 
         printf("eipIoc_registerRecordDeviceDriver(pdbbase)\n");
         eipIoc_registerRecordDeviceDriver(pdbbase);

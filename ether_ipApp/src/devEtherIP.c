@@ -512,7 +512,7 @@ static void check_mbbo_callback(void *arg)
             if (rec->sdef)
             {
                 rec->val  = 65535;  /* initalize to unknown state*/
-                state_val = &rec->zrvl;
+                state_val = (epicsUInt32 *) &rec->zrvl;
                 for (i=0; i<16; ++i)
                 {
                     if (*state_val == rval)
@@ -1074,7 +1074,7 @@ static long init_record(dbCommon *rec, EIPCallback cbtype,
     return analyze_link(rec, cbtype, link, count, bits);
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long ai_add_record(dbCommon *rec)
 {
@@ -1108,7 +1108,7 @@ static long ai_init_record(aiRecord *rec)
     return 0;
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long bi_add_record(dbCommon *rec)
 {
@@ -1126,11 +1126,11 @@ static long bi_init(int run)
 
 static long bi_init_record(biRecord *rec)
 {
-    // Handled by bi_add_record
+    /* Handled by bi_add_record */
     return 0;
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long mbbi_add_record(dbCommon *rec)
 {
@@ -1153,7 +1153,7 @@ static long mbbi_init_record(mbbiRecord *rec)
     return 0;
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long mbbi_direct_add_record(dbCommon *rec)
 {
@@ -1176,7 +1176,7 @@ static long mbbi_direct_init_record(mbbiDirectRecord *rec)
     return 0;
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long si_add_record(dbCommon *rec)
 {
@@ -1197,7 +1197,7 @@ static long si_init_record(stringinRecord *rec)
     return 0;
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long wf_add_record(dbCommon *rec)
 {
@@ -1219,7 +1219,7 @@ static long wf_init_record(waveformRecord *rec)
     return 0;
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long ao_add_record(dbCommon *rec)
 {
@@ -1251,7 +1251,7 @@ static long ao_init_record(aoRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long bo_add_record(dbCommon *rec)
 {
@@ -1282,7 +1282,7 @@ static long bo_init_record(boRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long mbbo_add_record(dbCommon *rec)
 {
@@ -1315,7 +1315,7 @@ static long mbbo_init_record(mbboRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long mbbo_direct_add_record(dbCommon *rec)
 {
@@ -1348,7 +1348,7 @@ static long mbbo_direct_init_record(mbboDirectRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long so_add_record(dbCommon *rec)
 {
@@ -1379,7 +1379,7 @@ static long so_init_record(stringoutRecord *rec)
     return 2; /* don't convert, we have no value, yet */
 }
 
-// ----------------------------------
+/* ---------------------------------- */
 
 static long ai_read(aiRecord *rec)
 {
@@ -1454,7 +1454,7 @@ static long bi_read(biRecord *rec)
         dump_DevicePrivate((dbCommon *)rec);
     if (lock_data((dbCommon *)rec))
     {
-        ok = get_bits((dbCommon *)rec, 1, &rec->rval);
+        ok = get_bits((dbCommon *)rec, 1, (epicsUInt32 *) &rec->rval);
         epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
@@ -1475,7 +1475,7 @@ static long mbbi_read (mbbiRecord *rec)
         dump_DevicePrivate ((dbCommon *)rec);
     if (lock_data((dbCommon *)rec))
     {
-        ok = get_bits((dbCommon *)rec, rec->nobt, &rec->rval);
+        ok = get_bits((dbCommon *)rec, rec->nobt, (epicsUInt32 *) &rec->rval);
         epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
@@ -1496,7 +1496,7 @@ static long mbbi_direct_read (mbbiDirectRecord *rec)
         dump_DevicePrivate((dbCommon *)rec);
     if (lock_data((dbCommon *)rec))
     {
-        ok = get_bits((dbCommon *)rec, rec->nobt, &rec->rval);
+        ok = get_bits((dbCommon *)rec, rec->nobt, (epicsUInt32 *) &rec->rval);
         epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
@@ -1708,7 +1708,7 @@ static long bo_write(boRecord *rec)
             if (rec->rval != rval)
             {
                 if (rec->tpro)
-                    printf("'%s': write %u\n", rec->name, rec->rval);
+                    printf("'%s': write %u\n", rec->name, (unsigned int) rec->rval);
                 ok = put_bits((dbCommon *)rec, 1, rec->rval);
                 if (pvt->tag->do_write)
                     EIP_printf(6,"'%s': already writing\n", rec->name);
@@ -1748,7 +1748,7 @@ static long mbbo_write (mbboRecord *rec)
         if (get_bits((dbCommon *)rec, rec->nobt, &rval) && rec->rval != rval)
         {
             if (rec->tpro)
-                printf("'%s': write %u\n", rec->name, rec->rval);
+                printf("'%s': write %u\n", rec->name, (unsigned int) rec->rval);
             ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
             if (pvt->tag->do_write)
                 EIP_printf(6,"'%s': already writing\n", rec->name);
@@ -1787,7 +1787,7 @@ static long mbbo_direct_write (mbboDirectRecord *rec)
         if (get_bits((dbCommon *)rec, rec->nobt, &rval)  &&  rec->rval != rval)
         {
             if (rec->tpro)
-                printf("'%s': write %u\n", rec->name, rec->rval);
+                printf("'%s': write %u\n", rec->name, (unsigned int) rec->rval);
             ok = put_bits((dbCommon *)rec, rec->nobt, rec->rval);
             if (pvt->tag->do_write)
                 EIP_printf(6,"'%s': already writing\n", rec->name);
