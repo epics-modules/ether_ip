@@ -33,7 +33,7 @@ static void usage()
     printf("Usage:\n");
     printf("       eipIoc st.cmd\n");
     printf("or\n");
-    printf("       eipIoc -pPlc1=IP,slot [-m macro=value] -d database.db [-d another.db]\n");
+    printf("       eipIoc -p Plc1=IP,slot [-m macro=value] -d database.db [-d another.db]\n");
     printf("\n");
     printf("In the first case, this program acts as an ordinary IOC, executing a startup file\n");
     printf("\n");
