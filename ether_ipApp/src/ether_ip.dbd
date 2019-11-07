@@ -1,5 +1,6 @@
 device(ai,         INST_IO, devAiEtherIP,         "EtherIP")
 device(bi,         INST_IO, devBiEtherIP,         "EtherIP")
+device(lsi,        INST_IO, devLsiEtherIP,        "EtherIP")
 device(mbbi,       INST_IO, devMbbiEtherIP,       "EtherIP")
 device(mbbiDirect, INST_IO, devMbbiDirectEtherIP, "EtherIP")
 device(stringin,   INST_IO, devSiEtherIP,         "EtherIP")

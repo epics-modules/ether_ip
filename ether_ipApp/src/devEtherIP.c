@@ -29,6 +29,7 @@
 #include <menuOmsl.h>
 #include <aiRecord.h>
 #include <biRecord.h>
+#include <lsiRecord.h>
 #include <mbbiRecord.h>
 #include <mbbiDirectRecord.h>
 #include <stringinRecord.h>
@@ -1136,6 +1137,27 @@ static long bi_init_record(biRecord *rec)
 
 /* ---------------------------------- */
 
+static long lsi_add_record(dbCommon *rec)
+{
+    return init_record(rec, scan_callback, &((lsiRecord *)rec)->inp, 1, 0);
+}
+
+static struct dsxt lsi_ext = { lsi_add_record, del_scan_callback_record };
+
+static long lsi_init(int run)
+{
+    if (run == 0)
+        devExtend(&lsi_ext);
+    return init(run);
+}
+
+static long lsi_init_record(lsiRecord *rec)
+{
+    return 0;
+}
+
+/* ---------------------------------- */
+
 static long mbbi_add_record(dbCommon *rec)
 {
     mbbiRecord *mbbi = (mbbiRecord *)rec;
@@ -1467,6 +1489,30 @@ static long bi_read(biRecord *rec)
         rec->udf = FALSE;
     else
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
+    return 0;
+}
+
+static long lsi_read(lsiRecord *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    eip_bool ok;
+
+    if (rec->tpro)
+        dump_DevicePrivate((dbCommon *)rec);
+    if (lock_data((dbCommon *)rec))
+    {
+        ok = get_CIP_STRING(pvt->tag->data, rec->val, rec->sizv);
+        epicsMutexUnlock(pvt->tag->data_lock);
+    }
+    else
+        ok = false;
+    if (ok)
+    {
+        rec->len = strlen(rec->val) + 1;
+        rec->udf = FALSE;
+    }
+    else
+        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
     return 0;
 }
 
@@ -1894,6 +1940,16 @@ DSET devBiEtherIP =
     get_ioint_info,
     bi_read,
     NULL
+};
+
+DSET devLsiEtherIP =
+{
+    5,
+    NULL,
+    lsi_init,
+    lsi_init_record,
+    get_ioint_info,
+    lsi_read
 };
 
 DSET devMbbiEtherIP =
