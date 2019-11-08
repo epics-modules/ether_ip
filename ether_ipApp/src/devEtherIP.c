@@ -19,6 +19,7 @@
 #include <cvtTable.h>
 #include <dbDefs.h>
 #include <dbAccess.h>
+#include <dbmf.h>
 #include <recGbl.h>
 #include <recSup.h>
 #include <devSup.h>
@@ -37,6 +38,7 @@
 #include <menuFtype.h>
 #include <aoRecord.h>
 #include <boRecord.h>
+#include <lsoRecord.h>
 #include <mbboRecord.h>
 #include <mbboDirectRecord.h>
 #include <stringoutRecord.h>
@@ -466,6 +468,62 @@ static void check_bo_callback(void *arg)
         }
         process = true;
     }
+    dbScanUnlock((dbCommon *)rec);
+    /* Does record need processing and is not periodic? */
+    if (process && rec->scan < SCAN_1ST_PERIODIC)
+        scanOnce((dbCommon *)rec);
+}
+
+/* callback for lso record */
+static void check_lso_callback(void *arg)
+{
+    lsoRecord *rec = (lsoRecord *) arg;
+    struct rset   *rset= (struct rset *)(rec->rset);
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    eip_bool      process = false;
+    char          *data = NULL;
+
+    /* We are about the check and even set val, & rval -> lock */
+    dbScanLock((dbCommon *)rec);
+    if (rec->pact)
+    {
+        if (rec->tpro)
+            printf("EIP check_lso_callback('%s'), pact=%d\n",
+                   rec->name, rec->pact);
+        (*rset->process) ((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
+    /* Check if record's (R)VAL is current */
+    if (!check_data((dbCommon *)rec))
+    {
+        if (rec->tpro)
+            printf("EIP check_lso_callback('%s'), no data\n", rec->name);
+        (*rset->process) ((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
+    data = dbmfMalloc(rec->sizv);
+    if (get_CIP_STRING(pvt->tag->data, data, rec->sizv) &&
+            (rec->udf || rec->sevr == INVALID_ALARM || strcmp(rec->val, data)))
+    {
+        if (rec->tpro)
+            printf("'%s': got %s from driver\n", rec->name, data);
+        if (!rec->udf && pvt->special & SPCO_FORCE)
+        {
+            if (rec->tpro)
+                printf("'%s': will re-write record's value %s\n", rec->name,
+                        rec->val);
+        }
+        else {
+            strcpy(rec->val, data);
+            rec->udf = false;
+            if (rec->tpro)
+                printf("'%s': updated record's value %s\n", rec->name, rec->val);
+        }
+        process = true;
+    }
+    dbmfFree(data);
     dbScanUnlock((dbCommon *)rec);
     /* Does record need processing and is not periodic? */
     if (process && rec->scan < SCAN_1ST_PERIODIC)
@@ -1310,6 +1368,37 @@ static long bo_init_record(boRecord *rec)
 
 /* ---------------------------------- */
 
+static long lso_add_record(dbCommon *rec)
+{
+    return init_record(rec, check_lso_callback, &((lsoRecord *)rec)->out, 1, 0);
+}
+
+static long lso_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, check_lso_callback, rec);
+    free(pvt);
+    return 0;
+}
+
+static struct dsxt lso_ext = { lso_add_record, lso_del_record };
+
+static long lso_init(int run)
+{
+    if (run == 0)
+        devExtend(&lso_ext);
+    return init(run);
+}
+
+static long lso_init_record(lsoRecord *rec)
+{
+    return 2; /* don't convert, we have no value, yet */
+}
+
+/* ---------------------------------- */
+
 static long mbbo_add_record(dbCommon *rec)
 {
     mbboRecord *mbbo = (mbboRecord *)rec;
@@ -1783,6 +1872,48 @@ static long bo_write(boRecord *rec)
     return 0;
 }
 
+static long lso_write(lsoRecord *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    eip_bool      ok = true;
+
+    if (rec->pact) /* Second pass, called for write completion ? */
+    {
+        if (rec->tpro)
+            printf("'%s': written\n", rec->name);
+        rec->pact = FALSE;
+        return 0;
+    }
+    if (rec->tpro)
+        dump_DevicePrivate((dbCommon *)rec);
+    if (lock_data((dbCommon *)rec))
+    {   /* Check if record's (R)VAL is current */
+        char *data = dbmfMalloc(rec->sizv);
+
+        ok = get_CIP_STRING(pvt->tag->data, data, rec->sizv);
+        if (ok && strcmp(rec->val, data))
+        {
+            if (rec->tpro)
+                printf("'%s': write %s!\n", rec->name, rec->val);
+            ok = put_CIP_STRING(pvt->tag->data, rec->val, pvt->tag->data_size);
+            if (pvt->tag->do_write)
+                EIP_printf(6,"'%s': already writing\n", rec->name);
+            else
+                pvt->tag->do_write = true;
+            rec->pact=TRUE;
+        }
+        dbmfFree(data);
+        epicsMutexUnlock(pvt->tag->data_lock);
+    }
+    else
+        ok = false;
+    if (ok)
+        rec->udf = FALSE;
+    else
+        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
+    return 0;
+}
+
 static long mbbo_write (mbboRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
@@ -2013,6 +2144,17 @@ DSET devBoEtherIP =
     bo_init_record,
     NULL,
     bo_write,
+    NULL
+};
+
+DSET devLsoEtherIP =
+{
+    6,
+    NULL,
+    lso_init,
+    lso_init_record,
+    NULL,
+    lso_write,
     NULL
 };
 
