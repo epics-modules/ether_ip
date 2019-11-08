@@ -2193,12 +2193,14 @@ DSET devSoEtherIP =
 
 epicsExportAddress(dset,devAiEtherIP);
 epicsExportAddress(dset,devBiEtherIP);
+epicsExportAddress(dset,devLsiEtherIP);
 epicsExportAddress(dset,devMbbiEtherIP);
 epicsExportAddress(dset,devMbbiDirectEtherIP);
 epicsExportAddress(dset,devSiEtherIP);
 epicsExportAddress(dset,devWfEtherIP);
 epicsExportAddress(dset,devAoEtherIP);
 epicsExportAddress(dset,devBoEtherIP);
+epicsExportAddress(dset,devLsoEtherIP);
 epicsExportAddress(dset,devMbboEtherIP);
 epicsExportAddress(dset,devMbboDirectEtherIP);
 epicsExportAddress(dset,devSoEtherIP);
