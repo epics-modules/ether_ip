@@ -7,6 +7,13 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+
+* 2019, Nov 11
+Added device support for the 3.15 lsi and lso (long string input/output) record
+types.
+
+--> REQUIRES EPICS BASE R3.15.1 OR HIGHER!
+
 * 2019, Nov 11
 Andrew Johnson provided fix for warning
 "case value ‘205’ not in enumerated type ‘CN_Services’".
