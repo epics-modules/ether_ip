@@ -5,10 +5,6 @@ include $(TOP)/configure/CONFIG
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 
-# No optimization, we want debugging info:
-HOST_OPT=NO
-CROSS_OPT=NO
-
 # On Darwin, got errors about unused assignment in recGblSetSevr
 USR_CFLAGS += -Wno-unused-value
 
