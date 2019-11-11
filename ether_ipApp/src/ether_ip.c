@@ -1236,7 +1236,7 @@ eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
 /* Fill buffer with up to 'size' characters (incl. ending '\0').
  * Return true for success */
 eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
-                    char *buffer, size_t size)
+                        char *buffer, size_t size)
 {
     CN_UINT        type, subtype, len, no_idea_what_this_is;
     const CN_USINT *buf;
@@ -1258,7 +1258,11 @@ eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
     buf = unpack_UINT(buf, &no_idea_what_this_is);
 
     if (len >= size)
+    {
+        EIP_printf(5, "EIP get_CIP_STRING: Truncating from %d to %d chars (plus terminator)\n",
+                   (int) len, (int) size-1);
         len = size-1;
+    }
     memcpy(buffer, buf, len);
     *(buffer+len) = '\0';
 
