@@ -278,14 +278,14 @@ void EIP_printf(int level, const char *format, ...)
     if (level > EIP_verbosity)
         return;
     va_start(ap, format);
-	vfprintf(stderr, format, ap);
+    vfprintf(stderr, format, ap);
     va_end(ap);
 }
 
 
 void EIP_printf_time(int level, const char *format, ...)
 {
-	epicsTimeStamp now;
+    epicsTimeStamp now;
     char  tsString[50];
     va_list ap;
     if (level > EIP_verbosity)
@@ -298,7 +298,7 @@ void EIP_printf_time(int level, const char *format, ...)
     fprintf(stderr, "%s ", tsString);
     /* Message */
     va_start(ap, format);
-	vfprintf(stderr, format, ap);
+    vfprintf(stderr, format, ap);
     va_end(ap);
 }
 
@@ -397,7 +397,7 @@ static CN_USINT *make_CIA_path(CN_USINT *path,
 
 char *EIP_strdup(const char *text)
 {
-	return EIP_strdup_n(text, strlen(text));
+    return EIP_strdup_n(text, strlen(text));
 }
 
 char *EIP_strdup_n(const char *text, size_t len)
@@ -812,7 +812,7 @@ const CN_USINT *EIP_dump_raw_MR_Response(const CN_USINT *response,
                 service, service_name(service & 0x7F));
     EIP_printf(0, "    USINT reserved        = 0x%02X\n", reserved);
     EIP_printf(0, "    USINT status          = 0x%02X (%s)\n",
-                general_status,	CN_error_text(general_status));
+                general_status, CN_error_text(general_status));
     EIP_printf(0, "    USINT ext. stat. size = %d\n", extended_status_size);
     while (extended_status_size > 0)
     {
@@ -1594,7 +1594,7 @@ CN_USINT *CIP_MultiRequest_item (CN_USINT *request,
     /* Get offset for this sub-request */
     unpack_UINT (offsetp + 2*request_no, &offset);
     EIP_printf(10, "    Embedded request %d/%d: offset 0x%04X\n",
-    		   request_no, count, offset);
+               request_no, count, offset);
     if (offset == 0)
     {
         EIP_printf (2, "CIP_MultiRequest_item (request_no %d): "
@@ -1796,8 +1796,8 @@ EIPConnection *EIP_init()
 
 void EIP_dispose(EIPConnection *c)
 {
-	free(c->buffer);
-	c->buffer = 0;
+    free(c->buffer);
+    c->buffer = 0;
     free(c);
 }
 
@@ -1847,8 +1847,8 @@ eip_bool EIP_connect(EIPConnection *c,
         c->sock = 0;
         return false;
     }
-	EIP_printf(10, "EIP connectWithTimeout(%s:0x%04X, %d sec, %d msec)\n",
-			   ip_addr, port, (int)timeout.tv_sec, (int)timeout.tv_usec);
+    EIP_printf(10, "EIP connectWithTimeout(%s:0x%04X, %d sec, %d msec)\n",
+               ip_addr, port, (int)timeout.tv_sec, (int)timeout.tv_usec);
     if (connectWithTimeout(c->sock, (struct sockaddr *)&addr,
                            sizeof (addr), &timeout) != 0)
     {
@@ -1908,10 +1908,10 @@ eip_bool EIP_read_connection_buffer(EIPConnection *c)
     set_nonblock(c->sock, 1);
     do
     {
-    	/* Check for availability of data.
-    	 * Reset all select() arguments to be portable with
-    	 * implementations that might update timeout.
-    	 */
+        /* Check for availability of data.
+         * Reset all select() arguments to be portable with
+         * implementations that might update timeout.
+         */
         FD_ZERO(&fds);
         FD_SET(c->sock, &fds);
         timeout.tv_sec = c->millisec_timeout/1000;
@@ -1939,7 +1939,7 @@ eip_bool EIP_read_connection_buffer(EIPConnection *c)
         /* Determine size of complete message */
         if (!checked && got >= sizeof(EncapsulationHeader))
         {
-        	/* EncapsulationHeader.length */
+            /* EncapsulationHeader.length */
             unpack_UINT(c->buffer+2, &length);
             needed = sizeof_EncapsulationHeader + length;
             if (needed > EIP_BUFFER_SIZE)
@@ -2183,7 +2183,7 @@ static eip_bool EIP_list_services(EIPConnection *c)
         if (! (reply.service.flags  &  (1<<5)))
         {
             EIP_printf (2, "\nEIP list_services: NO SUPPORT for"
-			   " CIP PDU encapsulation.!\n");
+                        " CIP PDU encapsulation.!\n");
             ok = false;
         }
         else
@@ -2515,7 +2515,7 @@ static void dump_CM_priority_and_tick (CN_USINT pat, CN_UINT ticks)
     if (pat & 0x10)
         EIP_printf (0, "High priority for connection request, ");
     EIP_printf (0, " tick time: %d ms, %d ticks = %d ms\n",
-		time, ticks, time*ticks);
+                time, ticks, time*ticks);
 }
 
 static void dump_CM_Unconnected_Send (const MR_Request *request)
@@ -2528,14 +2528,14 @@ static void dump_CM_Unconnected_Send (const MR_Request *request)
     send_data = (const CM_Unconnected_Send_Request *)
                 raw_MR_Request_data (request);
     EIP_printf (0, "    USINT priority_and_tick        = 0x%02X\n",
-		send_data->priority_and_tick);
+                send_data->priority_and_tick);
     EIP_printf (0, "    USINT connection_timeout_ticks = %d -> ",
-		send_data->connection_timeout_ticks);
+                send_data->connection_timeout_ticks);
     dump_CM_priority_and_tick (send_data->priority_and_tick,
-			       send_data->connection_timeout_ticks);
+                               send_data->connection_timeout_ticks);
 
     EIP_printf (0, "    UINT  message_size             = %d\n",
-		send_data->message_size);
+                send_data->message_size);
     EIP_printf (0, "    message_router_PDU: ");
     EIP_hexdump (&send_data->message_router_PDU, send_data->message_size);
     dump_raw_MR_Request (&send_data->message_router_PDU);
@@ -2728,21 +2728,21 @@ static void dump_CM_Forward_Open_Response (const MR_Response *response,
                EIP_MR_Response_data (response, response_size, 0);
         EIP_printf (10, "Forward_Open_Response:\n");
         EIP_printf (10, "    UDINT O2T_CID                       = 0x%08X\n",
-		    data->O2T_CID);
+                    data->O2T_CID);
         EIP_printf (10, "    UDINT T2O_CID                       = 0x%08X\n",
-		    data->T2O_CID);
+                    data->T2O_CID);
         EIP_printf (10, "    UINT  connection_serial             = 0x%04X\n",
-		    data->connection_serial);
+                    data->connection_serial);
         EIP_printf (10, "    UINT  vendor_ID                     = 0x%04X\n",
-		    data->vendor_ID);
+                    data->vendor_ID);
         EIP_printf (10, "    UDINT originator_serial             = 0x%08X\n",
-		    data->originator_serial);
+            data->originator_serial);
         EIP_printf (10, "    UDINT O2T_API                       = %d us\n",
-		    data->O2T_API);
+                    data->O2T_API);
         EIP_printf (10, "    UDINT T2O_API                       = %d us\n",
-		    data->T2O_API);
+                    data->T2O_API);
         EIP_printf (10, "    USINT application_reply_size        = %d\n",
-		    data->application_reply_size);
+                    data->application_reply_size);
         EIP_printf (10, "    USINT application_reply[]           = ");
         EIP_hexdump (&data->application_reply, data->application_reply_size*2);
     }
