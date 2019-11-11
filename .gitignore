@@ -1,4 +1,5 @@
 ## generated from EPICS build
+configure/RELEASE.local
 bin/
 db/
 dbd/
