@@ -17,6 +17,9 @@ terminated strings, allowing reading and writing
 
 Replaced some tabs with spaces.
 
+Replaced 'configure' files with those from EPICS 7.0.3.
+This replaces CONFIG_APP with CONFIG_SITE.
+
 * 2019, Aug 15
 Allow compilation on older RHEL 6.9, g++ 4.4.7
 
