@@ -679,7 +679,11 @@ static const CN_USINT *dump_raw_path(CN_USINT size, const CN_USINT *path)
 
 static const char *service_name(CN_Services service)
 {
-    switch (service)
+    // Check service code as number to avoid warning
+    // 'case value ‘212’ not in enumerated type ‘CN_Services’
+    // when checking the '-Reply' codes.
+    CN_USINT code = service;
+    switch (code)
     {
     case S_Get_Attribute_All:         return "Get_Attribute_All";
     case S_Get_Attribute_Single:      return "Get_Attribute_Single";
