@@ -70,7 +70,7 @@ typedef enum
 static struct
 {
     const char *text;
-	SpecialOptions mask;
+    SpecialOptions mask;
 } special_options[] =
 {
   { "E",                  SPCO_READ_SINGLE_ELEMENT }, /* Force a SCAN for a single element */
@@ -237,7 +237,7 @@ static eip_bool put_bits(dbCommon *rec, size_t bits, epicsUInt32 rval)
     if (rval & 1)
         value |= mask;
     else
-        value = (value | mask) ^ mask;		/* Force the bit ON, then turn it off */
+        value = (value | mask) ^ mask;        /* Force the bit ON, then turn it off */
     for (i=1/*!*/; i<bits; ++i)
     {
         rval >>= 1;
@@ -631,18 +631,22 @@ static void check_so_callback(void *arg)
         dbScanUnlock((dbCommon *)rec);
         return;
     }
+    /* Get a null-terminated string from CIP data,
+     * compare with record which we force to be terminated.
+     */ 
+    rec->val[MAX_STRING_SIZE-1] = '\0';
     if (get_CIP_STRING(pvt->tag->data, data, MAX_STRING_SIZE) &&
-            (rec->udf || rec->sevr == INVALID_ALARM || strcmp(rec->val, data)))
+        (rec->udf || rec->sevr == INVALID_ALARM || strcmp(rec->val, data)))
     {
         if (rec->tpro)
             printf("'%s': got %s from driver\n", rec->name, data);
         if (!rec->udf && pvt->special & SPCO_FORCE)
         {
             if (rec->tpro)
-                printf("'%s': will re-write record's value %s\n", rec->name,
-                        rec->val);
+                printf("'%s': will re-write record's value %s\n", rec->name, rec->val);
         }
-        else {
+        else
+        {
             strcpy(rec->val, data);
             rec->udf = false;
             if (rec->tpro)
@@ -676,8 +680,8 @@ static long get_ioint_info(int cmd, dbCommon *rec, IOSCANPVT *ppvt)
  */
 static double get_period(dbCommon *rec)
 {
-	/** Buffer that can hold PV name plus ".SCAN" as well as SCAN field values */
-	char          buf[PVNAME_STRINGSZ + 10];
+    /** Buffer that can hold PV name plus ".SCAN" as well as SCAN field values */
+    char          buf[PVNAME_STRINGSZ + 10];
     char          *p;
     size_t        len;
     struct dbAddr scan_field;
@@ -691,35 +695,35 @@ static double get_period(dbCommon *rec)
     if (sizeof(buf) < len+6)
     {
         EIP_printf(1, "EIP record name '%s' too long to access SCAN field\n", rec->name);
-    	return period;
+        return period;
     }
     memcpy(buf, rec->name, len);
     memcpy(buf+len, ".SCAN", 6);
     if (dbNameToAddr(buf, &scan_field) != 0)
-	{
-		EIP_printf(1, "EIP cannot locate '%s'\n", buf);
-		return period;
-	}
+    {
+        EIP_printf(1, "EIP cannot locate '%s'\n", buf);
+        return period;
+    }
 
     len = dbBufferSize(DBR_STRING, options, count);
     if (sizeof(buf) <= len)
     {
         EIP_printf(1, "EIP value of '%s' too long\n", buf);
-    	return period;
+        return period;
     }
     if (dbGet(&scan_field, DBR_STRING, buf, &options, &count, 0) != 0)
     {
         EIP_printf(1, "EIP cannot read '%s'\n", buf);
-    	return period;
+        return period;
     }
     if (strstr(buf, "second"))
     {
-		period = strtod(buf, &p);
-		if (p==buf || period==HUGE_VAL || period==-HUGE_VAL)
-			period = -1.0;
+        period = strtod(buf, &p);
+        if (p==buf || period==HUGE_VAL || period==-HUGE_VAL)
+            period = -1.0;
     }
     EIP_printf(8, "EIP record '%s' scans at %.1lf secs\n", rec->name, period);
-	return period;
+    return period;
 }
 
 /* Given string "s", return next token and end of token
@@ -764,9 +768,9 @@ static long analyze_link(dbCommon *rec,
 
     if (pvt->link_text)
     {
-    	EIP_printf(3, "EIP link changed for record %s\n", rec->name);
-    	free(pvt->link_text);
-		pvt->link_text = NULL;
+        EIP_printf(3, "EIP link changed for record %s\n", rec->name);
+        free(pvt->link_text);
+        pvt->link_text = NULL;
     }
     pvt->link_text = EIP_strdup(link->value.instio.string);
     if (! pvt->link_text)
@@ -786,20 +790,20 @@ static long analyze_link(dbCommon *rec,
 
     if (pvt->PLC_name && strncmp(pvt->PLC_name, p, end-p) )
     {
-    	EIP_printf(3, "EIP PLC changed for record %s\n", rec->name);
-    	free(pvt->PLC_name);
-		pvt->PLC_name = NULL;
+        EIP_printf(3, "EIP PLC changed for record %s\n", rec->name);
+        free(pvt->PLC_name);
+        pvt->PLC_name = NULL;
     }
-	
-	if(!pvt->PLC_name)
-	{
-		pvt->PLC_name = EIP_strdup_n(p, end-p);
-		if (! pvt->PLC_name)
-    	{
-       		errlogPrintf("devEtherIP (%s): Cannot copy PLC\n", rec->name);
-        	return S_dev_noMemory;
-	    }
-	}
+    
+    if(!pvt->PLC_name)
+    {
+        pvt->PLC_name = EIP_strdup_n(p, end-p);
+        if (! pvt->PLC_name)
+        {
+            errlogPrintf("devEtherIP (%s): Cannot copy PLC\n", rec->name);
+            return S_dev_noMemory;
+        }
+    }
 
     /* Find Tag */
     p = find_token(end, &end);
@@ -814,23 +818,23 @@ static long analyze_link(dbCommon *rec,
 
     if (pvt->string_tag && strncmp(pvt->string_tag, p, tag_len) )
     {
-    	EIP_printf(3, "EIP tag changed for record %s\n", rec->name);
-    	free(pvt->string_tag);
-		pvt->string_tag = NULL;
+        EIP_printf(3, "EIP tag changed for record %s\n", rec->name);
+        free(pvt->string_tag);
+        pvt->string_tag = NULL;
     }
-	
-	if(!pvt->string_tag)
-	{
-    	pvt->string_tag = EIP_strdup_n(p, tag_len);
-    	if (! pvt->string_tag)
-   		{
-        	errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
-        	return S_dev_noMemory;
-    	}
-	}
+    
+    if(!pvt->string_tag)
+    {
+        pvt->string_tag = EIP_strdup_n(p, tag_len);
+        if (! pvt->string_tag)
+        {
+            errlogPrintf("devEtherIP (%s): Cannot copy tag\n", rec->name);
+            return S_dev_noMemory;
+        }
+    }
 
     /* Check for more flags */
-	pvt->special = 0;  /* Init special options */
+    pvt->special = 0;  /* Init special options */
     while ((p = find_token(end, &end)))
     {
         for (i=0;
@@ -928,9 +932,9 @@ static long analyze_link(dbCommon *rec,
                              rec->name, pvt->link_text);
                 return S_db_badField;
             }
-			/* Show that this definition included an index reference */
-			pvt->special |= SPCO_INDEX_INCLUDED;
-			
+            /* Show that this definition included an index reference */
+            pvt->special |= SPCO_INDEX_INCLUDED;
+            
             /* remove element number text from tag */
             *p = '\0';
         }
@@ -953,22 +957,22 @@ static long analyze_link(dbCommon *rec,
 
     if (bits>0 && !(pvt->special & SPCO_BIT))
     {
-		/* This is defining a boolean object that didn't have a bit number */
-		if(pvt->special & SPCO_INDEX_INCLUDED)
-		{
-			/* If an index was supplied, it's a BOOL array,
-        	 * so the data is packed into UDINTs (CIP "BITS").
-        	 * The actual element requested is the UDINT index,
-        	 * not the bit#.
-        	 * Pick the bits within the UDINT via the mask.
-        	 */
-        	pvt->mask = 1U << (pvt->element & 0x1F); /* 0x1F == 31 */
-		}
-		else
-		{
-			/* There was no index, so it's just a plain BOOLEAN reference */
-			pvt->mask = 255;
-		}
+        /* This is defining a boolean object that didn't have a bit number */
+        if(pvt->special & SPCO_INDEX_INCLUDED)
+        {
+            /* If an index was supplied, it's a BOOL array,
+             * so the data is packed into UDINTs (CIP "BITS").
+             * The actual element requested is the UDINT index,
+             * not the bit#.
+             * Pick the bits within the UDINT via the mask.
+             */
+            pvt->mask = 1U << (pvt->element & 0x1F); /* 0x1F == 31 */
+        }
+        else
+        {
+            /* There was no index, so it's just a plain BOOLEAN reference */
+            pvt->mask = 255;
+        }
         last_element = pvt->element + bits - 1;
         pvt->element >>= 5;
         last_element >>= 5;
@@ -1815,7 +1819,7 @@ static long so_write(stringoutRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     eip_bool      ok = true;
-    char          data[MAX_STRING_SIZE + 1];
+    char          data[MAX_STRING_SIZE];
 
     if (rec->pact) /* Second pass, called for write completion ? */
     {
@@ -1827,8 +1831,15 @@ static long so_write(stringoutRecord *rec)
     if (rec->tpro)
         dump_DevicePrivate((dbCommon *)rec);
     if (lock_data((dbCommon *)rec))
-    {   /* Check if record's (R)VAL is current */
-        ok = get_CIP_STRING(pvt->tag->data, data, MAX_STRING_SIZE + 1);
+    {   /* Check if record's (R)VAL is current.
+         * stringout record might allow MAX_STRING_SIZE chars
+         * without terminator, but we only handle terminated strings
+         * in the stringin support and in put_CIP_STRING,
+         * so enforce terminator in case text used all MAX_STRING_SIZE chars
+         */
+        rec->val[MAX_STRING_SIZE-1] = '\n';
+        /* Get a total of MAX_STRING_SIZE incl. terminator for comparison */
+        ok = get_CIP_STRING(pvt->tag->data, data, MAX_STRING_SIZE);
         if (ok && strcmp(rec->val, data))
         {
             if (rec->tpro)

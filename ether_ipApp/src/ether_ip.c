@@ -1104,7 +1104,7 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
 }
 
 eip_bool get_CIP_double(const CN_USINT *raw_type_and_data,
-                    size_t element, double *result)
+                        size_t element, double *result)
 {
     CN_UINT        type;
     const CN_USINT *buf;
@@ -1270,7 +1270,7 @@ eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
 }
 
 eip_bool put_CIP_double(const CN_USINT *raw_type_and_data,
-                    size_t element, double value)
+                        size_t element, double value)
 {
     CN_UINT   type;
     CN_USINT *buf;
@@ -1301,7 +1301,7 @@ eip_bool put_CIP_double(const CN_USINT *raw_type_and_data,
 }
 
 eip_bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
-                   size_t element, CN_UDINT value)
+                       size_t element, CN_UDINT value)
 {
     CN_UINT   type;
     CN_USINT *buf;
@@ -1332,7 +1332,7 @@ eip_bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
 }
 
 eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
-                  size_t element, CN_DINT value)
+                      size_t element, CN_DINT value)
 {
     CN_UINT   type;
     CN_USINT *buf;
@@ -1367,11 +1367,13 @@ eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
 }
 
 /*
- * Set the data size and fill the data buffer of the CIP structure.  Leave the
- * other portion of the CIP structure unchanged.
+ * Set the data size and fill the data buffer of the CIP structure.
+ * Leave the other portion of the CIP structure unchanged.
+ * 'value' must be a '\0'-terminated string.
+ * 'size' is the CIP data size (string + length +  ...)
  */
 eip_bool put_CIP_STRING(const CN_USINT *raw_type_and_data,
-          char *value, size_t size)
+                        char *value, size_t size)
 {
     CN_UINT  type, subtype, len, no_idea_what_this_is;
     CN_USINT *buf, *plen;
@@ -1505,7 +1507,7 @@ void dump_CIP_WriteRequest (const CN_USINT *request)
 
 /* Test CIP_WriteData response: If not OK, report error */
 eip_bool check_CIP_WriteData_Response (const CN_USINT *response,
-                                   size_t response_size)
+                                       size_t response_size)
 {
     CN_USINT service = response[0];
     if ((service & 0x7F) != S_CIP_WriteData)
