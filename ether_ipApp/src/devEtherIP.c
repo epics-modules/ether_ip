@@ -19,7 +19,6 @@
 #include <cvtTable.h>
 #include <dbDefs.h>
 #include <dbAccess.h>
-#include <dbmf.h>
 #include <recGbl.h>
 #include <recSup.h>
 #include <devSup.h>
@@ -30,7 +29,6 @@
 #include <menuOmsl.h>
 #include <aiRecord.h>
 #include <biRecord.h>
-#include <lsiRecord.h>
 #include <mbbiRecord.h>
 #include <mbbiDirectRecord.h>
 #include <stringinRecord.h>
@@ -38,11 +36,16 @@
 #include <menuFtype.h>
 #include <aoRecord.h>
 #include <boRecord.h>
-#include <lsoRecord.h>
 #include <mbboRecord.h>
 #include <mbboDirectRecord.h>
 #include <stringoutRecord.h>
 #include <errlog.h>
+
+#ifdef BUILD_LONG_STRING_SUPPORT
+#include <dbmf.h>
+#include <lsiRecord.h>
+#include <lsoRecord.h>
+#endif
 
 /* Local */
 #include "drvEtherIP.h"
@@ -474,6 +477,7 @@ static void check_bo_callback(void *arg)
         scanOnce((dbCommon *)rec);
 }
 
+#ifdef BUILD_LONG_STRING_SUPPORT
 /* callback for lso record */
 static void check_lso_callback(void *arg)
 {
@@ -529,6 +533,7 @@ static void check_lso_callback(void *arg)
     if (process && rec->scan < SCAN_1ST_PERIODIC)
         scanOnce((dbCommon *)rec);
 }
+#endif
 
 /* Callback for mbbo */
 static void check_mbbo_callback(void *arg)
@@ -1195,6 +1200,7 @@ static long bi_init_record(biRecord *rec)
 
 /* ---------------------------------- */
 
+#ifdef BUILD_LONG_STRING_SUPPORT
 static long lsi_add_record(dbCommon *rec)
 {
     return init_record(rec, scan_callback, &((lsiRecord *)rec)->inp, 1, 0);
@@ -1213,6 +1219,7 @@ static long lsi_init_record(lsiRecord *rec)
 {
     return 0;
 }
+#endif
 
 /* ---------------------------------- */
 
@@ -1368,6 +1375,7 @@ static long bo_init_record(boRecord *rec)
 
 /* ---------------------------------- */
 
+#ifdef BUILD_LONG_STRING_SUPPORT
 static long lso_add_record(dbCommon *rec)
 {
     return init_record(rec, check_lso_callback, &((lsoRecord *)rec)->out, 1, 0);
@@ -1396,6 +1404,7 @@ static long lso_init_record(lsoRecord *rec)
 {
     return 2; /* don't convert, we have no value, yet */
 }
+#endif
 
 /* ---------------------------------- */
 
@@ -1581,6 +1590,7 @@ static long bi_read(biRecord *rec)
     return 0;
 }
 
+#ifdef BUILD_LONG_STRING_SUPPORT
 static long lsi_read(lsiRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
@@ -1604,6 +1614,7 @@ static long lsi_read(lsiRecord *rec)
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
     return 0;
 }
+#endif
 
 static long mbbi_read (mbbiRecord *rec)
 {
@@ -1872,6 +1883,7 @@ static long bo_write(boRecord *rec)
     return 0;
 }
 
+#ifdef BUILD_LONG_STRING_SUPPORT
 static long lso_write(lsoRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
@@ -1913,6 +1925,7 @@ static long lso_write(lsoRecord *rec)
         recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
     return 0;
 }
+#endif
 
 static long mbbo_write (mbboRecord *rec)
 {
@@ -2073,6 +2086,7 @@ DSET devBiEtherIP =
     NULL
 };
 
+#ifdef BUILD_LONG_STRING_SUPPORT
 DSET devLsiEtherIP =
 {
     5,
@@ -2082,6 +2096,7 @@ DSET devLsiEtherIP =
     get_ioint_info,
     lsi_read
 };
+#endif
 
 DSET devMbbiEtherIP =
 {
@@ -2147,6 +2162,7 @@ DSET devBoEtherIP =
     NULL
 };
 
+#ifdef BUILD_LONG_STRING_SUPPORT
 DSET devLsoEtherIP =
 {
     6,
@@ -2157,6 +2173,7 @@ DSET devLsoEtherIP =
     lso_write,
     NULL
 };
+#endif
 
 DSET devMbboEtherIP =
 {
@@ -2193,14 +2210,18 @@ DSET devSoEtherIP =
 
 epicsExportAddress(dset,devAiEtherIP);
 epicsExportAddress(dset,devBiEtherIP);
+#ifdef BUILD_LONG_STRING_SUPPORT
 epicsExportAddress(dset,devLsiEtherIP);
+#endif
 epicsExportAddress(dset,devMbbiEtherIP);
 epicsExportAddress(dset,devMbbiDirectEtherIP);
 epicsExportAddress(dset,devSiEtherIP);
 epicsExportAddress(dset,devWfEtherIP);
 epicsExportAddress(dset,devAoEtherIP);
 epicsExportAddress(dset,devBoEtherIP);
+#ifdef BUILD_LONG_STRING_SUPPORT
 epicsExportAddress(dset,devLsoEtherIP);
+#endif
 epicsExportAddress(dset,devMbboEtherIP);
 epicsExportAddress(dset,devMbboDirectEtherIP);
 epicsExportAddress(dset,devSoEtherIP);

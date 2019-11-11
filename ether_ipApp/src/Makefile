@@ -12,6 +12,13 @@ USR_CFLAGS += -Wno-unused-value
 # to build the test program
 SYS_PROD_LIBS_WIN32 = wsock32
 
+ifdef BASE_3_15
+devEtherIP_CFLAGS += -DBUILD_LONG_STRING_SUPPORT
+ETHER_IP_DBD = ether_ip-lsio.dbd
+else
+ETHER_IP_DBD = ether_ip-3-14.dbd
+endif
+
 PROD_HOST += ether_ip_test
 ether_ip_test_SRCS += ether_ip_test.c
 ether_ip_test_LIBS += Com
@@ -49,3 +56,11 @@ ether_ipLib_SRCS+= ether_ip_registerRecordDeviceDriver.cpp
 include $(TOP)/configure/RULES
 #----------------------------------------
 #  ADD RULES AFTER THIS LINE
+
+ether_ip.dbd$(DEP): ../Makefile
+	@$(RM) $@
+	@echo $(COMMON_DIR)/ether_ip.dbd:> $@
+
+$(COMMON_DIR)/ether_ip.dbd: ../$(ETHER_IP_DBD)
+	@$(RM) $@
+	$(CP) $< $@
