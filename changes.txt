@@ -9,7 +9,13 @@ drvEtherIP_report.
 
 * 2019, Nov 11
 Andrew Johnson provided fix for warning
-"case value ‘205’ not in enumerated type ‘CN_Services’"
+"case value ‘205’ not in enumerated type ‘CN_Services’".
+
+Check stringin/stringout support to consistently use
+terminated strings, allowing reading and writing
+39 useful characters based on total MAX_STRING_SIZE=40.
+
+Replaced some tabs with spaces.
 
 * 2019, Aug 15
 Allow compilation on older RHEL 6.9, g++ 4.4.7
