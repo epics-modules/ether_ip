@@ -1517,7 +1517,12 @@ static long si_read(stringinRecord *rec)
         dump_DevicePrivate((dbCommon *)rec);
     if (lock_data((dbCommon *)rec))
     {
+        // Read up to MAX_STRING_SIZE chars, including '\0' terminator.
+        // Record might actually allow MAX_STRING_SIZE chars without terminator,
+        // but to be on the safe side we always include a terminator,
+        // and thus can only fill the string record with MAX_STRING_SIZE-1 bytes.
         ok = get_CIP_STRING(pvt->tag->data, &rec->val[0], MAX_STRING_SIZE);
+        // printf("Record %s read '%s' (%d)\n", rec->name, rec->val, strlen(rec->val));
         epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
