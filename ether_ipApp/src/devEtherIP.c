@@ -1837,7 +1837,7 @@ static long so_write(stringoutRecord *rec)
          * in the stringin support and in put_CIP_STRING,
          * so enforce terminator in case text used all MAX_STRING_SIZE chars
          */
-        rec->val[MAX_STRING_SIZE-1] = '\n';
+        rec->val[MAX_STRING_SIZE-1] = '\0';
         /* Get a total of MAX_STRING_SIZE incl. terminator for comparison */
         ok = get_CIP_STRING(pvt->tag->data, data, MAX_STRING_SIZE);
         if (ok && strcmp(rec->val, data))
