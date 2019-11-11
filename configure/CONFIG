@@ -1,14 +1,29 @@
-#CONFIG
-#INSTALL_LOCATION_APP=$(TOP)/../..
-include $(TOP)/configure/CONFIG_APP
-# Add any changes to make definitions here
+# CONFIG - Load build configuration data
+#
+# Do not make changes to this file!
 
-#CROSS_COMPILER_TARGET_ARCHS = vxWorks-ppc603
+# Allow user to override where the build rules come from
+RULES = $(EPICS_BASE)
 
-# Use this when your IOC and the host use different paths
-# to access the application. Typically this will be 
-# used with the Microsoft FTP server or with NFS mounts. Use
-# is indicated by failure of the cdCommands script on
-# vxWorks. You must rebuild in the iocBoot directory 
-# before this takes effect.
-#IOCS_APPL_TOP = <the top of the application as seen by the IOC>
+# RELEASE files point to other application tops
+include $(TOP)/configure/RELEASE
+-include $(TOP)/configure/RELEASE.$(EPICS_HOST_ARCH).Common
+ifdef T_A
+-include $(TOP)/configure/RELEASE.Common.$(T_A)
+-include $(TOP)/configure/RELEASE.$(EPICS_HOST_ARCH).$(T_A)
+endif
+
+CONFIG = $(RULES)/configure
+include $(CONFIG)/CONFIG
+
+# Override the Base definition:
+INSTALL_LOCATION = $(TOP)
+
+# CONFIG_SITE files contain other build configuration settings
+include $(TOP)/configure/CONFIG_SITE
+-include $(TOP)/configure/CONFIG_SITE.$(EPICS_HOST_ARCH).Common
+ifdef T_A
+ -include $(TOP)/configure/CONFIG_SITE.Common.$(T_A)
+ -include $(TOP)/configure/CONFIG_SITE.$(EPICS_HOST_ARCH).$(T_A)
+endif
+
