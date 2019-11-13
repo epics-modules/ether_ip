@@ -8,11 +8,10 @@ so that you can see the current version at runtime via
 drvEtherIP_report.
 
 
-* 2019, Nov 11
-Added device support for the 3.15 lsi and lso (long string input/output) record
-types.
-
---> REQUIRES EPICS BASE R3.15.1 OR HIGHER!
+* 2019, Nov 13
+When built against Base-3.15.1 or higher, provide device support for the lsi and
+lso (long string input/output) record types. The module can still be built
+against earlier Base versions.
 
 * 2019, Nov 11
 Andrew Johnson provided fix for warning
@@ -26,6 +25,8 @@ Replaced some tabs with spaces.
 
 Replaced 'configure' files with those from EPICS 7.0.3.
 This replaces CONFIG_APP with CONFIG_SITE.
+
+--> REQUIRES EPICS BASE R3.14.11 OR HIGHER!
 
 * 2019, Aug 15
 Allow compilation on older RHEL 6.9, g++ 4.4.7
