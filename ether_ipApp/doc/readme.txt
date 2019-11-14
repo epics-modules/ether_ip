@@ -117,12 +117,14 @@ ether_ip.dbd looks like this:
      driver(drvEtherIP)
      device(ai,         INST_IO, devAiEtherIP,         "EtherIP")
      device(bi,         INST_IO, devBiEtherIP,         "EtherIP")
+     device(lsi,        INST_IO, devLsiEtherIP,        "EtherIP")
      device(mbbi,       INST_IO, devMbbiEtherIP,       "EtherIP")
      device(mbbiDirect, INST_IO, devMbbiDirectEtherIP, "EtherIP")
      device(stringin,   INST_IO, devSiEtherIP,         "EtherIP")
      device(waveform,   INST_IO, devWfEtherIP,         "EtherIP")
      device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
      device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
+     device(lso,        INST_IO, devLsoEtherIP,        "EtherIP")
      device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")
      device(mbboDirect, INST_IO, devMbboDirectEtherIP, "EtherIP")
      device(stringout,  INST_IO, devSoEtherIP,         "EtherIP")
@@ -636,7 +638,7 @@ whenever one or more other elements are changed by output records.
 ** write caveats
 See the ao comments.
 
-* stringin String Input Records
+* stringin and lsi String Input Records
 String input records can be connected to STRING tags
 on the PLC:
 
@@ -648,11 +650,17 @@ STRING tags seem to have an allowed length of up to 82
 characters. The stringin record is limited to 40 characters.
 Since I decided to include the '\0', any STRING tag gets
 truncated to 39 characters. There is no fault indication for this,
-just a limited string.
+just a truncated string.
 
-The stringin record works only with STRING tags. Any other tag
-type will result in errors.
-Likewise, only stringin records must be used with STRING tags.
+The lsi (long string input) record can hold any length, chosen by
+the value in the SIZV (size of VAL) field at record initialization.
+All strings stored by this record must include a '\0' terminator.
+As with the stringin record, if the record's field length is too
+short for the data, the data will be silently truncated.
+
+These records works only with STRING tags.
+Any other tag type will result in errors.
+Likewise, only stringin or lsi records can be used with STRING tags.
 Any other record type will fail with STRING tags.
 
 Note: The STRING tag data type was not documented!
@@ -660,7 +668,7 @@ To the driver, a STRING tag looks like a "CIP structure" and the
 location of the string length and character data in there were
 determined from tests.
 
-* stringout String Output Records
+* stringout and lso String Output Records
 String output records can be connected to STRING tags
 on the PLC:
 
@@ -668,8 +676,12 @@ on the PLC:
         field(INP,  "@$(PLC) text_tag")
         field(SCAN, "1 second")
 
-The stringout record works only with STRING tags. Any other tag
-type will result in errors.
+The stringout record is limited to 40 characters.
+The lso (long string output) record can hold any length, chosen
+by the SIZV (size of VAL) field at record initialization time.
+
+The stringout and lso records work only with STRING tags.
+Any other tag type will result in errors.
 Likewise, only stringout records must be used with STRING tags.
 Any other record type will fail with STRING tags.
 

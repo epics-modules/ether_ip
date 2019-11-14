@@ -41,6 +41,12 @@
 #include <stringoutRecord.h>
 #include <errlog.h>
 
+#ifdef BUILD_LONG_STRING_SUPPORT
+#include <dbmf.h>
+#include <lsiRecord.h>
+#include <lsoRecord.h>
+#endif
+
 /* Local */
 #include "drvEtherIP.h"
 
@@ -470,6 +476,64 @@ static void check_bo_callback(void *arg)
     if (process && rec->scan < SCAN_1ST_PERIODIC)
         scanOnce((dbCommon *)rec);
 }
+
+#ifdef BUILD_LONG_STRING_SUPPORT
+/* callback for lso record */
+static void check_lso_callback(void *arg)
+{
+    lsoRecord *rec = (lsoRecord *) arg;
+    struct rset   *rset= (struct rset *)(rec->rset);
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    eip_bool      process = false;
+    char          *data = NULL;
+
+    /* We are about the check and even set val, & rval -> lock */
+    dbScanLock((dbCommon *)rec);
+    if (rec->pact)
+    {
+        if (rec->tpro)
+            printf("EIP check_lso_callback('%s'), pact=%d\n",
+                   rec->name, rec->pact);
+        (*rset->process) ((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
+    /* Check if record's (R)VAL is current */
+    if (!check_data((dbCommon *)rec))
+    {
+        if (rec->tpro)
+            printf("EIP check_lso_callback('%s'), no data\n", rec->name);
+        (*rset->process) ((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
+    data = dbmfMalloc(rec->sizv);
+    if (get_CIP_STRING(pvt->tag->data, data, rec->sizv) &&
+            (rec->udf || rec->sevr == INVALID_ALARM || strcmp(rec->val, data)))
+    {
+        if (rec->tpro)
+            printf("'%s': got %s from driver\n", rec->name, data);
+        if (!rec->udf && pvt->special & SPCO_FORCE)
+        {
+            if (rec->tpro)
+                printf("'%s': will re-write record's value %s\n", rec->name,
+                        rec->val);
+        }
+        else {
+            strcpy(rec->val, data);
+            rec->udf = false;
+            if (rec->tpro)
+                printf("'%s': updated record's value %s\n", rec->name, rec->val);
+        }
+        process = true;
+    }
+    dbmfFree(data);
+    dbScanUnlock((dbCommon *)rec);
+    /* Does record need processing and is not periodic? */
+    if (process && rec->scan < SCAN_1ST_PERIODIC)
+        scanOnce((dbCommon *)rec);
+}
+#endif
 
 /* Callback for mbbo */
 static void check_mbbo_callback(void *arg)
@@ -1136,6 +1200,29 @@ static long bi_init_record(biRecord *rec)
 
 /* ---------------------------------- */
 
+#ifdef BUILD_LONG_STRING_SUPPORT
+static long lsi_add_record(dbCommon *rec)
+{
+    return init_record(rec, scan_callback, &((lsiRecord *)rec)->inp, 1, 0);
+}
+
+static struct dsxt lsi_ext = { lsi_add_record, del_scan_callback_record };
+
+static long lsi_init(int run)
+{
+    if (run == 0)
+        devExtend(&lsi_ext);
+    return init(run);
+}
+
+static long lsi_init_record(lsiRecord *rec)
+{
+    return 0;
+}
+#endif
+
+/* ---------------------------------- */
+
 static long mbbi_add_record(dbCommon *rec)
 {
     mbbiRecord *mbbi = (mbbiRecord *)rec;
@@ -1285,6 +1372,39 @@ static long bo_init_record(boRecord *rec)
 {
     return 2; /* don't convert, we have no value, yet */
 }
+
+/* ---------------------------------- */
+
+#ifdef BUILD_LONG_STRING_SUPPORT
+static long lso_add_record(dbCommon *rec)
+{
+    return init_record(rec, check_lso_callback, &((lsoRecord *)rec)->out, 1, 0);
+}
+
+static long lso_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, check_lso_callback, rec);
+    free(pvt);
+    return 0;
+}
+
+static struct dsxt lso_ext = { lso_add_record, lso_del_record };
+
+static long lso_init(int run)
+{
+    if (run == 0)
+        devExtend(&lso_ext);
+    return init(run);
+}
+
+static long lso_init_record(lsoRecord *rec)
+{
+    return 2; /* don't convert, we have no value, yet */
+}
+#endif
 
 /* ---------------------------------- */
 
@@ -1469,6 +1589,32 @@ static long bi_read(biRecord *rec)
         recGblSetSevr(rec, READ_ALARM, INVALID_ALARM);
     return 0;
 }
+
+#ifdef BUILD_LONG_STRING_SUPPORT
+static long lsi_read(lsiRecord *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    eip_bool ok;
+
+    if (rec->tpro)
+        dump_DevicePrivate((dbCommon *)rec);
+    if (lock_data((dbCommon *)rec))
+    {
+        ok = get_CIP_STRING(pvt->tag->data, rec->val, rec->sizv);
+        epicsMutexUnlock(pvt->tag->data_lock);
+    }
+    else
+        ok = false;
+    if (ok)
+    {
+        rec->len = strlen(rec->val) + 1;
+        rec->udf = FALSE;
+    }
+    else
+        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
+    return 0;
+}
+#endif
 
 static long mbbi_read (mbbiRecord *rec)
 {
@@ -1737,6 +1883,50 @@ static long bo_write(boRecord *rec)
     return 0;
 }
 
+#ifdef BUILD_LONG_STRING_SUPPORT
+static long lso_write(lsoRecord *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    eip_bool      ok = true;
+
+    if (rec->pact) /* Second pass, called for write completion ? */
+    {
+        if (rec->tpro)
+            printf("'%s': written\n", rec->name);
+        rec->pact = FALSE;
+        return 0;
+    }
+    if (rec->tpro)
+        dump_DevicePrivate((dbCommon *)rec);
+    if (lock_data((dbCommon *)rec))
+    {   /* Check if record's (R)VAL is current */
+        char *data = dbmfMalloc(rec->sizv);
+
+        ok = get_CIP_STRING(pvt->tag->data, data, rec->sizv);
+        if (ok && strcmp(rec->val, data))
+        {
+            if (rec->tpro)
+                printf("'%s': write %s!\n", rec->name, rec->val);
+            ok = put_CIP_STRING(pvt->tag->data, rec->val, pvt->tag->data_size);
+            if (pvt->tag->do_write)
+                EIP_printf(6,"'%s': already writing\n", rec->name);
+            else
+                pvt->tag->do_write = true;
+            rec->pact=TRUE;
+        }
+        dbmfFree(data);
+        epicsMutexUnlock(pvt->tag->data_lock);
+    }
+    else
+        ok = false;
+    if (ok)
+        rec->udf = FALSE;
+    else
+        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
+    return 0;
+}
+#endif
+
 static long mbbo_write (mbboRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
@@ -1896,6 +2086,18 @@ DSET devBiEtherIP =
     NULL
 };
 
+#ifdef BUILD_LONG_STRING_SUPPORT
+DSET devLsiEtherIP =
+{
+    5,
+    NULL,
+    lsi_init,
+    lsi_init_record,
+    get_ioint_info,
+    lsi_read
+};
+#endif
+
 DSET devMbbiEtherIP =
 {
     6,
@@ -1960,6 +2162,19 @@ DSET devBoEtherIP =
     NULL
 };
 
+#ifdef BUILD_LONG_STRING_SUPPORT
+DSET devLsoEtherIP =
+{
+    6,
+    NULL,
+    lso_init,
+    lso_init_record,
+    NULL,
+    lso_write,
+    NULL
+};
+#endif
+
 DSET devMbboEtherIP =
 {
     6,
@@ -1995,12 +2210,18 @@ DSET devSoEtherIP =
 
 epicsExportAddress(dset,devAiEtherIP);
 epicsExportAddress(dset,devBiEtherIP);
+#ifdef BUILD_LONG_STRING_SUPPORT
+epicsExportAddress(dset,devLsiEtherIP);
+#endif
 epicsExportAddress(dset,devMbbiEtherIP);
 epicsExportAddress(dset,devMbbiDirectEtherIP);
 epicsExportAddress(dset,devSiEtherIP);
 epicsExportAddress(dset,devWfEtherIP);
 epicsExportAddress(dset,devAoEtherIP);
 epicsExportAddress(dset,devBoEtherIP);
+#ifdef BUILD_LONG_STRING_SUPPORT
+epicsExportAddress(dset,devLsoEtherIP);
+#endif
 epicsExportAddress(dset,devMbboEtherIP);
 epicsExportAddress(dset,devMbboDirectEtherIP);
 epicsExportAddress(dset,devSoEtherIP);
