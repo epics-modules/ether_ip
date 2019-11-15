@@ -317,7 +317,7 @@ static void scan_callback(void *arg)
 static void check_ao_callback(void *arg)
 {
     aoRecord      *rec = (aoRecord *) arg;
-    struct rset   *rset= (struct rset *)(rec->rset);
+    rset          *rset = rec->rset;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     double        dbl;
     CN_DINT       dint;
@@ -330,7 +330,7 @@ static void check_ao_callback(void *arg)
         if (rec->tpro)
             printf("EIP check_ao_callback('%s'), pact=%d\n",
                    rec->name, rec->pact);
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
@@ -339,7 +339,7 @@ static void check_ao_callback(void *arg)
     {
         if (rec->tpro)
             printf("EIP check_ao_callback('%s'), no data\n", rec->name);
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
@@ -429,7 +429,7 @@ static void check_ao_callback(void *arg)
 static void check_bo_callback(void *arg)
 {
     boRecord      *rec = (boRecord *) arg;
-    struct rset   *rset= (struct rset *)(rec->rset);
+    rset          *rset = rec->rset;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     epicsUInt32   rval;
     eip_bool      process = false;
@@ -438,14 +438,14 @@ static void check_bo_callback(void *arg)
     dbScanLock((dbCommon *)rec);
     if (rec->pact)
     {
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
     /* Check if record's (R)VAL is current */
     if (!check_data((dbCommon *) rec))
     {
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
@@ -482,7 +482,7 @@ static void check_bo_callback(void *arg)
 static void check_lso_callback(void *arg)
 {
     lsoRecord *rec = (lsoRecord *) arg;
-    struct rset   *rset= (struct rset *)(rec->rset);
+    rset          *rset = rec->rset;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     eip_bool      process = false;
     char          *data = NULL;
@@ -494,7 +494,7 @@ static void check_lso_callback(void *arg)
         if (rec->tpro)
             printf("EIP check_lso_callback('%s'), pact=%d\n",
                    rec->name, rec->pact);
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
@@ -503,7 +503,7 @@ static void check_lso_callback(void *arg)
     {
         if (rec->tpro)
             printf("EIP check_lso_callback('%s'), no data\n", rec->name);
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
@@ -539,7 +539,7 @@ static void check_lso_callback(void *arg)
 static void check_mbbo_callback(void *arg)
 {
     mbboRecord    *rec = (mbboRecord *) arg;
-    struct rset   *rset= (struct rset *)(rec->rset);
+    rset          *rset = rec->rset;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     epicsUInt32   rval, *state_val;
     size_t        i;
@@ -549,14 +549,14 @@ static void check_mbbo_callback(void *arg)
     dbScanLock((dbCommon *)rec);
     if (rec->pact)
     {
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
     /* Check if record's (R)VAL is current */
     if (!check_data ((dbCommon *) rec))
     {
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
@@ -609,7 +609,7 @@ static void check_mbbo_callback(void *arg)
 static void check_mbbo_direct_callback(void *arg)
 {
     mbboDirectRecord *rec = (mbboDirectRecord *) arg;
-    struct rset      *rset= (struct rset *)(rec->rset);
+    rset             *rset = rec->rset;
     DevicePrivate    *pvt = (DevicePrivate *)rec->dpvt;
     epicsUInt32      rval;
     eip_bool         process = false;
@@ -618,14 +618,14 @@ static void check_mbbo_direct_callback(void *arg)
     dbScanLock((dbCommon *)rec);
     if (rec->pact)
     {
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
     /* Check if record's (R)VAL is current */
     if (!check_data((dbCommon *) rec))
     {
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
@@ -670,7 +670,7 @@ static void check_mbbo_direct_callback(void *arg)
 static void check_so_callback(void *arg)
 {
     stringoutRecord *rec = (stringoutRecord *) arg;
-    struct rset   *rset= (struct rset *)(rec->rset);
+    rset          *rset = rec->rset;
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
     eip_bool      process = false;
     char          data[MAX_STRING_SIZE];
@@ -682,7 +682,7 @@ static void check_so_callback(void *arg)
         if (rec->tpro)
             printf("EIP check_so_callback('%s'), pact=%d\n",
                    rec->name, rec->pact);
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }
@@ -691,7 +691,7 @@ static void check_so_callback(void *arg)
     {
         if (rec->tpro)
             printf("EIP check_so_callback('%s'), no data\n", rec->name);
-        (*rset->process) ((dbCommon *)rec);
+        rset->process((dbCommon *)rec);
         dbScanUnlock((dbCommon *)rec);
         return;
     }

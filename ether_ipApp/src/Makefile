@@ -14,6 +14,7 @@ SYS_PROD_LIBS_WIN32 = wsock32
 
 ifdef BASE_3_15
 devEtherIP_CFLAGS += -DBUILD_LONG_STRING_SUPPORT
+USR_CFLAGS += -DUSE_TYPED_RSET
 ETHER_IP_DBD = ether_ip-lsio.dbd
 else
 ETHER_IP_DBD = ether_ip-3-14.dbd

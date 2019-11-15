@@ -23,8 +23,7 @@ eipIoc_SRCS += eipIoc_registerRecordDeviceDriver.cpp
 eipIoc_SRCS_DEFAULT += eipIocMain.cpp
 eipIoc_SRCS_vxWorks += -nil-
 
-#The following adds support from base/src/vxWorks
-eipIoc_OBJS_vxWorks += $(EPICS_BASE_BIN)/vxComLibrary
+USR_CXXFLAGS += -DUSE_TYPED_RSET
 
 eipIoc_LIBS += ether_ip
 ether_ip_DIR = $(INSTALL_LIB)
