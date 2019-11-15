@@ -1433,12 +1433,7 @@ static long drvEtherIP_drvInit ()
 }
 
 /* EPICS driver support entry table */
-struct
-{
-    long number;
-    long (* report) ();
-    long (* init) ();
-} drvEtherIP =
+drvet drvEtherIP =
 {
     2,
     drvEtherIP_report,

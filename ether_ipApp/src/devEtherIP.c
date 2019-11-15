@@ -1168,11 +1168,12 @@ static long ai_init(int run)
     return init(run);
 }
 
-static long ai_init_record(aiRecord *rec)
+static long ai_init_record(dbCommon *rec)
 {
+    aiRecord *ai = (aiRecord *)rec;
     /* Make sure record processing routine does not perform any conversion*/
-    if (rec->linr != menuConvertSLOPE)
-        rec->linr = 0;
+    if (ai->linr != menuConvertSLOPE)
+        ai->linr = 0;
     return 0;
 }
 
@@ -1192,7 +1193,7 @@ static long bi_init(int run)
     return init(run);
 }
 
-static long bi_init_record(biRecord *rec)
+static long bi_init_record(dbCommon *rec)
 {
     /* Handled by bi_add_record */
     return 0;
@@ -1215,7 +1216,7 @@ static long lsi_init(int run)
     return init(run);
 }
 
-static long lsi_init_record(lsiRecord *rec)
+static long lsi_init_record(dbCommon *rec)
 {
     return 0;
 }
@@ -1238,9 +1239,10 @@ static long mbbi_init(int run)
     return init(run);
 }
 
-static long mbbi_init_record(mbbiRecord *rec)
+static long mbbi_init_record(dbCommon *rec)
 {
-    rec->shft = 0;
+    mbbiRecord *mbbi = (mbbiRecord *)rec;
+    mbbi->shft = 0;
     return 0;
 }
 
@@ -1261,9 +1263,10 @@ static long mbbi_direct_init(int run)
     return init(run);
 }
 
-static long mbbi_direct_init_record(mbbiDirectRecord *rec)
+static long mbbi_direct_init_record(dbCommon *rec)
 {
-    rec->shft = 0;
+    mbbiDirectRecord *mbbi = (mbbiDirectRecord *)rec;
+    mbbi->shft = 0;
     return 0;
 }
 
@@ -1283,7 +1286,7 @@ static long si_init(int run)
     return init(run);
 }
 
-static long si_init_record(stringinRecord *rec)
+static long si_init_record(dbCommon *rec)
 {
     return 0;
 }
@@ -1305,7 +1308,7 @@ static long wf_init(int run)
     return init(run);
 }
 
-static long wf_init_record(waveformRecord *rec)
+static long wf_init_record(dbCommon *rec)
 {
     return 0;
 }
@@ -1337,7 +1340,7 @@ static long ao_init(int run)
     return init(run);
 }
 
-static long ao_init_record(aoRecord *rec)
+static long ao_init_record(dbCommon *rec)
 {
     return 2; /* don't convert, we have no value, yet */
 }
@@ -1368,7 +1371,7 @@ static long bo_init(int run)
     return init(run);
 }
 
-static long bo_init_record(boRecord *rec)
+static long bo_init_record(dbCommon *rec)
 {
     return 2; /* don't convert, we have no value, yet */
 }
@@ -1400,7 +1403,7 @@ static long lso_init(int run)
     return init(run);
 }
 
-static long lso_init_record(lsoRecord *rec)
+static long lso_init_record(dbCommon *rec)
 {
     return 2; /* don't convert, we have no value, yet */
 }
@@ -1433,9 +1436,10 @@ static long mbbo_init(int run)
     return init(run);
 }
 
-static long mbbo_init_record(mbboRecord *rec)
+static long mbbo_init_record(dbCommon *rec)
 {
-    rec->shft = 0;
+    mbboRecord *mbbo = (mbboRecord *)rec;
+    mbbo->shft = 0;
     return 2; /* don't convert, we have no value, yet */
 }
 
@@ -1466,9 +1470,10 @@ static long mbbo_direct_init(int run)
     return init(run);
 }
 
-static long mbbo_direct_init_record(mbboDirectRecord *rec)
+static long mbbo_direct_init_record(dbCommon *rec)
 {
-    rec->shft = 0;
+    mbboDirectRecord *mbbo = (mbboDirectRecord *)rec;
+    mbbo->shft = 0;
     return 2; /* don't convert, we have no value, yet */
 }
 
@@ -1498,7 +1503,7 @@ static long so_init(int run)
     return init(run);
 }
 
-static long so_init_record(stringoutRecord *rec)
+static long so_init_record(dbCommon *rec)
 {
     return 2; /* don't convert, we have no value, yet */
 }
@@ -2053,159 +2058,194 @@ static long so_write(stringoutRecord *rec)
 }
 
 /* Create the device support entry tables */
-typedef struct
-{
-    long        number;
-    DEVSUPFUN   report;
-    DEVSUPFUN   init;
-    DEVSUPFUN   init_record;
-    DEVSUPFUN   get_ioint_info;
-    DEVSUPFUN   read_write;
-    DEVSUPFUN   special_linconv;
-} DSET;
-
-DSET devAiEtherIP =
-{
-    6,
-    NULL,
-    ai_init,
-    ai_init_record,
-    get_ioint_info,
+struct {
+    dset common;
+    long (*read)(aiRecord *rec);
+    long (*special_linconv)(aiRecord *rec);
+} devAiEtherIP = {
+    {
+        6,
+        NULL,
+        ai_init,
+        ai_init_record,
+        get_ioint_info
+    },
     ai_read,
     NULL
 };
 
-DSET devBiEtherIP =
-{
-    6,
-    NULL,
-    bi_init,
-    bi_init_record,
-    get_ioint_info,
-    bi_read,
-    NULL
+struct {
+    dset common;
+    long (*read)(biRecord *rec);
+} devBiEtherIP = {
+    {
+        5,
+        NULL,
+        bi_init,
+        bi_init_record,
+        get_ioint_info
+    },
+    bi_read
 };
 
 #ifdef BUILD_LONG_STRING_SUPPORT
-DSET devLsiEtherIP =
-{
-    5,
-    NULL,
-    lsi_init,
-    lsi_init_record,
-    get_ioint_info,
+struct {
+    dset common;
+    long (*read)(lsiRecord *rec);
+} devLsiEtherIP = {
+    {
+        5,
+        NULL,
+        lsi_init,
+        lsi_init_record,
+        get_ioint_info
+    },
     lsi_read
 };
 #endif
 
-DSET devMbbiEtherIP =
-{
-    6,
-    NULL,
-    mbbi_init,
-    mbbi_init_record,
-    get_ioint_info,
-    mbbi_read,
-    NULL
+struct {
+    dset common;
+    long (*read)(mbbiRecord *rec);
+} devMbbiEtherIP = {
+    {
+        5,
+        NULL,
+        mbbi_init,
+        mbbi_init_record,
+        get_ioint_info
+    },
+    mbbi_read
 };
 
-DSET devMbbiDirectEtherIP =
-{
-    6,
-    NULL,
-    mbbi_direct_init,
-    mbbi_direct_init_record,
-    get_ioint_info,
-    mbbi_direct_read,
-    NULL
+struct {
+    dset common;
+    long (*read)(mbbiDirectRecord *rec);
+} devMbbiDirectEtherIP = {
+    {
+        5,
+        NULL,
+        mbbi_direct_init,
+        mbbi_direct_init_record,
+        get_ioint_info
+    },
+    mbbi_direct_read
 };
 
-DSET devSiEtherIP =
-{
-    5,
-    NULL,
-    si_init,
-    si_init_record,
-    get_ioint_info,
+struct {
+    dset common;
+    long (*read)(stringinRecord *rec);
+} devSiEtherIP = {
+    {
+        5,
+        NULL,
+        si_init,
+        si_init_record,
+        get_ioint_info
+    },
     si_read
 };
 
-DSET devWfEtherIP =
-{
-    5,
-    NULL,
-    wf_init,
-    wf_init_record,
-    get_ioint_info,
+struct {
+    dset common;
+    long (*read)(waveformRecord *rec);
+} devWfEtherIP = {
+    {
+        5,
+        NULL,
+        wf_init,
+        wf_init_record,
+        get_ioint_info
+    },
     wf_read
 };
 
-DSET devAoEtherIP =
-{
-    6,
-    NULL,
-    ao_init,
-    ao_init_record,
-    NULL,
+struct {
+    dset common;
+    long (*write)(aoRecord *rec);
+    long (*special_linconv)(aoRecord *rec);
+} devAoEtherIP = {
+    {
+        6,
+        NULL,
+        ao_init,
+        ao_init_record,
+        NULL
+    },
     ao_write,
     NULL
 };
 
-DSET devBoEtherIP =
-{
-    6,
-    NULL,
-    bo_init,
-    bo_init_record,
-    NULL,
-    bo_write,
-    NULL
+struct {
+    dset common;
+    long (*write)(boRecord *rec);
+} devBoEtherIP = {
+    {
+        6,
+        NULL,
+        bo_init,
+        bo_init_record,
+        NULL
+    },
+    bo_write
 };
 
 #ifdef BUILD_LONG_STRING_SUPPORT
-DSET devLsoEtherIP =
-{
-    6,
-    NULL,
-    lso_init,
-    lso_init_record,
-    NULL,
-    lso_write,
-    NULL
+struct {
+    dset common;
+    long (*write)(lsoRecord *rec);
+} devLsoEtherIP = {
+    {
+        5,
+        NULL,
+        lso_init,
+        lso_init_record,
+        NULL
+    },
+    lso_write
 };
 #endif
 
-DSET devMbboEtherIP =
-{
-    6,
-    NULL,
-    mbbo_init,
-    mbbo_init_record,
-    NULL,
-    mbbo_write,
-    NULL
+struct {
+    dset common;
+    long (*write)(mbboRecord *rec);
+} devMbboEtherIP = {
+    {
+        5,
+        NULL,
+        mbbo_init,
+        mbbo_init_record,
+        NULL
+    },
+    mbbo_write
 };
 
-DSET devMbboDirectEtherIP =
-{
-    6,
-    NULL,
-    mbbo_direct_init,
-    mbbo_direct_init_record,
-    NULL,
-    mbbo_direct_write,
-    NULL
+struct {
+    dset common;
+    long (*write)(mbboDirectRecord *rec);
+} devMbboDirectEtherIP = {
+    {
+        5,
+        NULL,
+        mbbo_direct_init,
+        mbbo_direct_init_record,
+        NULL
+    },
+    mbbo_direct_write
 };
 
-DSET devSoEtherIP =
-{
-    6,
-    NULL,
-    so_init,
-    so_init_record,
-    NULL,
-    so_write,
-    NULL
+struct {
+    dset common;
+    long (*write)(stringoutRecord *rec);
+} devSoEtherIP = {
+    {
+        5,
+        NULL,
+        so_init,
+        so_init_record,
+        NULL
+    },
+    so_write
 };
 
 epicsExportAddress(dset,devAiEtherIP);
