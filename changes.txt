@@ -7,7 +7,7 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
-* 2019, Nov 15
+* 2019, Nov 15 ether_ip-3-2
 Builds against EPICS 7 no longer generate warnings about the deprecation of
 the 'rset' data type.
 
@@ -15,6 +15,26 @@ the 'rset' data type.
 When built against Base-3.15.1 or higher, provide device support for the lsi and
 lso (long string input/output) record types. The module can still be built
 against earlier Base versions.
+
+Hints for using lsi, lso records:
+1) Set field SIZV in the lsi/lso records to the maximum string length.
+   The driver always adds a '\0' terminator, so with  
+
+     field(SIZV, 60)
+
+   the maximum usable character count is 59.
+2) Via `cainfo`, the record reports a data type of DBR_STRING,
+   so a plain `caget` or `caput` will still be limited to 40 characters.
+   To access the full string, one needs to access the `VAL$` field,
+   and do this via a long-string (character waveform) operation:
+
+     caput -S  lso.VAL$ "....+....1....+....2....+....3....+....4....+....5....+...."
+   
+   When trying to access more than SIZV characters (note the implicit '\0' terminator),
+   write access will fail like this:
+
+     caput -S  lso.VAL$ "....+....1....+....2....+....3....+....4....+....5....+....6"
+     Error from put operation: Invalid element count requested
 
 * 2019, Nov 11
 Andrew Johnson provided fix for warning
