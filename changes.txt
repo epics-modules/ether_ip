@@ -25,8 +25,11 @@ Hints for using lsi, lso records:
    the maximum usable character count is 59.
 2) Via `cainfo`, the record reports a data type of DBR_STRING,
    so a plain `caget` or `caput` will still be limited to 40 characters.
-   To access the full string, one needs to access the `VAL$` field,
-   and do this via a long-string (character waveform) operation:
+   To access the full string, one needs to read/write the `VAL$` field,
+   which causes the IOC (Channel Access Server) to provide a 
+   DBR_CHAR datatype with element count based on SIZV.
+3) Client then needs to access the character waveform as a 'long string',
+   which is selected via the `-S` option of caget/caput:
 
      caput -S  lso.VAL$ "....+....1....+....2....+....3....+....4....+....5....+...."
    
