@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2019, Nov 15
+Builds against EPICS 7 no longer generate warnings about the deprecation of
+the 'rset' data type.
 
 * 2019, Nov 13
 When built against Base-3.15.1 or higher, provide device support for the lsi and
