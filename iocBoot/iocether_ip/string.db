@@ -1,0 +1,31 @@
+# Note that string data type of PLC is longer
+# than the string record's value,
+# so what you get might be truncated
+record(stringin, "string")
+{
+	field(SCAN, "1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@$(PLC) testStr2")
+}
+
+record(stringout, "out")
+{
+	field(DTYP, "EtherIP")
+	field(OUT, "@$(PLC) testStr2")
+}
+
+record(lsi, "lsi")
+{
+	field(SCAN, "1 second")
+	field(DTYP, "EtherIP")
+	field(SIZV, "60")
+	field(INP, "@$(PLC) testStr3")
+}
+
+record(lso, "lso")
+{
+	field(DTYP, "EtherIP")
+	field(OUT, "@$(PLC) testStr3")
+	field(SIZV, "60")
+}
+

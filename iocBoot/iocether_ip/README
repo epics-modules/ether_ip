@@ -8,5 +8,5 @@ export LD_LIBRARY_PATH=../../lib/linux-x86:$LD_LIBRARY_PATH;
 
 st.cmd.3_14 is meant for a vxWorks IOC under R3.14
 
-st.cmd is meant for vxWorks IOCs under 3.13.7 
+st.cmd is meant for Linux
 
