@@ -1,9 +1,9 @@
 -*- outline -*- $Id$
 
-* This document
-is part of the EPICS EtherIP package, to be found in
-<ether_ip>/ether_ipApp/doc/readme.txt.
-This is the "Manual" on how to use the driver.
+* This document is being replaced by the Manual.md
+found in the top-level directory
+
+
 
 For details on the underlying protocol, see
 "Interfacing the ControlLogix PLC Over EtherNet/IP",

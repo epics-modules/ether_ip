@@ -7,6 +7,11 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2020, Jan 16
+Add Manual.md, based on ether_ipApp/doc/readme.txt,
+with updates in a slightly modernized format.
+Also tweaked output of drvEtherIP_help.
+
 * 2019, Nov 15 ether_ip-3-2
 Builds against EPICS 7 no longer generate warnings about the deprecation of
 the 'rset' data type.
