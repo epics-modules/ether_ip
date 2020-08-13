@@ -12,6 +12,7 @@
 #include<string.h>
 #include<stddef.h>
 #include<time.h>
+#include<stdlib.h> 
 #include"ether_ip.c"
 
 #ifdef DEFINE_CONNECTED_METHODS
@@ -290,9 +291,9 @@ void stress(EIPConnection *c, size_t count, const ParsedTag *tags[], size_t runs
 
 void usage(const char *progname)
 {
-    fprintf(stderr, "Usage: %s <flags> [tag]\n", progname);
+    fprintf(stderr, "Usage: %s <Options> [tag]\n", progname);
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, "    -v verbosity\n");
+    fprintf(stderr, "    -v verbosity (Numerical digit)\n");
     fprintf(stderr, "    -i ip  (as 123.456.789.001 or DNS name)\n");
     fprintf(stderr, "    -p port\n");
     fprintf(stderr, "    -s PLC slot in ControlLogix crate (default: 0)\n");
@@ -331,7 +332,10 @@ int main (int argc, const char *argv[])
 #endif
 
     EIP_verbosity = 5;
-
+    if (argc < 2) {
+        usage (argv[0]);
+        return 1;
+    }
     /* parse arguments */
     for (i=1; i<(size_t)argc; ++i)
     {
@@ -344,38 +348,54 @@ int main (int argc, const char *argv[])
             {
             case 'v':
             GETARG
-                EIP_verbosity = atoi(arg);
+                if (arg) {
+                    if (isdigit(*arg) == 0) usage(argv[0]);
+                    else EIP_verbosity = atoi(arg);
+                }
+                else usage (argv[0]);
                 break;
             case 'i':
             GETARG
-                ip = arg;
+                if (arg) ip = arg;
+                else usage (argv[0]);
+
                 break;
             case 'p':
             GETARG
-                port = (unsigned short) strtol(arg, 0, 0);
+                if (arg) port = (unsigned short) strtol(arg, 0, 0);
+                else usage (argv[0]);
                 break;
             case 's':
             GETARG
-                slot = (int) strtol(arg, 0, 0);
+                if (arg) slot = (int) strtol(arg, 0, 0);
+                else usage (argv[0]);
                 break;
             case 'a':
             GETARG
-                elements = atoi(arg);
+                if (arg) elements = atoi(arg);
+                else usage (argv[0]);
                 break;
             case 't':
             GETARG
-                timeout_ms = atol(arg);
+                if (arg) timeout_ms = atol(arg);
+                else usage (argv[0]);
                 break;
             case 'w':
             GETARG
-                writeval = strtod(arg, NULL);
-                write = true;
+                if (arg) {
+                    writeval = strtod(arg, NULL);
+                    write = true;
+                }
+                else usage (argv[0]);
                 break;
             case 'T':
             GETARG
-                test_runs = atol(arg);
-                if (test_runs <= 0)
-                    test_runs = 1;
+                if (arg) {
+                    test_runs = atol(arg);
+                    if (test_runs <= 0)
+                        test_runs = 1;
+                }
+                else usage (argv[0]);
                 break;
             default:
                 usage (argv[0]);
@@ -385,13 +405,14 @@ int main (int argc, const char *argv[])
         else
         {
            tag = EIP_parse_tag(argv[i]);
+           
         }
     }
     if (tag && EIP_verbosity >= 3)
     {
         char buffer[EIP_MAX_TAG_LENGTH];
         EIP_copy_ParsedTag(buffer, tag);
-        EIP_printf(3, "Tag '%s'\n", buffer);
+        EIP_printf(3, "Tag : %s\n", buffer);
     }
 #ifdef _WIN32
     start = (double) time(0);
