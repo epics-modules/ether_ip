@@ -412,7 +412,7 @@ int main (int argc, const char *argv[])
     {
         char buffer[EIP_MAX_TAG_LENGTH];
         EIP_copy_ParsedTag(buffer, tag);
-        EIP_printf(3, "Tag : %s\n", buffer);
+        EIP_printf(3, "Tag '%s'\n", buffer);
     }
 #ifdef _WIN32
     start = (double) time(0);
