@@ -435,6 +435,9 @@ size_t CIP_Type_size(CIP_Type type);
 /* Turn tag string into ParsedTag,
  * convert back into string and free it
  */
+/* 
+  AB PLC has the max 82 chars for a tag string
+ */ 
 #define EIP_MAX_TAG_LENGTH 100
 ParsedTag *EIP_parse_tag(const char *tag);
 void EIP_copy_ParsedTag(char *buffer, const ParsedTag *tag);
