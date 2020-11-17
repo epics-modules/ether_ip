@@ -6,8 +6,11 @@ Interfaces Allen Bradley PLCs (see www.ab.com) via Ethernet to EPICS IOCs
    and L8x series that includes a network port in the controller.
  * Compact Logix devices
 
-Support EPICS R3.14.8 and higher.
-For earlier version of EPICS base, including R3.13, see tags older than ether_ip-3-0.
+For EPICS R3.14.8 and higher,
+on Linux and several other operating systems supported by EPICS libCom.
+For earlier version of EPICS base, including R3.13, see tags/releases older than ether_ip-3-0.
+VxWorks 5.5 must also use an older version because its compiler requires
+K&R style declarations of all variables at the start of a code block.
 
 See 
  * https://controlssoftware.sns.ornl.gov/etherip for more
