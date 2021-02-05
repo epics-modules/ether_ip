@@ -315,7 +315,7 @@ int main (int argc, const char *argv[])
     ParsedTag       *tag = 0;
     const char      *arg;
     size_t          i;
-    CN_REAL         writeval;
+    CN_REAL         writeval = 0.0;
     eip_bool        write = false;
     size_t          test_runs = 1;
 #ifndef _WIN32
