@@ -7,6 +7,20 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2021, Feb 5 ether_ip-3-3
+When a multi-request transfer fails, include request/response
+size info to determine how close we got to the buffer limit:
+
+EIP process_ScanList: Error in response
+Tag 0: 'testStr2'
+Tag 1: 'DINT'
+CIP_MultiRequest reply: general status 0x00 (Ok)
+   2 subreplies:
+   0) service 0xCC (CIP_ReadData-Reply), status 0x06 (Buffer too small, partial data only)
+   1) service 0xCC (CIP_ReadData-Reply), ...
+Request size: 36 bytes, response size: 116, buffer limit: 450
+
+
 * 2020, Jan 16
 Add Manual.md, based on ether_ipApp/doc/readme.txt,
 with updates in a slightly modernized format.

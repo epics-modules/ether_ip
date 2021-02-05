@@ -737,8 +737,12 @@ static eip_bool process_ScanList(EIPConnection *c, ScanList *scanlist)
                 ++i;
             }
             if (EIP_verbosity >= 2)
+            {
                 dump_CIP_MultiRequest_Response_Error(response,
                                                      rr_data.data_length);
+                EIP_printf(2, "Request size: %lu bytes, response size: %lu, buffer limit: %lu\n",
+                           multi_request_size, multi_response_size, c->transfer_buffer_limit);
+            }
             return false;
         }
         /* Handle individual read/write responses */
