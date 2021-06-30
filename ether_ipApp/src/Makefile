@@ -6,7 +6,7 @@ include $(TOP)/configure/CONFIG
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 
 # On Darwin, got errors about unused assignment in recGblSetSevr
-USR_CFLAGS += -Wno-unused-value
+USR_CFLAGS_Darwin += -Wno-unused-value
 
 # On WIN32, have to add socket library
 # to build the test program
