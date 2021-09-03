@@ -1853,17 +1853,17 @@ eip_bool EIP_connect(EIPConnection *c,
         c->sock = 0;
         return false;
     }
-    EIP_printf(10, "EIP connectWithTimeout(%s:0x%04X, %d sec, %d msec)\n",
+    EIP_printf(10, "EIP connectWithTimeout(%s:%u, %d sec, %d msec)\n",
                ip_addr, port, (int)timeout.tv_sec, (int)timeout.tv_usec);
     if (connectWithTimeout(c->sock, (struct sockaddr *)&addr,
                            sizeof (addr), &timeout) != 0)
     {
-        EIP_printf (3, "EIP cannot connect to %s:0x%04X\n", ip_addr, port);
+        EIP_printf (3, "EIP cannot connect to %s:%u\n", ip_addr, port);
         EIP_socket_close (c->sock);
         c->sock = 0;
         return false;
     }
-    EIP_printf (9, "EIP connected to %s:0x%04X on socket %d\n",
+    EIP_printf (9, "EIP connected to %s:%u on socket %d\n",
                 ip_addr, port, c->sock);
     return true;
 }

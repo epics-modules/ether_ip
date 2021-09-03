@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2021, Sep 3 ether_ip-3-4
+Log port number as decimal, since that's more familiar than hex.
+
 * 2021, Feb 5 ether_ip-3-3
 When a multi-request transfer fails, include request/response
 size info to determine how close we got to the buffer limit:
