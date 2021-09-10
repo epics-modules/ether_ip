@@ -11,6 +11,7 @@ USR_CFLAGS_Darwin += -Wno-unused-value
 # Support IPv6?
 USR_CFLAGS_Darwin += -DSUPPORT_IPv6
 USR_CFLAGS_Linux += -DSUPPORT_IPv6
+USR_CFLAGS_vxWorks += -DSUPPORT_IPv6
 
 # On WIN32, have to add socket library
 # to build the test program

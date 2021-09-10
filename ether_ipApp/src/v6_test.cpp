@@ -30,7 +30,7 @@ int main(int argc, const char **argv)
     unsigned short port = 44818;
 
     struct addrinfo hints = {};
-    hints.ai_flags = AI_DEFAULT | AI_NUMERICSERV;
+    hints.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICSERV;
     hints.ai_family = strchr(address_spec, ':') == NULL
                     ? AF_INET
                     : AF_INET6;

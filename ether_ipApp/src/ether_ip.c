@@ -1825,7 +1825,11 @@ eip_bool EIP_connect(EIPConnection *c,
 
 #ifdef SUPPORT_IPv6
     struct addrinfo hints = {};
-    hints.ai_flags = AI_DEFAULT | AI_NUMERICSERV;
+#ifdef AI_V4MAPPED_CFG
+    hints.ai_flags = AI_V4MAPPED_CFG | AI_ADDRCONFIG | AI_NUMERICSERV;
+#else
+    hints.ai_flags = AI_V4MAPPED | AI_ADDRCONFIG | AI_NUMERICSERV;
+#endif
     hints.ai_family = strchr(ip_addr, ':') == NULL
                     ? AF_INET
                     : AF_INET6;
@@ -1920,7 +1924,9 @@ eip_bool EIP_connect(EIPConnection *c,
 #endif
         return false;
     }
+#ifdef SUPPORT_IPv6
     freeaddrinfo(info);
+#endif
     EIP_printf (9, "EIP connected to %s port %u on socket %d\n",
                 ip_addr, port, c->sock);
     return true;
