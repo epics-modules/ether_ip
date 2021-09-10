@@ -1816,54 +1816,112 @@ eip_bool EIP_connect(EIPConnection *c,
                      unsigned short slot,
                      size_t millisec_timeout)
 {
-    struct sockaddr_in addr;
-    struct timeval timeout;
-    int flag = true;
-
     c->transfer_buffer_limit = EIP_buffer_limit;
     c->millisec_timeout = millisec_timeout;
     c->slot = slot;
-    timeout.tv_sec = millisec_timeout/1000;
-    timeout.tv_usec = (millisec_timeout-timeout.tv_sec*1000)*1000;
+
+    struct sockaddr *addr;
+    size_t addr_len;
+
+#ifdef SUPPORT_IPv6
+    struct addrinfo hints = {};
+    hints.ai_flags = AI_DEFAULT | AI_NUMERICSERV;
+    hints.ai_family = strchr(ip_addr, ':') == NULL
+                    ? AF_INET
+                    : AF_INET6;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    char szPort[6];
+    sprintf(szPort, "%hu", port);
+
+   // See https://stackoverflow.com/questions/57784632/how-to-create-sockaddr-from-sockaddr-in-sockaddr-in6-structure
+    struct addrinfo *info;
+    if (getaddrinfo(ip_addr, szPort, &hints, &info) != 0)
+    {
+        EIP_printf(2, "Cannot resolve address '%s'\n", ip_addr);
+        return false;
+    }
+    addr = info->ai_addr;
+    addr_len = info->ai_addrlen;
+    if (info->ai_family == AF_INET)
+    {
+        struct sockaddr_in *in = (struct sockaddr_in *) addr;
+        char buf[100];
+        EIP_printf(3, "EIP Address: IPv4 %s\n", inet_ntop(AF_INET, &in->sin_addr, buf, sizeof(buf)));
+    }
+    else if (info->ai_family == AF_INET6)
+    {
+        struct sockaddr_in6 *in = (struct sockaddr_in6 *) addr;
+        char buf[100];
+        EIP_printf(3, "EIP Address: IPv6 %s\n", inet_ntop(AF_INET6, &in->sin6_addr, buf, sizeof(buf)));
+    }
+    else
+    {
+        freeaddrinfo(info);
+        EIP_printf(2, "EIP Address '%s' has unknown type\n", ip_addr);
+        return false;
+    }
+    c->sock = socket(info->ai_family, info->ai_socktype, info->ai_protocol);
+#else
+    struct sockaddr_in in_addr;
+    addr = (struct sockaddr *) &in_addr;
+    addr_len = sizeof(in_addr);
 
     /* Get IP from ip_addr in '123.456.789.123' format ... */
-    memset (&addr, 0, sizeof (addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons (port);
-    if(hostToIPAddr(ip_addr, &addr.sin_addr) < 0) {
-            EIP_printf (2, "EIP cannot find IP for '%s'\n",
-                        ip_addr);
-            return false;
+    memset(addr, 0, addr_len);
+    in_addr.sin_family = AF_INET;
+    in_addr.sin_port = htons (port);
+    if (hostToIPAddr(ip_addr, &in_addr.sin_addr) < 0)
+    {
+        EIP_printf (2, "EIP cannot find IP for '%s'\n",
+                    ip_addr);
+        return false;
     }    
     if (c->sock != 0)
         EIP_printf (2, "EIP_connect found open socket\n");
     /* Create socket and set it to no-delay */
     c->sock = socket (AF_INET, SOCK_STREAM, IPPROTO_TCP);
+#endif
     if (c->sock == EIP_INVALID_SOCKET)
     {
-        EIP_printf (2, "EIP cannot create socket\n");
+        EIP_printf (2, "EIP cannot create socket for %s, port %u\n", ip_addr, port);
         c->sock = 0;
+#ifdef SUPPORT_IPv6
+        freeaddrinfo(info);
+#endif
         return false;
     }
+    int flag = true;
     if (setsockopt(c->sock, IPPROTO_TCP, TCP_NODELAY,
                    (char *) &flag, sizeof ( flag )) < 0)
     {
         EIP_printf(2, "EIP cannot set socket option to TCP_NODELAY\n");
         EIP_socket_close(c->sock);
         c->sock = 0;
+#ifdef SUPPORT_IPv6
+        freeaddrinfo(info);
+#endif
         return false;
     }
+
+    struct timeval timeout;
+    timeout.tv_sec = millisec_timeout/1000;
+    timeout.tv_usec = (millisec_timeout-timeout.tv_sec*1000)*1000;
     EIP_printf(10, "EIP connectWithTimeout(%s:%u, %d sec, %d msec)\n",
                ip_addr, port, (int)timeout.tv_sec, (int)timeout.tv_usec);
-    if (connectWithTimeout(c->sock, (struct sockaddr *)&addr,
-                           sizeof (addr), &timeout) != 0)
+    if (connectWithTimeout(c->sock, addr, addr_len, &timeout) != 0)
     {
         EIP_printf (3, "EIP cannot connect to %s:%u\n", ip_addr, port);
         EIP_socket_close (c->sock);
         c->sock = 0;
+#ifdef SUPPORT_IPv6
+        freeaddrinfo(info);
+#endif
         return false;
     }
-    EIP_printf (9, "EIP connected to %s:%u on socket %d\n",
+    freeaddrinfo(info);
+    EIP_printf (9, "EIP connected to %s port %u on socket %d\n",
                 ip_addr, port, c->sock);
     return true;
 }

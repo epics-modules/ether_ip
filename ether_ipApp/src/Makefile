@@ -8,6 +8,10 @@ include $(TOP)/configure/CONFIG
 # On Darwin, got errors about unused assignment in recGblSetSevr
 USR_CFLAGS_Darwin += -Wno-unused-value
 
+# Support IPv6?
+USR_CFLAGS_Darwin += -DSUPPORT_IPv6
+USR_CFLAGS_Linux += -DSUPPORT_IPv6
+
 # On WIN32, have to add socket library
 # to build the test program
 SYS_PROD_LIBS_WIN32 = wsock32
@@ -53,6 +57,10 @@ ether_ip_SRCS += drvEtherIPRegister.cpp
 # the registry routines.
 ether_ipLib_SRCS+=$(ether_ip_SRCS)
 ether_ipLib_SRCS+= ether_ip_registerRecordDeviceDriver.cpp
+
+PROD_HOST += v6_test
+v6_test_SRCS += v6_test.cpp
+
 
 include $(TOP)/configure/RULES
 #----------------------------------------
