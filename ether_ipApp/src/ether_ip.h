@@ -403,7 +403,9 @@ typedef enum
     T_CIP_SINT   = 0x00C2,
     T_CIP_INT    = 0x00C3,
     T_CIP_DINT   = 0x00C4,
+    T_CIP_UINT   = 0x00C7,
     T_CIP_REAL   = 0x00CA,
+    T_CIP_STRING = 0x00D0,
     T_CIP_BITS   = 0x00D3,
     T_CIP_STRUCT = 0x02A0
 } CIP_Type;

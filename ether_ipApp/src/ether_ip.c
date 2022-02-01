@@ -1164,6 +1164,10 @@ eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
             unpack_UINT(buf, &vi);
             *result = (CN_UDINT) vi;
             return true;
+        case T_CIP_UINT:
+            unpack_UINT(buf, &vi);
+            *result = (CN_UDINT) vi;
+            return true;
         case T_CIP_DINT:
         case T_CIP_BITS:
             unpack_UDINT(buf, result);
@@ -1242,6 +1246,16 @@ eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
     const CN_USINT *buf;
 
     buf = unpack_UINT(raw_type_and_data, &type);
+    
+    if (type == T_CIP_STRING)
+    {
+        buf = unpack_UINT(buf, &subtype);
+        memcpy(buffer, buf, size);
+        *(buffer+len) = '\0';
+         
+        return true;
+    }
+    
     if (type != T_CIP_STRUCT)
     {
         EIP_printf(1, "EIP get_CIP_STRING: unknown type %d\n", (int) type);
