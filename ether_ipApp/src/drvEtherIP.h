@@ -17,7 +17,7 @@
 #include "dl_list.h"
 
 #define ETHERIP_MAYOR 3
-#define ETHERIP_MINOR 4
+#define ETHERIP_MINOR 5
 
 /* For timing */
 #define EIP_MIN_TIMEOUT         0.1  /* second */
@@ -27,7 +27,7 @@
 #define ETHERIP_PORT 0xAF12
 
 /* TCP timeout in millisec for connection and readback */
-#define ETHERIP_TIMEOUT 5000
+extern int EIP_TIMEOUT;
 
 typedef struct __TagInfo  TagInfo;  /* forwards */
 typedef struct __ScanList ScanList;

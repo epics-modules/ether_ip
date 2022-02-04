@@ -10,6 +10,7 @@ eipIoc_registerRecordDeviceDriver(pdbbase)
 drvEtherIP_init()
 
 # EIP_verbosity(10)
+# EIP_timeout(5000)
 
 drvEtherIP_define_PLC("plc1", "160.91.233.45", 0)
 
