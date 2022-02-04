@@ -25,6 +25,8 @@
 /* See drvEtherIP_initHook() */
 static int databaseIsReady = false;
 
+int EIP_TIMEOUT = 5000;
+
 double drvEtherIP_default_rate = 0.0;
 
 DrvEtherIP_Private drvEtherIP_private = { {NULL, NULL}, 0 };
@@ -498,7 +500,7 @@ static eip_bool assert_PLC_connect(PLC *plc)
         return true;
     EIP_printf_time(4, "EIP connecting %s\n", plc->name);
     if (! EIP_startup(plc->connection, plc->ip_addr,
-                      ETHERIP_PORT, plc->slot, ETHERIP_TIMEOUT))
+                      ETHERIP_PORT, plc->slot, EIP_TIMEOUT))
     {
         errlogPrintf("EIP connection failed for %s:%d\n",
                       plc->ip_addr, ETHERIP_PORT);
@@ -838,7 +840,7 @@ static void PLC_scan_task(PLC *plc)
     eip_bool          transfer_ok, reset_next_schedule;
 
     quantum = epicsThreadSleepQuantum();
-    timeout = (double)ETHERIP_TIMEOUT/1000.0;
+    timeout = (double)EIP_TIMEOUT/1000.0;
 scan_loop: /* --------- The Scan Loop for one PLC -------- */
     if (epicsMutexLock(plc->lock) != epicsMutexLockOK)
     {
@@ -1031,6 +1033,9 @@ void drvEtherIP_help()
     printf("        2: show more error info\n");
     printf("        1: show severe error messages\n");
 	printf("        0: keep quiet\n");
+    printf("    EIP_timeout(<milliseconds>)\n");
+    printf("    -  define the default timeout for connecting to PLC and reading responses\n");
+    printf("       (default: %d ms)\n", EIP_TIMEOUT);
     printf("    drvEtherIP_default_rate(<seconds>)\n");
     printf("    -  define the default scan rate\n");
     printf("       (if neither SCAN nor INP/OUT provide one)\n");

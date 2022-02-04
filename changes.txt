@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2022, Feb 4 ether_ip-3-5
+Make EIP_timeout(ms) configurable.
+
 * 2021, Sep 3 ether_ip-3-4
 Log port number as decimal, since that's more familiar than hex.
 
