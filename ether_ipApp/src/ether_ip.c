@@ -1138,7 +1138,7 @@ eip_bool get_CIP_double(const CN_USINT *raw_type_and_data,
             *result = (double) vr;
             return true;
     }
-    EIP_printf(1, "EIP get_CIP_double: unknown type %d\n", (int) type);
+    EIP_printf(1, "EIP get_CIP_double: unknown type 0x%04X\n", (int) type);
     return false;
 }
 
@@ -1177,7 +1177,7 @@ eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
             *result = (CN_UDINT) vr;
             return true;
     }
-    EIP_printf(1, "EIP get_CIP_UDINT: unknown type %d\n", (int) type);
+    EIP_printf(1, "EIP get_CIP_UDINT: unknown type 0x%04X\n", (int) type);
     return false;
 }
 
@@ -1212,7 +1212,7 @@ eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
             *result = (CN_DINT) vr;
             return true;
     }
-    EIP_printf(1, "EIP get_CIP_UDINT: unknown type %d\n", (int) type);
+    EIP_printf(1, "EIP get_CIP_DINT: unknown type 0x%04X\n", (int) type);
     return false;
 }
 
@@ -1233,7 +1233,7 @@ eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
             *result = (CN_UDINT) vs;
             return true;
     }
-    EIP_printf(1, "EIP get_CIP_USINT: cannot handle type %d\n", (int) type);
+    EIP_printf(1, "EIP get_CIP_USINT: cannot handle type 0x%04X\n", (int) type);
     return false;
 }
 
@@ -1258,13 +1258,13 @@ eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
     
     if (type != T_CIP_STRUCT)
     {
-        EIP_printf(1, "EIP get_CIP_STRING: unknown type %d\n", (int) type);
+        EIP_printf(1, "EIP get_CIP_STRING: unknown type 0x%04X\n", (int) type);
         return false;
     }
     buf = unpack_UINT(buf, &subtype);
     if (subtype != T_CIP_STRUCT_STRING)
     {
-        EIP_printf(1, "EIP get_CIP_STRING: unknown subtype %d\n",
+        EIP_printf(1, "EIP get_CIP_STRING: unknown subtype 0x%04X\n",
                    (int) subtype);
         return false;
     }
@@ -1310,7 +1310,7 @@ eip_bool put_CIP_double(const CN_USINT *raw_type_and_data,
             pack_REAL(buf, (CN_REAL) value);
             return true;
     }
-    EIP_printf(1, "EIP put_CIP_double: unknown type %d\n", (int) type);
+    EIP_printf(1, "EIP put_CIP_double: unknown type 0x%04X\n", (int) type);
     return false;
 }
 
@@ -1341,7 +1341,7 @@ eip_bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
             pack_REAL(buf, (CN_REAL) value);
             return true;
     }
-    EIP_printf(1, "EIP put_CIP_UDINT: unknown type %d\n", (int) type);
+    EIP_printf(1, "EIP put_CIP_UDINT: unknown type 0x%04X\n", (int) type);
     return false;
 }
 
@@ -1376,7 +1376,7 @@ eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
             pack_REAL(buf, (CN_REAL) value);
             return true;
     }
-    EIP_printf(1, "EIP put_CIP_DINT: unknown type %d\n", (int) type);
+    EIP_printf(1, "EIP put_CIP_DINT: unknown type 0x%04X\n", (int) type);
     return false;
 }
 
@@ -1395,13 +1395,13 @@ eip_bool put_CIP_STRING(const CN_USINT *raw_type_and_data,
     buf = (CN_USINT *) unpack_UINT(raw_type_and_data, &type);
     if (type != T_CIP_STRUCT)
     {
-        EIP_printf(1, "EIP put_CIP_STRING: unknown type %d\n", (int) type);
+        EIP_printf(1, "EIP put_CIP_STRING: unknown type 0x%04X\n", (int) type);
         return false;
     }
     plen = buf = (CN_USINT *) unpack_UINT(buf, &subtype);
     if (subtype != T_CIP_STRUCT_STRING)
     {
-        EIP_printf(1, "EIP put_CIP_STRING: unknown subtype %d\n",
+        EIP_printf(1, "EIP put_CIP_STRING: unknown subtype 0x%04X\n",
                    (int) subtype);
         return false;
     }
