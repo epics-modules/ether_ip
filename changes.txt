@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* Next
+Display unknown CIP types in error messaes as hex (JTGWilson) 
+
 * 2022, Feb 4 ether_ip-3-5
 Make EIP_timeout(ms) configurable.
 Add support for unsigned integer type (0xC7) and string type (0xD0).
