@@ -5,6 +5,17 @@ include $(TOP)/configure/CONFIG
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 
+# Since base 3_15, on Linux 64 and Mac, support LINT
+ifdef BASE_3_15
+ifeq ($(EPICS_HOST_ARCH),linux-x86_64)
+USR_CFLAGS += -DSUPPORT_LINT
+USR_CPPFLAGS += -DSUPPORT_LINT
+else ifeq ($(EPICS_HOST_ARCH),darwin-x86)
+USR_CFLAGS += -DSUPPORT_LINT
+USR_CPPFLAGS += -DSUPPORT_LINT
+endif
+endif
+
 # <name>.dbd will be created from <name>Include.dbd
 DBD += eipIoc.dbd
 

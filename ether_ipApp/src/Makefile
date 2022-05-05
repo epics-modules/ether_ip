@@ -15,7 +15,20 @@ SYS_PROD_LIBS_WIN32 = wsock32
 ifdef BASE_3_15
 devEtherIP_CFLAGS += -DBUILD_LONG_STRING_SUPPORT
 USR_CFLAGS += -DUSE_TYPED_RSET -DUSE_TYPED_DSET -DUSE_TYPED_DRVET
+
+# Since base 3_15, on Linux 64 and Mac, support LINT
+ifeq ($(EPICS_HOST_ARCH),linux-x86_64)
+USR_CFLAGS += -DSUPPORT_LINT
+USR_CPPFLAGS += -DSUPPORT_LINT
+ETHER_IP_DBD = ether_ip-lint.dbd
+else ifeq ($(EPICS_HOST_ARCH),darwin-x86)
+USR_CFLAGS += -DSUPPORT_LINT
+USR_CPPFLAGS += -DSUPPORT_LINT
+ETHER_IP_DBD = ether_ip-lint.dbd
+else
 ETHER_IP_DBD = ether_ip-lsio.dbd
+endif
+
 else
 ETHER_IP_DBD = ether_ip-3-14.dbd
 endif
