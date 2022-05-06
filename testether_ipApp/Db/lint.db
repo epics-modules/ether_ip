@@ -13,7 +13,6 @@ record(int64out, "$(IOC):i64out")
 	field(SCAN, "Passive")
 	field(DTYP, "EtherIP")
 	field(OUT, "@plc1 testLint S 1")
-	field(EGU, "Counts")
 	field(TPRO, "1")
 }
 
