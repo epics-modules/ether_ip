@@ -6,8 +6,6 @@ record(int64in, "$(IOC):i64in")
 	field(EGU, "Counts")
 }
 
-
-
 record(int64out, "$(IOC):i64out")
 {
 	field(SCAN, "Passive")
@@ -16,4 +14,50 @@ record(int64out, "$(IOC):i64out")
 	field(TPRO, "1")
 }
 
+record(int64in, "$(IOC):a64in0")
+{
+	field(SCAN, "I/O Intr")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 testLArray[0] S 1")
+	field(EGU, "Counts")
+}
 
+record(int64out, "$(IOC):a64out0")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@plc1 testLArray[0] S 1")
+	field(TPRO, "1")
+}
+
+record(int64in, "$(IOC):a64in1")
+{
+	field(SCAN, "I/O Intr")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 testLArray[1] S 1")
+	field(EGU, "Counts")
+}
+
+record(int64out, "$(IOC):a64out1")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@plc1 testLArray[1] S 1")
+	field(TPRO, "1")
+}
+
+record(int64in, "$(IOC):a64in9")
+{
+	field(SCAN, "I/O Intr")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 testLArray[9] S 1")
+	field(EGU, "Counts")
+}
+
+record(int64out, "$(IOC):a64out9")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@plc1 testLArray[9] S 1")
+	field(TPRO, "1")
+}
