@@ -37,6 +37,15 @@ eipIoc_SRCS_vxWorks += -nil-
 USR_CXXFLAGS += -DUSE_TYPED_RSET
 
 eipIoc_LIBS += ether_ip
+
+# Add PVA if available
+ifdef EPICS_QSRV_MAJOR_VERSION
+    eipIoc_DBD += PVAServerRegister.dbd
+    eipIoc_DBD += qsrv.dbd
+    eipIoc_LIBS += qsrv
+    eipIoc_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
+endif
+
 ether_ip_DIR = $(INSTALL_LIB)
 
 eipIoc_LIBS += $(EPICS_BASE_IOC_LIBS)
