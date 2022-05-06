@@ -1102,12 +1102,15 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
 #ifdef SUPPORT_LINT
         case T_CIP_LINT:
         case T_CIP_ULINT:
-            EIP_printf(0, "(U)LINT");
+            if (type == T_CIP_LINT)
+                EIP_printf(0, "LINT");
+            else
+                EIP_printf(0, "ULINT");
             CN_LINT vl;
             for (i=0; i<elements; ++i)
             {
                 buf = unpack_LINT(buf, &vl);
-                EIP_printf(0, " %lld", vl);
+                EIP_printf(0, " 0x%016llX", vl);
             }
             break;
 #endif
