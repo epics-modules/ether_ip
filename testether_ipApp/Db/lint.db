@@ -1,3 +1,7 @@
+# Test PLC:
+#
+# eipIoc -p plc1=160.91.233.45 -m IOC=test -d testether_ipApp/Db/lint.db
+
 record(int64in, "$(IOC):i64in")
 {
 	field(SCAN, "I/O Intr")
