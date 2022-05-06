@@ -197,6 +197,19 @@ const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
 }
 
 #ifdef SUPPORT_LINT
+CN_USINT *pack_LINT(CN_USINT *buffer, CN_LINT val)
+{
+    *buffer++ =  val & 0x00000000000000FF;
+    *buffer++ = (val & 0x000000000000FF00) >> 8;
+    *buffer++ = (val & 0x0000000000FF0000) >> 16;
+    *buffer++ = (val & 0x00000000FF000000) >> 24;
+    *buffer++ = (val & 0x000000FF00000000) >> 32;
+    *buffer++ = (val & 0x0000FF0000000000) >> 40;
+    *buffer++ = (val & 0x00FF000000000000) >> 48;
+    *buffer++ = (val & 0xFF00000000000000) >> 56;
+    return buffer;
+}
+
 const CN_USINT *unpack_LINT(const CN_USINT *buffer, CN_LINT *val)
 {
     *val =  (CN_ULINT)buffer[0]
@@ -1435,6 +1448,29 @@ eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
     EIP_printf(1, "EIP put_CIP_DINT: unknown type 0x%04X\n", (int) type);
     return false;
 }
+
+#ifdef SUPPORT_LINT
+eip_bool put_CIP_LINT(const CN_USINT *raw_type_and_data,
+                      size_t element, CN_LINT value)
+{
+    CN_UINT   type;
+    CN_USINT *buf;
+    
+    buf = (CN_USINT *) unpack_UINT(raw_type_and_data, &type);
+    /* buf now on first, skip to given element */
+    if (element > 0)
+        buf += element*CIP_Type_size(type);
+    switch (type)
+    {
+        case T_CIP_LINT:
+        case T_CIP_ULINT:
+            pack_LINT(buf, value);
+            return true;
+    }
+    EIP_printf(1, "EIP put_CIP_LINT: unknown type 0x%04X\n", (int) type);
+    return false;
+}
+#endif
 
 /*
  * Set the data size and fill the data buffer of the CIP structure.

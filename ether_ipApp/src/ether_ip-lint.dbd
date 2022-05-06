@@ -8,6 +8,7 @@ recordtype(mbbiDirect) {}
 recordtype(stringin  ) {}
 recordtype(waveform  ) {}
 recordtype(ao        ) {}
+recordtype(int64out  ) {}
 recordtype(bo        ) {}
 recordtype(lso       ) {}
 recordtype(mbbo      ) {}
@@ -24,6 +25,7 @@ device(mbbiDirect, INST_IO, devMbbiDirectEtherIP, "EtherIP")
 device(stringin,   INST_IO, devSiEtherIP,         "EtherIP")
 device(waveform,   INST_IO, devWfEtherIP,         "EtherIP")
 device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
+device(int64out,   INST_IO, devInt64outEtherIP,   "EtherIP")
 device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
 device(lso,        INST_IO, devLsoEtherIP,        "EtherIP")
 device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")

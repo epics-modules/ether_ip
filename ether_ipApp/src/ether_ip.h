@@ -502,6 +502,8 @@ eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
 #ifdef SUPPORT_LINT
 eip_bool get_CIP_LINT(const CN_USINT *raw_type_and_data,
                       size_t element, CN_LINT *result);
+eip_bool put_CIP_LINT(const CN_USINT *raw_type_and_data,
+                      size_t element, CN_LINT value);
 #endif
 eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
                        size_t element, CN_USINT *result);

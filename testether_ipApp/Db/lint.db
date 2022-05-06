@@ -1,11 +1,20 @@
 record(int64in, "$(IOC):i64in")
 {
-	field(SCAN, "1 second")
+	field(SCAN, "I/O Intr")
 	field(DTYP, "EtherIP")
-	field(INP, "@plc1 testLint")
+	field(INP, "@plc1 testLint S 1")
 	field(EGU, "Counts")
 }
 
 
+
+record(int64out, "$(IOC):i64out")
+{
+	field(SCAN, "Passive")
+	field(DTYP, "EtherIP")
+	field(OUT, "@plc1 testLint S 1")
+	field(EGU, "Counts")
+	field(TPRO, "1")
+}
 
 
