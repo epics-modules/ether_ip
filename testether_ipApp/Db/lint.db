@@ -1,0 +1,11 @@
+record(int64in, "$(IOC):i64in")
+{
+	field(SCAN, "1 second")
+	field(DTYP, "EtherIP")
+	field(INP, "@plc1 testLint")
+	field(EGU, "Counts")
+}
+
+
+
+
