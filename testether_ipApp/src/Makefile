@@ -5,6 +5,17 @@ include $(TOP)/configure/CONFIG
 #----------------------------------------
 #  ADD MACRO DEFINITIONS AFTER THIS LINE
 
+# Since base 3_15, on Linux 64 and Mac, support LINT
+ifdef BASE_3_15
+ifeq ($(EPICS_HOST_ARCH),linux-x86_64)
+USR_CFLAGS += -DSUPPORT_LINT
+USR_CPPFLAGS += -DSUPPORT_LINT
+else ifeq ($(EPICS_HOST_ARCH),darwin-x86)
+USR_CFLAGS += -DSUPPORT_LINT
+USR_CPPFLAGS += -DSUPPORT_LINT
+endif
+endif
+
 # <name>.dbd will be created from <name>Include.dbd
 DBD += eipIoc.dbd
 
@@ -26,6 +37,15 @@ eipIoc_SRCS_vxWorks += -nil-
 USR_CXXFLAGS += -DUSE_TYPED_RSET
 
 eipIoc_LIBS += ether_ip
+
+# Add PVA if available
+ifdef EPICS_QSRV_MAJOR_VERSION
+    eipIoc_DBD += PVAServerRegister.dbd
+    eipIoc_DBD += qsrv.dbd
+    eipIoc_LIBS += qsrv
+    eipIoc_LIBS += $(EPICS_BASE_PVA_CORE_LIBS)
+endif
+
 ether_ip_DIR = $(INSTALL_LIB)
 
 eipIoc_LIBS += $(EPICS_BASE_IOC_LIBS)

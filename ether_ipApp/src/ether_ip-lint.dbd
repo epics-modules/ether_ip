@@ -1,0 +1,37 @@
+# Declarations to support dynamic loading
+recordtype(ai        ) {}
+recordtype(int64in   ) {}
+recordtype(bi        ) {}
+recordtype(lsi       ) {}
+recordtype(mbbi      ) {}
+recordtype(mbbiDirect) {}
+recordtype(stringin  ) {}
+recordtype(waveform  ) {}
+recordtype(ao        ) {}
+recordtype(int64out  ) {}
+recordtype(bo        ) {}
+recordtype(lso       ) {}
+recordtype(mbbo      ) {}
+recordtype(mbboDirect) {}
+recordtype(stringout ) {}
+
+# Device support definitions
+device(ai,         INST_IO, devAiEtherIP,         "EtherIP")
+device(int64in,    INST_IO, devInt64inEtherIP,    "EtherIP")
+device(bi,         INST_IO, devBiEtherIP,         "EtherIP")
+device(lsi,        INST_IO, devLsiEtherIP,        "EtherIP")
+device(mbbi,       INST_IO, devMbbiEtherIP,       "EtherIP")
+device(mbbiDirect, INST_IO, devMbbiDirectEtherIP, "EtherIP")
+device(stringin,   INST_IO, devSiEtherIP,         "EtherIP")
+device(waveform,   INST_IO, devWfEtherIP,         "EtherIP")
+device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
+device(int64out,   INST_IO, devInt64outEtherIP,   "EtherIP")
+device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
+device(lso,        INST_IO, devLsoEtherIP,        "EtherIP")
+device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")
+device(mbboDirect, INST_IO, devMbboDirectEtherIP, "EtherIP")
+device(stringout,  INST_IO, devSoEtherIP,         "EtherIP")
+
+# Other registration
+driver(drvEtherIP)
+registrar(drvEtherIP_Register)

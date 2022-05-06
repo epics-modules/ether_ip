@@ -49,6 +49,10 @@ static void check_sizes()
     if (sizeof(CN_USINT) != 1  ||
         sizeof(CN_INT) != 2  ||
         sizeof(CN_UDINT) != 4  ||
+#ifdef SUPPORT_LINT
+        sizeof(CN_LINT) != 8  ||
+        sizeof(CN_ULINT) != 8  ||
+#endif
         sizeof(CN_REAL) != 4  ||
         sizeof(EncapsulationHeader) != sizeof_EncapsulationHeader  ||
         sizeof(RegisterSessionData) != sizeof_RegisterSessionData  ||
@@ -191,6 +195,34 @@ const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
          | (buffer[3]<<24);
     return buffer + 4;
 }
+
+#ifdef SUPPORT_LINT
+CN_USINT *pack_LINT(CN_USINT *buffer, CN_LINT val)
+{
+    *buffer++ =  val & 0x00000000000000FF;
+    *buffer++ = (val & 0x000000000000FF00) >> 8;
+    *buffer++ = (val & 0x0000000000FF0000) >> 16;
+    *buffer++ = (val & 0x00000000FF000000) >> 24;
+    *buffer++ = (val & 0x000000FF00000000) >> 32;
+    *buffer++ = (val & 0x0000FF0000000000) >> 40;
+    *buffer++ = (val & 0x00FF000000000000) >> 48;
+    *buffer++ = (val & 0xFF00000000000000) >> 56;
+    return buffer;
+}
+
+const CN_USINT *unpack_LINT(const CN_USINT *buffer, CN_LINT *val)
+{
+    *val =  (CN_ULINT)buffer[0]
+         | ((CN_ULINT)buffer[1]<< 8)
+         | ((CN_ULINT)buffer[2]<<16)
+         | ((CN_ULINT)buffer[3]<<24)
+         | ((CN_ULINT)buffer[4]<<32)
+         | ((CN_ULINT)buffer[5]<<40)
+         | ((CN_ULINT)buffer[6]<<48)
+         | ((CN_ULINT)buffer[7]<<56);
+    return buffer + 8;
+}
+#endif
 
 const CN_USINT *unpack_REAL(const CN_USINT *buffer, CN_REAL *val)
 {
@@ -977,6 +1009,10 @@ size_t CIP_Type_size(CIP_Type type)
         case T_CIP_SINT:  return sizeof(CN_USINT);
         case T_CIP_INT:   return sizeof(CN_UINT);
         case T_CIP_DINT:  return sizeof(CN_DINT);
+#ifdef SUPPORT_LINT
+        case T_CIP_LINT:  return sizeof(CN_LINT);
+        case T_CIP_ULINT: return sizeof(CN_ULINT);
+#endif
         case T_CIP_REAL:  return sizeof(CN_REAL);
         case T_CIP_BITS:  return sizeof(CN_UDINT);
         default:
@@ -1063,6 +1099,21 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
                 EIP_printf(0, " %d", (int)vd);
             }
             break;
+#ifdef SUPPORT_LINT
+        case T_CIP_LINT:
+        case T_CIP_ULINT:
+            if (type == T_CIP_LINT)
+                EIP_printf(0, "LINT");
+            else
+                EIP_printf(0, "ULINT");
+            CN_LINT vl;
+            for (i=0; i<elements; ++i)
+            {
+                buf = unpack_LINT(buf, &vl);
+                EIP_printf(0, " 0x%016llX", vl);
+            }
+            break;
+#endif
         case T_CIP_REAL:
             EIP_printf(0, "REAL");
             for (i=0; i<elements; ++i)
@@ -1216,6 +1267,27 @@ eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
     return false;
 }
 
+#ifdef SUPPORT_LINT
+eip_bool get_CIP_LINT(const CN_USINT *raw_type_and_data,
+                      size_t element, CN_LINT *result)
+{
+    CN_UINT        type;
+    const CN_USINT *buf;
+
+    buf = unpack_UINT(raw_type_and_data, &type);
+    buf += element*CIP_Type_size(type);
+    switch (type)
+    {
+        case T_CIP_LINT:
+        case T_CIP_ULINT:
+            unpack_LINT(buf, result);
+            return true;
+    }
+    EIP_printf(1, "EIP get_CIP_LINT: unknown type 0x%04X\n", (int) type);
+    return false;
+}
+#endif
+
 eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
                        size_t element, CN_USINT *result)
 {
@@ -1251,7 +1323,7 @@ eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
     {
         buf = unpack_UINT(buf, &subtype);
         memcpy(buffer, buf, size);
-        *(buffer+len) = '\0';
+        *(buffer+size) = '\0';
          
         return true;
     }
@@ -1379,6 +1451,29 @@ eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
     EIP_printf(1, "EIP put_CIP_DINT: unknown type 0x%04X\n", (int) type);
     return false;
 }
+
+#ifdef SUPPORT_LINT
+eip_bool put_CIP_LINT(const CN_USINT *raw_type_and_data,
+                      size_t element, CN_LINT value)
+{
+    CN_UINT   type;
+    CN_USINT *buf;
+    
+    buf = (CN_USINT *) unpack_UINT(raw_type_and_data, &type);
+    /* buf now on first, skip to given element */
+    if (element > 0)
+        buf += element*CIP_Type_size(type);
+    switch (type)
+    {
+        case T_CIP_LINT:
+        case T_CIP_ULINT:
+            pack_LINT(buf, value);
+            return true;
+    }
+    EIP_printf(1, "EIP put_CIP_LINT: unknown type 0x%04X\n", (int) type);
+    return false;
+}
+#endif
 
 /*
  * Set the data size and fill the data buffer of the CIP structure.

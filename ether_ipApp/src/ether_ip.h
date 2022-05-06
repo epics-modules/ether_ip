@@ -203,6 +203,12 @@ typedef short          CN_INT;
 typedef unsigned int   CN_UDINT;
 typedef int            CN_DINT;
 typedef float          CN_REAL;
+#ifdef SUPPORT_LINT
+typedef long long          CN_LINT;
+typedef unsigned long long CN_ULINT;
+#else
+#warning No 64 bit LINT/ULINT support
+#endif
 
 typedef enum
 {
@@ -403,7 +409,11 @@ typedef enum
     T_CIP_SINT   = 0x00C2,
     T_CIP_INT    = 0x00C3,
     T_CIP_DINT   = 0x00C4,
+    T_CIP_LINT   = 0x00C5,
+  /*T_CIP_USINT  = 0x00C6,*/
     T_CIP_UINT   = 0x00C7,
+  /*T_CIP_UDINT  = 0x00C8,*/
+    T_CIP_ULINT  = 0x00C9,
     T_CIP_REAL   = 0x00CA,
     T_CIP_STRING = 0x00D0,
     T_CIP_BITS   = 0x00D3,
@@ -489,6 +499,12 @@ eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
                    size_t element, CN_UDINT *result);
 eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
                   size_t element, CN_DINT *result);
+#ifdef SUPPORT_LINT
+eip_bool get_CIP_LINT(const CN_USINT *raw_type_and_data,
+                      size_t element, CN_LINT *result);
+eip_bool put_CIP_LINT(const CN_USINT *raw_type_and_data,
+                      size_t element, CN_LINT value);
+#endif
 eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
                        size_t element, CN_USINT *result);
 /* Fill buffer with up to 'size' characters (incl. ending '\0').

@@ -300,6 +300,9 @@ void usage(const char *progname)
     fprintf(stderr, "    -t timeout (ms)\n");
     fprintf(stderr, "    -a array size\n");
     fprintf(stderr, "    -w <double value to write>\n");
+#ifdef SUPPORT_LINT
+    fprintf(stderr, "    -W <64 bit value to write>\n");
+#endif
     fprintf(stderr, "    -T times-to-do-all-this (default: 1)\n");
     exit(-1);
 }
@@ -317,6 +320,10 @@ int main (int argc, const char *argv[])
     size_t          i;
     CN_REAL         writeval = 0.0;
     eip_bool        write = false;
+#ifdef SUPPORT_LINT
+    CN_LINT         Writeval = 0x0000000000000000;
+    eip_bool        Write = false;
+#endif
     size_t          test_runs = 1;
 #ifndef _WIN32
     struct timeval  now;
@@ -388,6 +395,16 @@ int main (int argc, const char *argv[])
                 }
                 else usage (argv[0]);
                 break;
+#ifdef SUPPORT_LINT
+            case 'W':
+            GETARG
+                if (arg) {
+                    Writeval = strtoull(arg, NULL, 0);
+                    Write = true;
+                }
+                else usage (argv[0]);
+                break;
+#endif
             case 'T':
             GETARG
                 if (arg) {
@@ -432,6 +449,14 @@ int main (int argc, const char *argv[])
                 pack_REAL((CN_USINT *)&real_buffer, writeval);
                 EIP_write_tag(c, tag, T_CIP_REAL, 1,(CN_USINT*) &real_buffer, 0, 0);
             }
+#ifdef SUPPORT_LINT
+            if (Write)
+            {
+                CN_ULINT ulint_buffer;
+                pack_LINT((CN_USINT *)&ulint_buffer, Writeval);
+                EIP_write_tag(c, tag, T_CIP_LINT, 1,(CN_USINT*) &ulint_buffer, 0, 0);
+            }
+#endif
             else
                 data = EIP_read_tag(c, tag, elements, &data_len, 0, 0);
             if (data)

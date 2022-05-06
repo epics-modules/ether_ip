@@ -8,7 +8,39 @@ so that you can see the current version at runtime via
 drvEtherIP_report.
 
 * Next
-Display unknown CIP types in error messaes as hex (JTGWilson) 
+
+
+
+* 2022, May 6 ether_ip-3-6
+On Mac OS (Darwin) and Linux X86_64, support CIP LINT and ULINT
+64 bit data types via the int64in and int64out record types.
+
+Beware that Channel Access has no 64 bit data type.
+Values from int64in/out records will be transferred as DBR_DOUBLE,
+which uses a total of 64 bits: 52 bits for the mantissa, 11 bits exponent, 1 sign.
+It can represent large as well as small numbers, but with limited granularity.
+It effectively transfers 52 bits of significant detail, that is 13 4-bit nibbles.
+For a 64 bit hex number, which has 16 nibbles, the lowest 3 nibbles are cut
+if the value extends into the upper 3 nibbles.
+
+PVAccess has a native 'long' data type for 64 bit integers can can transfer the
+LINT values without problems.
+
+Actual value:        0x000bcdef87654321  0x00abcdef87654321  0x80abcdef87654321     
+Read via PVA long:   0x000BCDEF87654321  0x00ABCDEF87654321  0x80ABCDEF87654321
+Read via DBR_DOUBLE: 0x000BCDEF87654321  0x00ABCDEF87654320  0x80ABCDEF87654400     
+
+Note how numbers that only use the lower 13 nibbles are perfectly transferred via
+both protocols.
+As numbers start to use the upper nibbles, this results in lower nibbles being
+truncated to zero when using Channel Access DBR_DOUBLE.
+
+Furthermore, versions of the int64in record before EPICS 7.0.6.1
+fail to send monitors unless the lower 32 bits in the value
+change, https://github.com/epics-base/epics-base/pull/191.
+
+Other changes:
+Display unknown CIP types in error messaes as hex (JTGWilson).
 
 * 2022, Feb 4 ether_ip-3-5
 Make EIP_timeout(ms) configurable.

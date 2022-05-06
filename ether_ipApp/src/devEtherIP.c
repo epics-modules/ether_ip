@@ -50,6 +50,11 @@
 /* Local */
 #include "drvEtherIP.h"
 
+#ifdef SUPPORT_LINT
+#include <int64inRecord.h>
+#include <int64outRecord.h>
+#endif
+
 /* Base */
 #  include "epicsExport.h"
 
@@ -424,6 +429,59 @@ static void check_ao_callback(void *arg)
     if (process && rec->scan < SCAN_1ST_PERIODIC)
         scanOnce((dbCommon *)rec);
 }
+
+#ifdef SUPPORT_LINT
+/* Callback for int64out */
+static void check_int64out_callback(void *arg)
+{
+    int64outRecord   *rec = (int64outRecord *) arg;
+    rset             *rset = rec->rset;
+    DevicePrivate    *pvt = (DevicePrivate *)rec->dpvt;
+    CN_LINT          val;
+    eip_bool         process = false;
+
+    /* We are about the check and even set val -> lock */
+    dbScanLock((dbCommon *)rec);
+    if (rec->pact)
+    {
+        rset->process((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
+    /* Check if record's VAL is current */
+    if (!check_data((dbCommon *) rec))
+    {
+        rset->process((dbCommon *)rec);
+        dbScanUnlock((dbCommon *)rec);
+        return;
+    }
+    /* Compare received value with record */
+    if (get_CIP_LINT(pvt->tag->data, pvt->element, &val) &&
+        (rec->udf || rec->sevr == INVALID_ALARM || rec->val != val))
+    {
+        if (rec->tpro)
+            printf("'%s': got %lld from driver\n", rec->name, val);
+        if (!rec->udf && pvt->special & SPCO_FORCE)
+        {
+            if (rec->tpro)
+                printf("'%s': will re-write record's value %lld\n", rec->name, rec->val);
+        }
+        else
+        {
+            rec->val = val;
+            rec->udf = false;
+            if (rec->tpro)
+                printf("'%s': updated record's value to %lld\n", rec->name, rec->val);
+        }
+        process = true;
+    }
+    dbScanUnlock((dbCommon *)rec);
+    /* Does record need processing and is not periodic? */
+    if (process && rec->scan < SCAN_1ST_PERIODIC)
+        scanOnce((dbCommon *)rec);
+}
+#endif
+
 
 /* Callback for bo, see ao_callback comments */
 static void check_bo_callback(void *arg)
@@ -1177,6 +1235,29 @@ static long ai_init_record(dbCommon *rec)
     return 0;
 }
 
+#ifdef SUPPORT_LINT
+/* ---------------------------------- */
+
+static long int64in_add_record(dbCommon *rec)
+{
+    return init_record(rec, scan_callback, &((int64inRecord *)rec)->inp, 1, 0);
+}
+
+static struct dsxt int64in_ext = { int64in_add_record, del_scan_callback_record };
+
+static long int64in_init(int run)
+{
+    if (run == 0)
+        devExtend(&int64in_ext);
+    return init(run);
+}
+
+static long int64in_init_record(dbCommon *rec)
+{
+    return 0;
+}
+#endif
+
 /* ---------------------------------- */
 
 static long bi_add_record(dbCommon *rec)
@@ -1344,6 +1425,41 @@ static long ao_init_record(dbCommon *rec)
 {
     return 2; /* don't convert, we have no value, yet */
 }
+
+
+#ifdef SUPPORT_LINT
+/* ---------------------------------- */
+
+static long int64out_add_record(dbCommon *rec)
+{
+    return init_record(rec, check_int64out_callback, &((int64outRecord *)rec)->out, 1, 0);
+}
+
+static long int64out_del_record(dbCommon *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    printf("Updating link for %s\n", rec->name);
+    if (pvt->plc && pvt->tag)
+        drvEtherIP_remove_callback(pvt->plc, pvt->tag, check_int64out_callback, rec);
+    free(pvt);
+
+    return 0;
+}
+
+static struct dsxt int64out_ext = { int64out_add_record, int64out_del_record };
+
+static long int64out_init(int run)
+{
+    if (run == 0)
+        devExtend(&int64out_ext);
+    return init(run);
+}
+
+static long int64out_init_record(dbCommon *rec)
+{
+    return 0;
+}
+#endif
 
 /* ---------------------------------- */
 
@@ -1573,6 +1689,30 @@ static long ai_read(aiRecord *rec)
         recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
     return status;
 }
+
+#ifdef SUPPORT_LINT
+static long int64in_read(int64inRecord *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    long status = 0;
+    eip_bool ok;
+
+    if (rec->tpro)
+        dump_DevicePrivate((dbCommon *)rec);
+    if ((ok = lock_data((dbCommon *)rec)))
+    {
+        if (pvt->tag->valid_data_size>0 && pvt->tag->elements>pvt->element)
+            ok = get_CIP_LINT(pvt->tag->data, pvt->element, &rec->val);
+        else
+            ok = false;
+        epicsMutexUnlock(pvt->tag->data_lock);
+    }
+    if (!ok)
+        recGblSetSevr(rec,READ_ALARM,INVALID_ALARM);
+    return status;
+}
+#endif
+
 
 static long bi_read(biRecord *rec)
 {
@@ -1846,6 +1986,48 @@ static long ao_write(aoRecord *rec)
     return 0;
 }
 
+#ifdef SUPPORT_LINT
+static long int64out_write(int64outRecord *rec)
+{
+    DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
+    eip_bool      ok = true;
+
+    if (rec->pact) /* Second pass, called for write completion ? */
+    {
+        if (rec->tpro)
+            printf("'%s': written\n", rec->name);
+        rec->pact = FALSE;
+        return 0;
+    }
+    if (rec->tpro)
+        dump_DevicePrivate((dbCommon *)rec);
+    if (lock_data((dbCommon *)rec))
+    {   /* Check if record's VAL is current */
+        CN_LINT val;
+        ok = get_CIP_LINT(pvt->tag->data, pvt->element, &val);
+        if (ok && rec->val != val)
+        {
+            if (rec->tpro)
+                printf("'%s': write %lld!\n", rec->name, rec->val);
+            ok = put_CIP_LINT(pvt->tag->data, pvt->element, rec->val);
+            if (pvt->tag->do_write)
+                EIP_printf(6,"'%s': already writing\n", rec->name);
+            else
+                pvt->tag->do_write = true;
+            rec->pact=TRUE;
+        }
+        epicsMutexUnlock(pvt->tag->data_lock);
+    }
+    else
+        ok = false;
+    if (ok)
+        rec->udf = FALSE;
+    else
+        recGblSetSevr(rec, WRITE_ALARM, INVALID_ALARM);
+    return 0;
+}
+#endif
+
 static long bo_write(boRecord *rec)
 {
     DevicePrivate *pvt = (DevicePrivate *)rec->dpvt;
@@ -2074,6 +2256,35 @@ struct {
     NULL
 };
 
+#ifdef SUPPORT_LINT
+struct {
+    dset common;
+    long (*read)(int64inRecord *rec);
+} devInt64inEtherIP = {
+    {
+        5,
+        NULL,
+        int64in_init,
+        int64in_init_record,
+        get_ioint_info
+    },
+    int64in_read
+};
+struct {
+    dset common;
+    long (*write)(int64outRecord *rec);
+} devInt64outEtherIP = {
+    {
+        5,
+        NULL,
+        int64out_init,
+        int64out_init_record,
+        NULL
+    },
+    int64out_write
+};
+#endif
+
 struct {
     dset common;
     long (*read)(biRecord *rec);
@@ -2249,6 +2460,10 @@ struct {
 };
 
 epicsExportAddress(dset,devAiEtherIP);
+#ifdef SUPPORT_LINT
+epicsExportAddress(dset,devInt64inEtherIP);
+epicsExportAddress(dset,devInt64outEtherIP);
+#endif
 epicsExportAddress(dset,devBiEtherIP);
 #ifdef BUILD_LONG_STRING_SUPPORT
 epicsExportAddress(dset,devLsiEtherIP);
