@@ -755,7 +755,7 @@ static void check_so_callback(void *arg)
     }
     /* Get a null-terminated string from CIP data,
      * compare with record which we force to be terminated.
-     */ 
+     */
     rec->val[MAX_STRING_SIZE-1] = '\0';
     if (get_CIP_STRING(pvt->tag->data, data, MAX_STRING_SIZE) &&
         (rec->udf || rec->sevr == INVALID_ALARM || strcmp(rec->val, data)))
@@ -916,7 +916,7 @@ static long analyze_link(dbCommon *rec,
         free(pvt->PLC_name);
         pvt->PLC_name = NULL;
     }
-    
+
     if(!pvt->PLC_name)
     {
         pvt->PLC_name = EIP_strdup_n(p, end-p);
@@ -944,7 +944,7 @@ static long analyze_link(dbCommon *rec,
         free(pvt->string_tag);
         pvt->string_tag = NULL;
     }
-    
+
     if(!pvt->string_tag)
     {
         pvt->string_tag = EIP_strdup_n(p, tag_len);
@@ -1056,7 +1056,7 @@ static long analyze_link(dbCommon *rec,
             }
             /* Show that this definition included an index reference */
             pvt->special |= SPCO_INDEX_INCLUDED;
-            
+
             /* remove element number text from tag */
             *p = '\0';
         }
@@ -2070,6 +2070,17 @@ static long bo_write(boRecord *rec)
     return 0;
 }
 
+static long bo_reset_stats(boRecord *rec)
+{
+    // Reset when non-zero value is written
+    if (rec->rval)
+    {
+        printf("'%s': resetting PLC statistics\n", rec->name);
+        drvEtherIP_reset_statistics();
+    }
+    return 0;
+}
+
 #ifdef BUILD_LONG_STRING_SUPPORT
 static long lso_write(lsoRecord *rec)
 {
@@ -2401,6 +2412,20 @@ struct {
     bo_write
 };
 
+struct {
+    dset common;
+    long (*write)(boRecord *rec);
+} devBoEtherIPReset = {
+    {
+        6,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+    },
+    bo_reset_stats
+};
+
 #ifdef BUILD_LONG_STRING_SUPPORT
 struct {
     dset common;
@@ -2474,6 +2499,7 @@ epicsExportAddress(dset,devSiEtherIP);
 epicsExportAddress(dset,devWfEtherIP);
 epicsExportAddress(dset,devAoEtherIP);
 epicsExportAddress(dset,devBoEtherIP);
+epicsExportAddress(dset,devBoEtherIPReset);
 #ifdef BUILD_LONG_STRING_SUPPORT
 epicsExportAddress(dset,devLsoEtherIP);
 #endif

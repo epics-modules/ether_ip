@@ -1,11 +1,18 @@
 # -*- shell-script -*-
-# AI records that read statistical information from EtherIP
-# driver/device
+# Example for reading statistical information from EtherIP driver/device
 #
 # IOC:  prefix to records
 # PLC:  PLC to use
 # TAG:  queried tag (leads to PLC's ScanList)
+#
+# The Alarm/warn thresholds in here are an example.
+# You'll have to check with your PLC setup what
+# the normal, expected transfer times are.
 
+# The error counter will unfortunately be "INVALID" while disconnected from the PLC,
+# then indicate the error count once we're re-connected.
+# Good enough? While disconnected, the fact is pretty obvious.
+# Then when all looks good again, this record will tell us how many disconnects there used to be.
 record(ai, "$(IOC):PLC_ERRORS")
 {
 	field(SCAN, ".5 second")
@@ -15,8 +22,10 @@ record(ai, "$(IOC):PLC_ERRORS")
 	field(EGU, "Errors")
 	field(HOPR, "5")
 	field(LOPR, "0")
+    # Ideally, there are zero errors
+    field(HIGH, "1")
+    field(HSV,  "MINOR")
 }
-
 
 record(ai, "$(IOC):PLC_TASK_SLOW")
 {
@@ -50,6 +59,9 @@ record(ai, "$(IOC):LIST_SCAN_TIME")
 	field(HOPR, "1")
 	field(LOPR, "0")
 	field(PREC, "5")
+    # To support 10 Hz, should return within 0.1 sec
+    field(HIGH, "0.1")
+    field(HSV,  "MINOR")
 }
 
 record(ai, "$(IOC):LIST_MIN_SCAN_TIME")
@@ -62,6 +74,8 @@ record(ai, "$(IOC):LIST_MIN_SCAN_TIME")
 	field(HOPR, "1")
 	field(LOPR, "0")
 	field(PREC, "5")
+    field(HIGH, "0.01")
+    field(HSV,  "MINOR")
 }
 
 record(ai, "$(IOC):LIST_MAX_SCAN_TIME")
@@ -74,6 +88,8 @@ record(ai, "$(IOC):LIST_MAX_SCAN_TIME")
 	field(HOPR, "1")
 	field(LOPR, "0")
 	field(PREC, "5")
+    field(HIGH, "1.0")
+    field(HSV,  "MINOR")
 }
 
 record(ai, "$(IOC):TAG_TRANSFER_TIME")
@@ -88,8 +104,14 @@ record(ai, "$(IOC):TAG_TRANSFER_TIME")
 	field(PREC, "5")
 }
 
-
-
-
-
-
+# Resets when writing "1".
+# Self-resets after 1 second
+record(bo, "$(IOC):RESET_PLC_STATS")
+{
+	field(DTYP, "EtherIPReset")
+	field(DOL,  "0")
+    field(PINI, "YES")
+    field(ZNAM, "Reset")
+    field(ONAM, "Reset!")
+    field(HIGH, "1")
+}

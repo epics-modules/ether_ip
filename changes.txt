@@ -7,9 +7,10 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
-* Next
-
-
+* 2022, Aug 18 ether_ip-3-7
+Add support for bo record to reset statistics.
+Updated eip_stat.db example to use it,
+with example warning thresholds and display file.
 
 * 2022, May 6 ether_ip-3-6
 On Mac OS (Darwin) and Linux X86_64, support CIP LINT and ULINT
@@ -26,9 +27,9 @@ if the value extends into the upper 3 nibbles.
 PVAccess has a native 'long' data type for 64 bit integers can can transfer the
 LINT values without problems.
 
-Actual value:        0x000bcdef87654321  0x00abcdef87654321  0x80abcdef87654321     
+Actual value:        0x000bcdef87654321  0x00abcdef87654321  0x80abcdef87654321
 Read via PVA long:   0x000BCDEF87654321  0x00ABCDEF87654321  0x80ABCDEF87654321
-Read via DBR_DOUBLE: 0x000BCDEF87654321  0x00ABCDEF87654320  0x80ABCDEF87654400     
+Read via DBR_DOUBLE: 0x000BCDEF87654321  0x00ABCDEF87654320  0x80ABCDEF87654400
 
 Note how numbers that only use the lower 13 nibbles are perfectly transferred via
 both protocols.
@@ -79,7 +80,7 @@ against earlier Base versions.
 
 Hints for using lsi, lso records:
 1) Set field SIZV in the lsi/lso records to the maximum string length.
-   The driver always adds a '\0' terminator, so with  
+   The driver always adds a '\0' terminator, so with
 
      field(SIZV, 60)
 
@@ -87,13 +88,13 @@ Hints for using lsi, lso records:
 2) Via `cainfo`, the record reports a data type of DBR_STRING,
    so a plain `caget` or `caput` will still be limited to 40 characters.
    To access the full string, one needs to read/write the `VAL$` field,
-   which causes the IOC (Channel Access Server) to provide a 
+   which causes the IOC (Channel Access Server) to provide a
    DBR_CHAR datatype with element count based on SIZV.
 3) Client then needs to access the character waveform as a 'long string',
    which is selected via the `-S` option of caget/caput:
 
      caput -S  lso.VAL$ "....+....1....+....2....+....3....+....4....+....5....+...."
-   
+
    When trying to access more than SIZV characters (note the implicit '\0' terminator),
    write access will fail like this:
 
@@ -148,7 +149,7 @@ not compatible with earlier releases, so support for R3.14.7 and earlier, includ
 has been removed.
 
 * 2016, Apr 13 ether_ip-2-27
-Credit to William Lu for stringout support code.  Works with 40-char limit of 
+Credit to William Lu for stringout support code.  Works with 40-char limit of
 EPICS stringout.  Version merging and testing (R3.14.12.5) by Wesley Moore.
 
 * 2014, Aug 13 ether_ip-2-26
@@ -159,7 +160,7 @@ Example for defining a PLC, defining macros, loading a database:
 
     eipIoc -p MyPLC=10.0.1.47 -m "PLC=MyPLC,IOC=test" -d /path/to/some.db
 
- 
+
 * 2014, Jul 31 ether_ip-2-25
 Hovanes Egiyan found bug in mbboDirect support,
 similar to what Rod Nussbaumer found in a modbus driver (http://www.aps.anl.gov/epics/tech-talk/2012/msg02155.php):
@@ -198,7 +199,7 @@ John Sinclair sent fix for EIP_printf(4, .. call with possible null argument
 * 2011, Feb 14 ether_ip-2-21
 Janet Anderson contributed patches to avoid compile errors from
 EPICS base R3.14.10 on where the RVAL field was changed from unsigned long
-to epicsUInt32. 
+to epicsUInt32.
 
 * 2010, Nov 5 ether_ip-2-20
 Jeff Hill noticed that driver could invoke for example ao record callbacks,
@@ -222,7 +223,7 @@ Attempt to fix crashes which look like this:
 1a1c60c EIP_startup +70 : 1a1b4e0 (19fdfb0)
 1a1b534 EncapsulationHeader_status+668: 1a1b0dc (19fdfb0)
 1a1b13c EncapsulationHeader_status+270: EIP_reserve_buffer (19fdfc8, 19fdfc4, 18)
-1a1a960 EIP_reserve_buffer+9c : malloc () 
+1a1a960 EIP_reserve_buffer+9c : malloc ()
 
 Also with EIP_reserve_buffer(.., 6e) calling free(), and
 examples which don't start in EIP_startup().
@@ -370,7 +371,7 @@ Assume this output from drvEtherIP_report:
   data                : -no data-
   transfer time       : 0 secs
 ...
-and 
+and
    EIP_buffer_limit=20
 in the startup file, you'll get the following error message:
 
@@ -543,7 +544,7 @@ Symptoms include:
   CPU and flooding the network was the slow response of the
   PLC, which kept the network load within 1% in a test
   in my office.
- 
+
 The CPU usage of the driver thread in the "spy" report
 is now back to 0% for test.db, sometimes going up to 3%.
 The "scan task slow" messages are almost completely gone
@@ -593,7 +594,7 @@ In case another hangup occurs, try:
 which lists all locked mutexes and the threads
 waiting for them.
 
-* 2004, 02/11 V2.3 
+* 2004, 02/11 V2.3
 (CVS Release Tag --> ether_ip-2-3)
 Create munch file to support
 IOC run-time loading (RTL) of
@@ -606,7 +607,7 @@ R3.14.4 port
 waveform supports CHAR
 
 * 2003, 04/29 V2.0
-Stephanie Allison, saa@SLAC.Stanford.EDU, 
+Stephanie Allison, saa@SLAC.Stanford.EDU,
 ported the EtherIP support to EPICS R3.14!
 This added some #ifdefs, the R3.13 support
 is hopefully as before.
@@ -683,7 +684,7 @@ Now output records get reprocessed not only for value discrepancies
 but also for missing values (disconnect).
 
 * 2002, 08/15 V1.7
-When you omit the call to 
+When you omit the call to
      drvEtherIP_define_PLC  <plc>, <IP>, <slot>
 the driver (actually device support) reports
 "unknown PLC xxx".
@@ -791,7 +792,7 @@ when you define the PLC.
 
 ** Some changes to output of drvEtherIP_report
 Now displaying the PLC interface info, e.g.:
-  Interface name        : 1756-ENET/A 
+  Interface name        : 1756-ENET/A
   Interface vendor      : 0x100
   Interface type        : 0xC00
   Interface revision    : 0x112

@@ -17,7 +17,7 @@ EIP_verbosity(7)
 
 # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
 # The driver/device uses the <name> to indentify the PLC.
-# 
+#
 # <ip_addr> can be an IP address in dot-notation
 # or a name about which the IOC knows.
 # The IP address gets us to the ENET interface.
@@ -29,7 +29,7 @@ EIP_verbosity(7)
 drvEtherIP_define_PLC("plc1", "160.91.233.45", 0)
 
 #dbLoadRecords("db/ramp.db",    "IOC=test")
-#dbLoadRecords("db/eip_stat.db","PLC=plc1,IOC=test,TAG=REAL")
+dbLoadRecords("../../db/eip_stat.db", "PLC=plc1,IOC=test,TAG=DINT")
 #dbLoadRecords("db/ai.db",      "PLC=plc1,IOC=test")
 #dbLoadRecords("db/ana.db",     "PLC=plc1,IOC=test")
 #dbLoadRecords("db/bi.db",      "PLC=plc1,IOC=test")
@@ -44,3 +44,6 @@ dbLoadRecords("../../db/brad.db", "PLC=plc1,IOC=test")
 
 iocInit()
 
+epicsThreadSleep 5
+
+drvEtherIP_report 10

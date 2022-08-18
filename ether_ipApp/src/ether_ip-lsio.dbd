@@ -1,3 +1,5 @@
+# EtherIP for EPICS 3.15+ with long string support
+
 # Declarations to support dynamic loading
 recordtype(ai        ) {}
 recordtype(bi        ) {}
@@ -23,6 +25,7 @@ device(stringin,   INST_IO, devSiEtherIP,         "EtherIP")
 device(waveform,   INST_IO, devWfEtherIP,         "EtherIP")
 device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
 device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
+device(bo,         INST_IO, devBoEtherIPReset,    "EtherIPReset")
 device(lso,        INST_IO, devLsoEtherIP,        "EtherIP")
 device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")
 device(mbboDirect, INST_IO, devMbboDirectEtherIP, "EtherIP")

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<display version="2.0.0">
+  <name>Display</name>
+  <widget type="label" version="2.0.0">
+    <name>Label</name>
+    <class>TITLE</class>
+    <text>Ether IP Stats</text>
+    <x use_class="true">0</x>
+    <y use_class="true">0</y>
+    <width>550</width>
+    <height>31</height>
+    <font use_class="true">
+      <font name="Header 1" family="Liberation Sans" style="BOLD" size="22.0">
+      </font>
+    </font>
+    <foreground_color use_class="true">
+      <color name="Text" red="0" green="0" blue="0">
+      </color>
+    </foreground_color>
+    <transparent use_class="true">true</transparent>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_1</name>
+    <text>PLC Errors:</text>
+    <y>50</y>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update</name>
+    <pv_name>$(S=test):PLC_ERRORS</pv_name>
+    <x>110</x>
+    <y>50</y>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_3</name>
+    <text>List Scan Time:</text>
+    <y>80</y>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_1</name>
+    <pv_name>$(S=test):LIST_SCAN_TIME</pv_name>
+    <x>110</x>
+    <y>80</y>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_4</name>
+    <text>Min. Scan Time:</text>
+    <y>110</y>
+    <width>110</width>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_2</name>
+    <pv_name>$(S=test):LIST_MIN_SCAN_TIME</pv_name>
+    <x>110</x>
+    <y>110</y>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_5</name>
+    <text>Max Scan Time:</text>
+    <y>140</y>
+    <width>110</width>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_3</name>
+    <pv_name>$(S=test):LIST_MAX_SCAN_TIME</pv_name>
+    <x>110</x>
+    <y>140</y>
+  </widget>
+  <widget type="label" version="2.0.0">
+    <name>Label_6</name>
+    <text>Slow Transfers:</text>
+    <y>170</y>
+    <width>110</width>
+  </widget>
+  <widget type="textupdate" version="2.0.0">
+    <name>Text Update_4</name>
+    <pv_name>$(S=test):PLC_TASK_SLOW</pv_name>
+    <x>110</x>
+    <y>170</y>
+  </widget>
+  <widget type="bool_button" version="2.0.0">
+    <name>Boolean Button</name>
+    <pv_name>$(S=test):RESET_PLC_STATS</pv_name>
+    <x>110</x>
+    <y>200</y>
+    <width>90</width>
+    <off_color>
+      <color name="Button_Background" red="210" green="210" blue="210">
+      </color>
+    </off_color>
+    <on_color>
+      <color name="Button_Background" red="210" green="210" blue="210">
+      </color>
+    </on_color>
+    <show_led>false</show_led>
+    <labels_from_pv>true</labels_from_pv>
+    <mode>1</mode>
+  </widget>
+</display>

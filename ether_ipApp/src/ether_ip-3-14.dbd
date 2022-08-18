@@ -1,3 +1,5 @@
+# EtherIP for EPICS 3.14 (no long string, no int64)
+
 # Device support definitions
 device(ai,         INST_IO, devAiEtherIP,         "EtherIP")
 device(bi,         INST_IO, devBiEtherIP,         "EtherIP")
@@ -7,6 +9,7 @@ device(stringin,   INST_IO, devSiEtherIP,         "EtherIP")
 device(waveform,   INST_IO, devWfEtherIP,         "EtherIP")
 device(ao,         INST_IO, devAoEtherIP,         "EtherIP")
 device(bo,         INST_IO, devBoEtherIP,         "EtherIP")
+device(bo,         INST_IO, devBoEtherIPReset,    "EtherIPReset")
 device(mbbo,       INST_IO, devMbboEtherIP,       "EtherIP")
 device(mbboDirect, INST_IO, devMbboDirectEtherIP, "EtherIP")
 device(stringout,  INST_IO, devSoEtherIP,         "EtherIP")
