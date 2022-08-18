@@ -1,6 +1,4 @@
-/* $Id: ether_ip.c,v 1.10 2011/04/12 18:08:48 saa Exp $
- *
- * ether_ip
+/* ether_ip.c
  *
  * EtherNet/IP routines for Win32, Unix, vxWorks, and RTEMS.
  *
@@ -10,7 +8,7 @@
  * Docs:  "Spec" = ControlNet Spec. version 2.0, Errata 1
  *        "ENET" = AB Publication 1756-RM005A-EN-E
  *
- * kasemir@lanl.gov
+ * kasemirk@ornl.gov
  */
 
 /* System */
@@ -1318,16 +1316,16 @@ eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
     const CN_USINT *buf;
 
     buf = unpack_UINT(raw_type_and_data, &type);
-    
+
     if (type == T_CIP_STRING)
     {
         buf = unpack_UINT(buf, &subtype);
         memcpy(buffer, buf, size);
         *(buffer+size) = '\0';
-         
+
         return true;
     }
-    
+
     if (type != T_CIP_STRUCT)
     {
         EIP_printf(1, "EIP get_CIP_STRING: unknown type 0x%04X\n", (int) type);
@@ -1458,7 +1456,7 @@ eip_bool put_CIP_LINT(const CN_USINT *raw_type_and_data,
 {
     CN_UINT   type;
     CN_USINT *buf;
-    
+
     buf = (CN_USINT *) unpack_UINT(raw_type_and_data, &type);
     /* buf now on first, skip to given element */
     if (element > 0)
@@ -1943,7 +1941,7 @@ eip_bool EIP_connect(EIPConnection *c,
             EIP_printf (2, "EIP cannot find IP for '%s'\n",
                         ip_addr);
             return false;
-    }    
+    }
     if (c->sock != 0)
         EIP_printf (2, "EIP_connect found open socket\n");
     /* Create socket and set it to no-delay */

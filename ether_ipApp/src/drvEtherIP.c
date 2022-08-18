@@ -1,6 +1,4 @@
-/* $Id: drvEtherIP.c,v 1.14 2011/04/12 18:08:48 saa Exp $
- *
- * drvEtherIP
+/* drvEtherIP.c
  *
  * IOC driver that uses ether_ip routines,
  * keeping lists of PLCs and tags and scanlists etc.

@@ -3,7 +3,7 @@
  * IOC driver that uses ether_ip routines,
  * keeping lists of PLCs and tags and scanlists etc.
  *
- * kasemir@lanl.gov
+ * kasemirk@ornl.gov
  */
 
 #ifndef ETHERIP_MAYOR

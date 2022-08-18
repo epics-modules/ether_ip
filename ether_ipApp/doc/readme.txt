@@ -1,4 +1,4 @@
--*- outline -*- $Id$
+-*- outline -*-
 
 * This document is being replaced by the Manual.md
 found in the top-level directory
@@ -37,7 +37,7 @@ use the "-?" option for help:
       -s slot (default: 0)
       -t timeout (ms)
       -a array size
-      -w <double value to write>       
+      -w <double value to write>
 
 Example:
 Read tag "REAL" from plc with IP 128.165.160.146,
@@ -80,7 +80,7 @@ be configured. After loading the driver object code either directly
 or as part of an ADE library, issue the following commands.
 Note that the IP address (128.165.160.146), the DNS name (snsplc1)
 and the name that the driver uses (plc1) are all related but different!
-    
+
     # Initialize EtherIP driver, define PLCs
     # -------------------------------------
     drvEtherIP_init
@@ -94,7 +94,7 @@ and the name that the driver uses (plc1) are all related but different!
 
     # drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
     # The driver/device uses the <name> to indentify the PLC.
-    # 
+    #
     # <ip_addr> can be an IP address in dot-notation
     # or a name that the IOC knows about (defined via hostAdd).
     # The IP address gets us to the ENET interface.
@@ -103,7 +103,7 @@ and the name that the driver uses (plc1) are all related but different!
     # ControlLogix crate is slot 0.
     # (When omitting the slot number, the default is also 0)
     drvEtherIP_define_PLC "plc1", "snsplc1", 0
-       
+
     # EtherIP driver verbosity, 0=silent, up to 10:
     EIP_verbosity=4
 
@@ -146,7 +146,7 @@ the attached records. When records refer to different elements of an
 array, the driver will transfer the array as a whole. Tags are
 arranged according to PLC and scan rate. In order to not disturb
 processing of the EPICS database, the driver has one separate task per
-PLC. 
+PLC.
 
 You should try to benefit from the driver optimization by arranging
 tags in arrays. You can have alias tags on the PLC, so that a
@@ -169,7 +169,7 @@ exact timing in response to the command. When done, the PLC signals
 success or failure via another "status" tag.
 This way, network delays in the transfer of "start" and "status" tags
 will not harm the critical timing.
-                
+
 * EPICS records: Generic fields
 ** DTYP: Device type
 Has to be "EtherIP" as defined in DBD file:
@@ -256,7 +256,7 @@ has to match
     This can be a single tag "fred" that is defined in the "Controller
     Tags" section of the PLC ladder logic. It can also be an array tag
     "my_array[5]" as well as a structure element "Local:2:I.Ch0Data".
-    Array elements are indexed beginning with 0. 
+    Array elements are indexed beginning with 0.
     Note: you can use decimals (2, 10, 15), hex numbers (0x0f) and
     octal numbers (04, 07, 12). This means that 08 is invalid because
     it is interpreted as an octal number!
@@ -286,7 +286,7 @@ has to match
      MBBODirect	     Passive
 
     In all other cases, the S flag should not be used, instead the
-    SCAN field must provide the needed period (e.g. SCAN=".5 second").  
+    SCAN field must provide the needed period (e.g. SCAN=".5 second").
 
     The time format is in seconds, like the SCAN field, but without "seconds".
     Examples:
@@ -343,7 +343,7 @@ has to match
     Ethernet is not "deterministic". If instead you use several "E"
     flags, each of those tags ends up being a separate transfer,
     leading to more network load and possible collisions and delays.
-  
+
 
 * ai, Analog Input Record
 By default the tag itself is read:
@@ -384,9 +384,9 @@ information. In other cases it's used to find the scanlist.
 The PLC_TASK_SLOW flag is of less use than anticipated. It's
 incremented when the scan task is done processing the list and then
 notices that it's already time to process the list again. Since all
-delays are specified in vxWorks ticks (3.13) or seconds (3.14), defaulting 
-to 60 ticks per second (3.13) or 1 second (3.14), this scheduling is rather 
-coarse. With all the other task scheduling going on and ethernet delays, 
+delays are specified in vxWorks ticks (3.13) or seconds (3.14), defaulting
+to 60 ticks per second (3.13) or 1 second (3.14), this scheduling is rather
+coarse. With all the other task scheduling going on and ethernet delays,
 PLC_TASK_SLOW might increment every once in a while without a
 noticeable impact on the data (no time-outs, no old data).
 
@@ -531,7 +531,7 @@ the same PLC tag. Changes from "one" source are reflected on the
 respective "other" side.
 With TPRO, it looks like this:
      'Test_HPRF:Fil1:WrmRmp_Set': got 8 from driver
-     'Test_HPRF:Fil1:WrmRmp_Set': updated record's value 8  
+     'Test_HPRF:Fil1:WrmRmp_Set': updated record's value 8
 
 The "FORCE" flag will change this behavior:
 When the driver notices a discrepency, it will NOT
@@ -569,7 +569,7 @@ but keep different "EPICS to PLC" and "PLC to EPICS" arrays.
 If you have to have handshake tags (EPICS writes, PLC uses
 it and then PLC resets the tag), those bidirectional tags
 should not be in arrays. They have to be standalone, scalar tags.
-   
+
 * bi, Binary Input Record
 Reads a single bit from a tag.
 
@@ -704,7 +704,7 @@ or
 ** Note on tags in INP
 On the PLC, "array_tag" could be
       fred = REAL[40]
-or   
+or
       fred = DINT[80]
 When specifying the array tag in INP, do not use
 'fred[0]' or 'fred[any other number]', use only 'fred'.
@@ -740,7 +740,7 @@ drvEtherIP_help shows all user-callable driver routines:
       -  set to 0..10
       double drvEtherIP_default_rate = <seconds>
        -  define the default scan rate
-          (if neither SCAN nor INP/OUT provide one)    
+          (if neither SCAN nor INP/OUT provide one)
       drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
       -  define a PLC name (used by EPICS records) as IP
          (DNS name or dot-notation) and slot (0...)
@@ -758,7 +758,7 @@ drvEtherIP_help shows all user-callable driver routines:
       drvEtherIP_restart
       -  in case of communication errors, driver will restart,
          so calling this one directly shouldn't be necessary
-         but is possible                           
+         but is possible
 
 A common problem might be that a record does not seem to read/write
 the PLC tag that it was supposed to be connected to.
@@ -808,8 +808,8 @@ in array element 40, you should have used "DINTs[40] B 0"
       do_write            : no
       is_writing          : no
       data                : INT 4 1 1 1 4 0 0 0 0 0 1 1 1 1\
-                           4 1 1 1 1 1 2 2 1 16 0 0 4 1 1 
-      transfer tick-time  : 46 (0.046 secs) 
+                           4 1 1 1 1 1 2 2 1 16 0 0 4 1 1
+      transfer tick-time  : 46 (0.046 secs)
     If the "...._size" fields in there are zero, the driver
     could not learn anything about the tag.
     See if the tag actually exists on the PLC (next step).
@@ -953,7 +953,7 @@ Example:
 The one and only output record with OUT="@plc tagname S 5"
 configures the driver to scan the 'tagname' every 5 seconds.
 If you now process the record every second by e.g. entering
-new value via ChannelAccess, you'll see about 4 'already writing' 
+new value via ChannelAccess, you'll see about 4 'already writing'
 messages, because the driver will only write every 5 seconds.
 But if you only process the record every 10 seconds, you should
 see no message, because the last new value should have been written

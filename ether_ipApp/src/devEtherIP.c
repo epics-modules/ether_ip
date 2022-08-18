@@ -1,11 +1,9 @@
-/* $Id: devEtherIP.c,v 1.12 2011/04/12 18:08:48 saa Exp $
- *
- * devEtherIP
+/* devEtherIP
  *
  * EPICS Device Support,
  * glue between EtherIP driver and records.
  *
- * kasemir@lanl.gov
+ * kasemirk@ornl.gov
  */
 
 /* System */

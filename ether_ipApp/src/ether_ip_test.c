@@ -1,10 +1,8 @@
-/* $Id$
- *
- * EtherNet/IP: ControlNet over Ethernet
+/* EtherNet/IP: ControlNet over Ethernet
  *
  * Test program for hosts.
  *
- * kasemir@lanl.gov
+ * kasemirk@ornl.gov
  */
 
 #include<memory.h>
@@ -12,7 +10,7 @@
 #include<string.h>
 #include<stddef.h>
 #include<time.h>
-#include<stdlib.h> 
+#include<stdlib.h>
 #include"ether_ip.c"
 
 #ifdef DEFINE_CONNECTED_METHODS
@@ -422,7 +420,6 @@ int main (int argc, const char *argv[])
         else
         {
            tag = EIP_parse_tag(argv[i]);
-           
         }
     }
     if (tag && EIP_verbosity >= 3)
