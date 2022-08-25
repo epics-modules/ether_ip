@@ -1,0 +1,2 @@
+# Enables support for long ints
+SUPPORT_LINT=NO
