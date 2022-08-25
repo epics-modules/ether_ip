@@ -39,5 +39,8 @@ CHECK_RELEASE = YES
 # settings without having to modify the configure/CONFIG_SITE
 # file itself.
 -include $(TOP)/../CONFIG_SITE.local
+-include $(TOP)/../configure/CONFIG_SITE.local
 -include $(TOP)/configure/CONFIG_SITE.local
-
+-include $(TOP)/configure/CONFIG_SITE.local.$(OS_CLASS)
+-include $(TOP)/configure/CONFIG_SITE.local.$(EPICS_HOST_ARCH)
+-include $(TOP)/configure/CONFIG_SITE.local.$(EPICS_HOST_ARCH).$(T_A)

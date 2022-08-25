@@ -1,0 +1,2 @@
+#Support long int on Linux 64
+SUPPORT_LINT = YES
