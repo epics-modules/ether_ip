@@ -17,4 +17,4 @@ See
  * changes.txt for changes
  * https://github.com/ornl-epics/etherip for a Java version of the basic communication library, not connected to an EPCIS IOC.
 
-See Manual.md for usage
+See Manual.md for usage.
