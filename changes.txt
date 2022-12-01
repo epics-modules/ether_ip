@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2022, Dec 1
+Support UINT for ai record.
+
 * 2022, Aug 18 ether_ip-3-7
 Add support for bo record to reset statistics.
 Updated eip_stat.db example to use it,
