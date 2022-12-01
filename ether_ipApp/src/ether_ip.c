@@ -1249,6 +1249,7 @@ eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
             *result = (CN_DINT) vs;
             return true;
         case T_CIP_INT:
+        case T_CIP_UINT:
             unpack_UINT(buf, (CN_UINT *)&vi);
             *result = (CN_DINT) vi;
             return true;
