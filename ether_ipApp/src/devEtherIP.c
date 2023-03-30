@@ -158,8 +158,7 @@ static eip_bool lock_data(const dbCommon *rec)
             printf("devEtherIP lock_data (%s): no lock\n", rec->name);
         return false;
     }
-    if (pvt->tag->valid_data_size <= 0  ||
-        pvt->tag->elements <= pvt->element)
+    if (pvt->tag->valid_data_size <= 0 )
     {
         epicsMutexUnlock(pvt->tag->data_lock);
         if (rec->tpro &&
@@ -1375,7 +1374,7 @@ static long si_init_record(dbCommon *rec)
 static long wf_add_record(dbCommon *rec)
 {
     waveformRecord *wf = (waveformRecord *) rec;
-    return init_record(rec, scan_callback, &wf->inp, wf->nelm, 0);
+    return init_record(rec, scan_callback, &wf->inp, 0, 0);
 }
 
 static struct dsxt wf_ext = { wf_add_record, del_scan_callback_record };
@@ -1842,7 +1841,7 @@ static long wf_read(waveformRecord *rec)
         dump_DevicePrivate((dbCommon *)rec);
     if ((ok = lock_data((dbCommon *)rec)))
     {
-        if (pvt->tag->valid_data_size > 0 &&  pvt->tag->elements >= rec->nelm)
+        if (pvt->tag->valid_data_size > 0)
         {
             if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
             {
