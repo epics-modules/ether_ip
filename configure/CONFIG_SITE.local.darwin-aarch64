@@ -1,0 +1,2 @@
+#Support long int on Mac
+SUPPORT_LINT = YES
