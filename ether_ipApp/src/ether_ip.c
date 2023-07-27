@@ -178,6 +178,37 @@ CN_USINT *pack_REAL(CN_USINT *buffer, CN_REAL val)
     return buffer;
 }
 
+CN_USINT *pack_LREAL(CN_USINT *buffer, CN_LREAL val)
+{
+    const CN_USINT *p;
+
+    if (is_little_endian)
+    {
+        p = (const CN_USINT *) &val;
+        *buffer++ = *p++;
+        *buffer++ = *p++;
+        *buffer++ = *p++;
+        *buffer++ = *p++;
+        *buffer++ = *p++;
+        *buffer++ = *p++;
+        *buffer++ = *p++;
+        *buffer++ = *p;
+    }
+    else
+    {
+        p = ((const CN_USINT *) &val)+7;
+        *buffer++ = *p--;
+        *buffer++ = *p--;
+        *buffer++ = *p--;
+        *buffer++ = *p--;
+        *buffer++ = *p--;
+        *buffer++ = *p--;
+        *buffer++ = *p--;
+        *buffer++ = *p;
+    }
+    return buffer;
+}
+
 const CN_USINT *unpack_UINT(const CN_USINT *buffer, CN_UINT *val)
 {
     *val =  buffer[0]
@@ -236,6 +267,36 @@ const CN_USINT *unpack_REAL(const CN_USINT *buffer, CN_REAL *val)
     else
     {
         p = ((CN_USINT *) val)+3;
+        *p-- = *buffer++;
+        *p-- = *buffer++;
+        *p-- = *buffer++;
+        *p   = *buffer++;
+    }
+    return buffer;
+}
+
+const CN_USINT *unpack_LREAL(const CN_USINT *buffer, CN_LREAL *val)
+{
+    CN_USINT *p;
+    if (is_little_endian)
+    {
+        p = (CN_USINT *) val;
+        *p++ = *buffer++;
+        *p++ = *buffer++;
+        *p++ = *buffer++;
+        *p++ = *buffer++;
+        *p++ = *buffer++;
+        *p++ = *buffer++;
+        *p++ = *buffer++;
+        *p   = *buffer++;
+    }
+    else
+    {
+        p = ((CN_USINT *) val)+7;
+        *p-- = *buffer++;
+        *p-- = *buffer++;
+        *p-- = *buffer++;
+        *p-- = *buffer++;
         *p-- = *buffer++;
         *p-- = *buffer++;
         *p-- = *buffer++;
@@ -1012,6 +1073,7 @@ size_t CIP_Type_size(CIP_Type type)
         case T_CIP_ULINT: return sizeof(CN_ULINT);
 #endif
         case T_CIP_REAL:  return sizeof(CN_REAL);
+        case T_CIP_LREAL: return sizeof(CN_LREAL);
         case T_CIP_BITS:  return sizeof(CN_UDINT);
         default:
             return 0;
@@ -1061,6 +1123,7 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
     CN_UINT        vi;
     CN_UDINT       vd;
     CN_REAL        vr;
+    CN_LREAL       vlr;
 
     buf = unpack_UINT(raw_type_and_data, &type);
     switch (type)
@@ -1118,6 +1181,14 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
             {
                 buf = unpack_REAL(buf, &vr);
                 EIP_printf(0, " %f", (double)vr);
+            }
+            break;
+        case T_CIP_LREAL:
+            EIP_printf(0, "LREAL");
+            for (i=0; i<elements; ++i)
+            {
+                buf = unpack_LREAL(buf, &vlr);
+                EIP_printf(0, " %f", vlr);
             }
             break;
         case T_CIP_BITS:
@@ -1186,6 +1257,9 @@ eip_bool get_CIP_double(const CN_USINT *raw_type_and_data,
             unpack_REAL(buf, &vr);
             *result = (double) vr;
             return true;
+        case T_CIP_LREAL:
+            unpack_LREAL(buf, result);
+            return true;
     }
     EIP_printf(1, "EIP get_CIP_double: unknown type 0x%04X\n", (int) type);
     return false;
@@ -1199,6 +1273,7 @@ eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
     CN_USINT       vs;
     CN_UINT        vi;
     CN_REAL        vr;
+    CN_LREAL       vlr;
 
     buf = unpack_UINT(raw_type_and_data, &type);
     buf += element*CIP_Type_size(type);
@@ -1225,6 +1300,10 @@ eip_bool get_CIP_UDINT(const CN_USINT *raw_type_and_data,
             unpack_REAL(buf, &vr);
             *result = (CN_UDINT) vr;
             return true;
+        case T_CIP_LREAL:
+            unpack_LREAL(buf, &vlr);
+            *result = (CN_UDINT) vlr;
+            return true;
     }
     EIP_printf(1, "EIP get_CIP_UDINT: unknown type 0x%04X\n", (int) type);
     return false;
@@ -1238,6 +1317,7 @@ eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
     CN_USINT       vs;
     CN_INT         vi;
     CN_REAL        vr;
+    CN_LREAL       vlr;
 
     buf = unpack_UINT(raw_type_and_data, &type);
     buf += element*CIP_Type_size(type);
@@ -1260,6 +1340,10 @@ eip_bool get_CIP_DINT(const CN_USINT *raw_type_and_data,
         case T_CIP_REAL:
             unpack_REAL(buf, &vr);
             *result = (CN_DINT) vr;
+            return true;
+        case T_CIP_LREAL:
+            unpack_LREAL(buf, &vlr);
+            *result = (CN_DINT) vlr;
             return true;
     }
     EIP_printf(1, "EIP get_CIP_DINT: unknown type 0x%04X\n", (int) type);
@@ -1380,6 +1464,9 @@ eip_bool put_CIP_double(const CN_USINT *raw_type_and_data,
         case T_CIP_REAL:
             pack_REAL(buf, (CN_REAL) value);
             return true;
+        case T_CIP_LREAL:
+            pack_LREAL(buf, value);
+            return true;
     }
     EIP_printf(1, "EIP put_CIP_double: unknown type 0x%04X\n", (int) type);
     return false;
@@ -1410,6 +1497,9 @@ eip_bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,
             return true;
         case T_CIP_REAL:
             pack_REAL(buf, (CN_REAL) value);
+            return true;
+        case T_CIP_LREAL:
+            pack_LREAL(buf, (CN_LREAL) value);
             return true;
     }
     EIP_printf(1, "EIP put_CIP_UDINT: unknown type 0x%04X\n", (int) type);
@@ -1445,6 +1535,9 @@ eip_bool put_CIP_DINT(const CN_USINT *raw_type_and_data,
             return true;
         case T_CIP_REAL:
             pack_REAL(buf, (CN_REAL) value);
+            return true;
+        case T_CIP_LREAL:
+            pack_LREAL(buf, (CN_LREAL) value);
             return true;
     }
     EIP_printf(1, "EIP put_CIP_DINT: unknown type 0x%04X\n", (int) type);

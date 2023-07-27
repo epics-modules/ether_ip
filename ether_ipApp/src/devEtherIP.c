@@ -346,7 +346,8 @@ static void check_ao_callback(void *arg)
         dbScanUnlock((dbCommon *)rec);
         return;
     }
-    if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
+    if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL  ||
+        get_CIP_typecode(pvt->tag->data) == T_CIP_LREAL)
     {
         if (rec->tpro)
             printf("EIP check_ao_callback('%s') w/ real data\n", rec->name);
@@ -1640,7 +1641,8 @@ static long ai_read(aiRecord *rec)
         {
             if (pvt->tag->valid_data_size>0 && pvt->tag->elements>pvt->element)
             {
-                if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
+                if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL  ||
+                    get_CIP_typecode(pvt->tag->data) == T_CIP_LREAL)
                 {
                     ok = get_CIP_double(pvt->tag->data,
                                         pvt->element, &rec->val);
@@ -1844,7 +1846,8 @@ static long wf_read(waveformRecord *rec)
     {
         if (pvt->tag->valid_data_size > 0 &&  pvt->tag->elements >= rec->nelm)
         {
-            if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
+            if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL  ||
+                get_CIP_typecode(pvt->tag->data) == T_CIP_LREAL)
             {
                 if (rec->ftvl == menuFtypeDOUBLE)
                 {
@@ -1857,7 +1860,7 @@ static long wf_read(waveformRecord *rec)
                 else
                 {
                     recGblRecordError(S_db_badField, (void *)rec,
-                                      "EtherIP: tag data type requires "
+                                      "EtherIP: tag data type REAL or LREAL requires "
                                       "waveform FTVL==DOUBLE");
                     ok = false;
                 }
@@ -1942,7 +1945,8 @@ static long ao_write(aoRecord *rec)
     }
     if (lock_data((dbCommon *)rec))
     {   /* Check if record's (R)VAL is current */
-        if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL)
+        if (get_CIP_typecode(pvt->tag->data) == T_CIP_REAL  ||
+            get_CIP_typecode(pvt->tag->data) == T_CIP_LREAL)
         {
             if (get_CIP_double(pvt->tag->data, pvt->element, &dbl) &&
                 rec->val != dbl)

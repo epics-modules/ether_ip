@@ -201,6 +201,7 @@ typedef short          CN_INT;
 typedef unsigned int   CN_UDINT;
 typedef int            CN_DINT;
 typedef float          CN_REAL;
+typedef double         CN_LREAL;
 #ifdef SUPPORT_LINT
 typedef long long          CN_LINT;
 typedef unsigned long long CN_ULINT;
@@ -399,7 +400,6 @@ struct __ParsedTag
 
 /* (Abbreviated) type codes for CIP data
  * ENET p. 11
- * There are no 'unsigned' designators.
  */
 typedef enum
 {
@@ -413,6 +413,7 @@ typedef enum
   /*T_CIP_UDINT  = 0x00C8,*/
     T_CIP_ULINT  = 0x00C9,
     T_CIP_REAL   = 0x00CA,
+    T_CIP_LREAL  = 0x00CB,
     T_CIP_STRING = 0x00D0,
     T_CIP_BITS   = 0x00D3,
     T_CIP_STRUCT = 0x02A0

@@ -13,8 +13,9 @@ VxWorks 5.5 must also use an older version because its compiler requires
 K&R style declarations of all variables at the start of a code block.
 
 See 
- * https://controlssoftware.sns.ornl.gov/etherip for more
- * changes.txt for changes
+ * Manual.md for usage.
+ * https://controlssoftware.sns.ornl.gov/etherip for more.
+ * changes.txt for changes.
  * https://github.com/ornl-epics/etherip for a Java version of the basic communication library, not connected to an EPCIS IOC.
+ * https://github.com/ottowayi/pycomm3 for an unrelated python library that supports many protocol features.
 
-See Manual.md for usage.
