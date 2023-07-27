@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2023, Jul 27
+Support LREAL ('double',  64 bit).
+
 * 2023, Apr 14
 Support LINT on darwin-aarch64.
 
