@@ -228,14 +228,14 @@ const CN_USINT *unpack_UDINT(const CN_USINT *buffer, CN_UDINT *val)
 #ifdef SUPPORT_LINT
 CN_USINT *pack_LINT(CN_USINT *buffer, CN_LINT val)
 {
-    *buffer++ =  val & 0x00000000000000FF;
-    *buffer++ = (val & 0x000000000000FF00) >> 8;
-    *buffer++ = (val & 0x0000000000FF0000) >> 16;
-    *buffer++ = (val & 0x00000000FF000000) >> 24;
-    *buffer++ = (val & 0x000000FF00000000) >> 32;
-    *buffer++ = (val & 0x0000FF0000000000) >> 40;
-    *buffer++ = (val & 0x00FF000000000000) >> 48;
-    *buffer++ = (val & 0xFF00000000000000) >> 56;
+    *buffer++ = (CN_USINT)  (val & 0x00000000000000FFll);
+    *buffer++ = (CN_USINT) ((val & 0x000000000000FF00ll) >>  8);
+    *buffer++ = (CN_USINT) ((val & 0x0000000000FF0000ll) >> 16);
+    *buffer++ = (CN_USINT) ((val & 0x00000000FF000000ll) >> 24);
+    *buffer++ = (CN_USINT) ((val & 0x000000FF00000000ll) >> 32);
+    *buffer++ = (CN_USINT) ((val & 0x0000FF0000000000ll) >> 40);
+    *buffer++ = (CN_USINT) ((val & 0x00FF000000000000ll) >> 48);
+    *buffer++ = (CN_USINT) ((val & 0xFF00000000000000ll) >> 56);
     return buffer;
 }
 

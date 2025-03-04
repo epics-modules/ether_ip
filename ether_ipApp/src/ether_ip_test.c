@@ -319,7 +319,7 @@ int main (int argc, const char *argv[])
     CN_REAL         writeval = 0.0;
     eip_bool        write = false;
 #ifdef SUPPORT_LINT
-    CN_LINT         Writeval = 0x0000000000000000;
+    CN_LINT         Writeval = 0x0000000000000000ll;
     eip_bool        Write = false;
 #endif
     size_t          test_runs = 1;

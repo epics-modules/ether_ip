@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2025, March 4
+Fix compiler warnings for long-long constants.
+
 * 2023, Jul 27
 Support LREAL ('double',  64 bit).
 
