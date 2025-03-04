@@ -19,6 +19,7 @@
 #include<stdlib.h>
 #include<ctype.h>
 #ifndef vxWorks
+#include<poll.h>
 #include<memory.h>
 #endif
 
@@ -1957,30 +1958,43 @@ static int connectWithTimeout (EIP_SOCKET s, const struct sockaddr *addr,
                                int addr_size,
                                struct timeval *timeout)
 {
-    fd_set fds;
-    int error;
-
     set_nonblock (s, true);
-    if (connect (s, addr, addr_size) < 0)
+    int status = connect (s, addr, addr_size);
+    set_nonblock (s, false);
+    // Simply connected?
+    if (status == 0)
+        return 0;
+
+    int error = EIP_SOCKERRNO;
+    if (error == EIP_SOCK_EWOULDBLOCK || error == EIP_SOCK_EINPROGRESS)
     {
-        error = EIP_SOCKERRNO;
-        if (error == EIP_SOCK_EWOULDBLOCK || error == EIP_SOCK_EINPROGRESS)
+        // Wait for connection until timeout:
+        // success is reported as write access
+        struct pollfd fds = { .fd = s, .events = POLLOUT };
+        int ms = timeout->tv_sec*1000;
+        EIP_printf(10, "EIP connectWithTimeout polls for %d msec\n", ms);
+        if (poll (&fds, 1, ms) <= 0  || (fds.revents & POLLOUT) == 0)
         {
-            /* Wait for connection until timeout:
-             * success is reported in writefds */
-            FD_ZERO (&fds);
-            FD_SET (s, &fds);
-            if (select (s+1, 0, &fds, 0, timeout) > 0)
-                goto got_connected;
+            EIP_printf(10, "EIP connectWithTimeout timed out\n");
+            return -1;
         }
+    }
+
+    // Socket appears writable, but that doesn't seem to suffice
+    socklen_t len = sizeof(error);
+    if (getsockopt(s, SOL_SOCKET, SO_ERROR, &error, &len) != 0)
+    {
+        EIP_printf(10, "EIP connectWithTimeout cannot get socket status\n");
         return -1;
     }
-  got_connected:
-    set_nonblock (s, false);
-
+    if (error != 0)
+    {
+        EIP_printf(10, "EIP connectWithTimeout `connected` but with error code %d\n", error);
+        return -1;
+    }
+    // All fine
     return 0;
 }
-
 #endif
 
 EIPConnection *EIP_init()
@@ -2119,6 +2133,8 @@ eip_bool EIP_read_connection_buffer(EIPConnection *c)
          * Reset all select() arguments to be portable with
          * implementations that might update timeout.
          */
+        // TODO Should use poll() instead of select(),
+        //      but vxWorks only offers select()...
         FD_ZERO(&fds);
         FD_SET(c->sock, &fds);
         timeout.tv_sec = c->millisec_timeout/1000;

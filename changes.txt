@@ -9,6 +9,8 @@ drvEtherIP_report.
 
 * 2025, March 4
 Fix compiler warnings for long-long constants.
+Add SO_ERROR check to connectWithTimeout, which otherwise
+tends to report a good connection even if it can't connect.
 
 * 2023, Jul 27
 Support LREAL ('double',  64 bit).
