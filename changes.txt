@@ -7,6 +7,9 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2025, April 11
+Tynan Ford fixed issue with mbbi record connected to a single number AB tag
+
 * 2025, March 4
 Fix compiler warnings for long-long constants.
 Add SO_ERROR check to connectWithTimeout, which otherwise
