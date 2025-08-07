@@ -41,7 +41,7 @@ It effectively transfers 52 bits of significant detail, that is 13 4-bit nibbles
 For a 64 bit hex number, which has 16 nibbles, the lowest 3 nibbles are cut
 if the value extends into the upper 3 nibbles.
 
-PVAccess has a native 'long' data type for 64 bit integers can can transfer the
+PVAccess has a native 'long' data type for 64 bit integers that can transfer the
 LINT values without problems.
 
 Actual value:        0x000bcdef87654321  0x00abcdef87654321  0x80abcdef87654321
