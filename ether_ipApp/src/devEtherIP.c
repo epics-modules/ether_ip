@@ -206,8 +206,14 @@ static eip_bool get_bits(dbCommon *rec, size_t bits, epicsUInt32 *rval)
     }
     /* Fetch bits from BOOL array.
      * #1 directly (faster for BI case), rest in loop */
-    if ((value & 0x1) & mask)
-        *rval = 1;
+    if (bits == 1) {
+        if (value & mask)
+           *rval = 1;
+    } else {
+        /* in case the mask is 0xFF */
+        if ((value & 0x1) & mask)
+           *rval = 1;
+    }
     for (i=1/*!*/; i<bits; ++i)
     {
         mask <<= 1;
