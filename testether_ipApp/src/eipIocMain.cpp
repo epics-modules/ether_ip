@@ -33,7 +33,7 @@ static void usage()
     printf("Usage:\n");
     printf("       eipIoc st.cmd\n");
     printf("or\n");
-    printf("       eipIoc -p Plc1=IP,slot [-m macro=value] -d database.db [-d another.db]\n");
+    printf("       eipIoc -v verbosity -p Plc1=IP,slot [-m macro=value] -d database.db [-d another.db]\n");
     printf("\n");
     printf("In the first case, this program acts as an ordinary IOC, executing a startup file\n");
     printf("\n");
@@ -104,13 +104,17 @@ int main(int argc,char *argv[])
         drvEtherIP_init();
 
         int ch;
-        while ( (ch = getopt(argc, argv, "p:m:d:h")) != -1)
+        while ( (ch = getopt(argc, argv, "v:p:m:d:h")) != -1)
         {
             switch (ch)
             {
             case 'h':
                 usage();
                 return 0;
+            case 'v':
+                EIP_verbosity = atoi(optarg);
+                printf("EIP_verbosity(%d)\n", EIP_verbosity);
+                break;
             case 'p':
                 if (! definePlc(optarg))
                     return -2;
