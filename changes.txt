@@ -7,6 +7,13 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2026, Feb 6
+Hao Hao fixed bug in BI bit handling.
+eipIoc has '-v verbosity' option.
+Support STRING array. Lacking documentation of the string
+data format, implementation is based on data received
+from Control Logix PLCs.
+
 * 2025, April 11
 Tynan Ford fixed issue with mbbi record connected to a single number AB tag
 

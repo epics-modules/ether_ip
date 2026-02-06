@@ -1205,10 +1205,21 @@ void dump_raw_CIP_data(const CN_USINT *raw_type_and_data, size_t elements)
             buf = unpack_UINT(buf, &vi);
             if (vi == T_CIP_STRUCT_STRING)
             {
-                /* String: A0 02 CE 0F (len L) (len H) 00 00 (chars...) */
-                buf = unpack_UINT(buf, &len);
-                buf = unpack_UINT(buf, &vi);
-                EIP_printf(0, "STRING '%s'", (const char *)buf);
+                /* String: A0 02 CE 0F (len L) (len H) 00 00 (buffer with 84 chars...) */
+                EIP_printf(0, "STRING");
+                for (i=0; i<elements; ++i)
+                {
+                    // T_CIP_STRUCT_LEN_BYTES, only first 2 used
+                    buf = unpack_UINT(buf, &len);
+                    buf = unpack_UINT(buf, &vi);
+                    char text[T_CIP_STRUCT_STRING_MAX+1];
+                    if (len > T_CIP_STRUCT_STRING_MAX)
+                        len = T_CIP_STRUCT_STRING_MAX;
+                    memcpy(text, buf, len);
+                    text[len] = '\0';
+                    EIP_printf(0, " '%s'", text);
+                    buf += T_CIP_STRUCT_STRING_BUF;
+                }
             }
             else
             {
@@ -1396,7 +1407,7 @@ eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
 /* Fill buffer with up to 'size' characters (incl. ending '\0').
  * Return true for success */
 eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
-                        char *buffer, size_t size)
+                        size_t element, char *buffer, size_t size)
 {
     CN_UINT        type, subtype, len, no_idea_what_this_is;
     const CN_USINT *buf;
@@ -1424,6 +1435,8 @@ eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
                    (int) subtype);
         return false;
     }
+
+    buf += element*(T_CIP_STRUCT_LEN_BYTES + T_CIP_STRUCT_STRING_BUF);
     buf = unpack_UINT(buf, &len);
     buf = unpack_UINT(buf, &no_idea_what_this_is);
 

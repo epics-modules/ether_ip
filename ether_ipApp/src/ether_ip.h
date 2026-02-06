@@ -425,11 +425,21 @@ typedef enum
  * the T_CIP_STRUCT = 0x02A0 is followed by
  * two more bytes, shown as "?? ??".
  * Looks like for strings, those are always 0x0FCE,
- * followed by INT length, INT 0, 82 characters and more zeroes
+ * followed by UINT length, UINT 0, 82 characters and UINT 0.
+ * The 'buffer' thus has room for 84 chars,
+ * but it looks like only 82 are used and then there's UINT 0
+ * (have also seen UINT 0xA15E); might be a random-valued pad. 
  */
 typedef enum
 {
-    T_CIP_STRUCT_STRING = 0x0FCE
+    /* Struct used for string */
+    T_CIP_STRUCT_STRING = 0x0FCE,
+    /* 4 bytes store the text length (only first 2 actually used?) */
+    T_CIP_STRUCT_LEN_BYTES = 4,
+    /* Max. number of useful chars */
+    T_CIP_STRUCT_STRING_MAX = 82,
+    /* Overall size of text buffer */
+    T_CIP_STRUCT_STRING_BUF = 84
 } CIP_STRUCT_Type;
 
 /* Size of appreviated type code.
@@ -509,7 +519,7 @@ eip_bool get_CIP_USINT(const CN_USINT *raw_type_and_data,
 /* Fill buffer with up to 'size' characters (incl. ending '\0').
  * Return true for success */
 eip_bool get_CIP_STRING(const CN_USINT *raw_type_and_data,
-                    char *buffer, size_t size);
+                        size_t element, char *buffer, size_t size);
 eip_bool put_CIP_double(const CN_USINT *raw_type_and_data,
                     size_t element, double value);
 eip_bool put_CIP_UDINT(const CN_USINT *raw_type_and_data,

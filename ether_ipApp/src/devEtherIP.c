@@ -571,7 +571,7 @@ static void check_lso_callback(void *arg)
         return;
     }
     data = dbmfMalloc(rec->sizv);
-    if (get_CIP_STRING(pvt->tag->data, data, rec->sizv) &&
+    if (get_CIP_STRING(pvt->tag->data, pvt->element, data, rec->sizv) &&
             (rec->udf || rec->sevr == INVALID_ALARM || strcmp(rec->val, data)))
     {
         if (rec->tpro)
@@ -762,7 +762,7 @@ static void check_so_callback(void *arg)
      * compare with record which we force to be terminated.
      */
     rec->val[MAX_STRING_SIZE-1] = '\0';
-    if (get_CIP_STRING(pvt->tag->data, data, MAX_STRING_SIZE) &&
+    if (get_CIP_STRING(pvt->tag->data, pvt->element, data, MAX_STRING_SIZE) &&
         (rec->udf || rec->sevr == INVALID_ALARM || strcmp(rec->val, data)))
     {
         if (rec->tpro)
@@ -1751,7 +1751,7 @@ static long lsi_read(lsiRecord *rec)
         dump_DevicePrivate((dbCommon *)rec);
     if (lock_data((dbCommon *)rec))
     {
-        ok = get_CIP_STRING(pvt->tag->data, rec->val, rec->sizv);
+        ok = get_CIP_STRING(pvt->tag->data, pvt->element, rec->val, rec->sizv);
         epicsMutexUnlock(pvt->tag->data_lock);
     }
     else
@@ -1822,7 +1822,7 @@ static long si_read(stringinRecord *rec)
         // Record might actually allow MAX_STRING_SIZE chars without terminator,
         // but to be on the safe side we always include a terminator,
         // and thus can only fill the string record with MAX_STRING_SIZE-1 bytes.
-        ok = get_CIP_STRING(pvt->tag->data, &rec->val[0], MAX_STRING_SIZE);
+        ok = get_CIP_STRING(pvt->tag->data, pvt->element, &rec->val[0], MAX_STRING_SIZE);
         // printf("Record %s read '%s' (%d)\n", rec->name, rec->val, strlen(rec->val));
         epicsMutexUnlock(pvt->tag->data_lock);
     }
@@ -2108,7 +2108,7 @@ static long lso_write(lsoRecord *rec)
     {   /* Check if record's (R)VAL is current */
         char *data = dbmfMalloc(rec->sizv);
 
-        ok = get_CIP_STRING(pvt->tag->data, data, rec->sizv);
+        ok = get_CIP_STRING(pvt->tag->data, pvt->element, data, rec->sizv);
         if (ok && strcmp(rec->val, data))
         {
             if (rec->tpro)
@@ -2235,7 +2235,7 @@ static long so_write(stringoutRecord *rec)
          */
         rec->val[MAX_STRING_SIZE-1] = '\0';
         /* Get a total of MAX_STRING_SIZE incl. terminator for comparison */
-        ok = get_CIP_STRING(pvt->tag->data, data, MAX_STRING_SIZE);
+        ok = get_CIP_STRING(pvt->tag->data, pvt->element, data, MAX_STRING_SIZE);
         if (ok && strcmp(rec->val, data))
         {
             if (rec->tpro)
