@@ -7,7 +7,7 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
-* 2026, Feb 6
+* 2026, Feb 6 ether_ip-3-8
 Hao Hao fixed bug in BI bit handling.
 eipIoc has '-v verbosity' option.
 Support STRING array. Lacking documentation of the string
