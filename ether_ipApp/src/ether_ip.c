@@ -440,6 +440,7 @@ static const char *EIP_class_name(CN_Classes c)
     case C_Identity:            return "Identity";
     case C_MessageRouter:       return "MessageRouter";
     case C_ConnectionManager:   return "ConnectionManager";
+    case C_Symbol:              return "Symbol";
     default:                    return "<unknown>";
     }
 }
@@ -458,31 +459,48 @@ static void make_port_path(CN_USINT *path, CN_USINT port, CN_USINT link)
 }
 
 /* Build path from Class, Instance, Attribute (0 for no attr.) */
-static size_t CIA_path_size(CN_Classes cls, CN_USINT instance, CN_USINT attr)
-{   /* In Words */
-    return attr ? 3 : 2;
+static size_t CIA_path_size(CN_Classes cls, CN_UDINT instance, CN_USINT attr)
+{
+    size_t words = 1; // class
+    if (instance > 0xFF)
+        words += 2;
+    else
+        words += 1;
+    if (attr)
+        words += 1;
+    return words;
 }
 
 /* Fill path buffer with path, return following location */
 static CN_USINT *make_CIA_path(CN_USINT *path,
-                               CN_Classes cls, CN_USINT instance,
+                               CN_Classes cls, CN_UINT instance,
                                CN_USINT attr)
 {
+    // Spec 4, p. 17
     *path++ = 0x20;
     *path++ = cls;
-    *path++ = 0x24;
-    *path++ = instance;
+    if (instance > 0xFF)
+    {
+        *path++ = 0x25;
+        *path++ = 0x00;
+        path = pack_UINT(path, instance);
+    }
+    else
+    {
+        *path++ = 0x24;
+        *path++ = instance;
+    }
     if (attr)
     {
         *path++ = 0x30;
         *path++ = attr;
         EIP_printf(10,
-                   "    Path: Class(0x20) 0x%X (%s), instance(0x24) %d, attrib.(0x30) 0x%X\n",
-                   cls, EIP_class_name(cls), instance, attr);
+                   "    Path: Class(0x20) 0x%X (%s), instance(%s) %d, attrib.(0x30) 0x%X\n",
+                   cls, EIP_class_name(cls), (instance > 0xFF ? "0x25" : "0x24"), instance, attr);
     }
     else
-        EIP_printf(10, "    Path: Class(0x20) 0x%X (%s), instance(0x24) %d\n",
-                   cls, EIP_class_name(cls), instance);
+        EIP_printf(10, "    Path: Class(0x20) 0x%X (%s), instance(%s) %d\n",
+                   cls, EIP_class_name(cls), (instance > 0xFF ? "0x25" : "0x24"), instance);
 
     return path;
 }
@@ -783,6 +801,7 @@ static const char *service_name(CN_Services service)
     case S_CIP_ReadData:              return "CIP_ReadData";
     case S_CIP_WriteData:             return "CIP_WriteData";
     case S_CM_Unconnected_Send:       return "CM_Unconnected_Send";
+    case S_Get_Instance_Attr_List:    return "S_Get_Instance_Attr_List";
     case S_CM_Forward_Open:           return "CM_Forward_Open";
 
     case S_Get_Attribute_All|0x80:    return "Get_Attribute_All-Reply";
@@ -791,6 +810,7 @@ static const char *service_name(CN_Services service)
     case S_CIP_ReadData|0x80:         return "CIP_ReadData-Reply";
     case S_CIP_WriteData|0x80:        return "CIP_WriteData-Reply";
     case S_CM_Unconnected_Send|0x80:  return "CM_Unconnected_Send-Reply";
+    case S_Get_Instance_Attr_List|0x80: return "S_Get_Instance_Attr_List-Reply";
     case S_CM_Forward_Open|0x80:      return "CM_Forward_Open-Reply";
 
     default:                          return "<unknown>";
@@ -2497,6 +2517,146 @@ static eip_bool EIP_unregister_session(EIPConnection *c)
     return make_EncapsulationHeader(c, EC_UnRegisterSession,
                                     0, 0 /*length, options*/, &tid)
         && EIP_send_connection_buffer(c);
+}
+
+typedef char CIPTypeInfoBuffer[50];
+
+/** Decode the 'extended' CIP data types 
+ * 
+ *  Logix data access ENET p. 6
+ *  Bit 15     : 1 Struct, 0 atomic
+ *  Bit 14,13  : 0-4 dimensions
+ *  Bit 12     : reserved
+ *  Bit 11,..,0: see CIP_Type
+ *  0x20C4: DINT[]
+ */
+static const char *decode_extended_type(CN_UINT tag_type, CIPTypeInfoBuffer buffer)
+{
+    if ((tag_type & 0xE000) == 0x2000)
+        switch (tag_type & 0x0FFF)
+        {
+            case T_CIP_BOOL:          return " BOOL[]";
+            case T_CIP_SINT:          return " SINT[]";
+            case T_CIP_INT:           return "  INT[]";
+            case T_CIP_UINT:          return " UINT[]";
+            case T_CIP_DINT:          return " DINT[]";
+            case T_CIP_LINT:          return " LINT[]";
+            case T_CIP_ULINT:         return "ULINT[]";
+            case T_CIP_REAL:          return " REAL[]";
+            case T_CIP_LREAL:         return "LREAL[]";
+        }
+    else if ((tag_type & 0xE000) == 0xA000)
+        switch (tag_type & 0x0FFF)
+        {
+            case T_CIP_STRUCT_STRING: return "Strng[]";
+        }
+
+    sprintf(buffer, " 0x%04X", tag_type);
+    return buffer;
+}
+
+eip_bool EIP_list_tags(EIPConnection *c)
+{
+    EIP_printf(9, "EIP list tags\n");
+    CN_UDINT tag_id = 0;
+    eip_bool complete = false;
+    while (! complete)
+    {
+        size_t path_size = CIA_path_size(C_Symbol, tag_id, 0);
+        size_t msg_size = 1 + 1       // service, path size
+                        + path_size*2 // path size is in words, need bytes
+                        + 3*2;        // requested attributes
+        size_t send_size = CM_Unconnected_Send_size(msg_size);
+
+        TransactionID tid;
+        generateTransactionId(&tid);
+
+        CN_USINT *send_request = EIP_make_SendRRData(c, send_size, &tid);
+        CN_USINT *msg_request = make_CM_Unconnected_Send(send_request, msg_size, c->slot);
+        CN_USINT *buf = make_MR_Request(msg_request, S_Get_Instance_Attr_List, path_size);
+        buf = make_CIA_path(buf, C_Symbol, tag_id, 0);
+        buf = pack_UINT(buf, (CN_INT) 2); // Get 2 attributes
+        buf = pack_UINT(buf, (CN_INT) 1); // attr 1: Symbol name
+        buf = pack_UINT(buf, (CN_INT) 2); // attr 2: Symbol type
+
+        if (! EIP_send_connection_buffer(c))
+        {
+            EIP_printf(1, "EIP_list_tags: send failed\n");
+            return false;
+        }
+        if (! EIP_read_connection_buffer(c))
+        {
+            EIP_printf(1, "EIP_list_tags: No response\n");
+            return false;
+        }
+
+        EncapsulationRRData rr_data;
+        const CN_USINT *response = EIP_unpack_RRData(c->buffer, &rr_data);
+        if (EIP_verbosity >= 10)
+            EIP_dump_raw_MR_Response(response, rr_data.data_length);
+
+        TransactionID rid;
+        extractTransactionId(&rr_data.header,&rid);
+        if (! compareTransactionIds(&tid,&rid))
+        {
+            char tid_str[32], rid_str[32];
+            transactionIdString(&tid,tid_str,sizeof(tid_str));
+            transactionIdString(&rid,rid_str,sizeof(rid_str));
+            EIP_printf(1, "EIP_list_tags: Transaction id mismatch, got %s expected %s\n",rid_str,tid_str);
+            return false;
+        }
+
+        if ((response[0] & 0x7F) != S_Get_Instance_Attr_List)
+        {
+            EIP_printf(1, "EIP_list_tags: Got response 0x%X, not S_Get_Instance_Attr_List\n", response[0]);
+            return false;
+        }
+
+        // MR response status of 6 indicates partial data
+        complete = response[2] == 0;
+        if (response[2] == 0x06)
+            EIP_printf(9, "Partial S_Get_Instance_Attr_List response\n");
+        else if (! complete)
+        {
+            EIP_printf(1, "Error in S_Get_Instance_Attr_List response\n");
+            return false;
+        }
+        else
+            EIP_printf(9, "Complete S_Get_Instance_Attr_List response\n");
+        size_t data_len;
+        const CN_USINT *data = EIP_raw_MR_Response_data(response, rr_data.data_length, &data_len);
+        const CN_USINT *data_end = data + data_len;
+        // Unpack sequence of { id, tag length, tag name, type }
+        char tag_name[100];
+        while (data < data_end)
+        {
+            data = unpack_UDINT(data, &tag_id);
+
+            CN_UINT tag_len;
+            data = unpack_UINT(data, &tag_len);
+            unsigned used_len = tag_len;
+            if (used_len >= sizeof(tag_name)-1)
+            {
+                used_len = sizeof(tag_name)-1;
+                EIP_printf(2, "Tag name with length of %u is shortened to %u\n",
+                              (unsigned)tag_len, used_len);
+            }
+
+            memcpy(tag_name, data, used_len);
+            tag_name[used_len] = '\0';
+            data += tag_len;
+
+            CN_UINT tag_type;
+            data = unpack_UINT(data, &tag_type);
+            CIPTypeInfoBuffer type_info;
+            EIP_printf(1, "Tag 0x%04X, Type %s: %s\n", tag_id, decode_extended_type(tag_type, type_info), tag_name);
+        }
+
+        // If not complete, request from next tag ID on
+        if (! complete)
+            ++tag_id;
+    }
+    return true;
 }
 
 /* Decode IDs for "Common Packet Type"

@@ -64,6 +64,12 @@ static void drvEtherIP_restartCall(const iocshArgBuf * args) {
 	drvEtherIP_restart();
 }
 
+static const iocshFuncDef drvEtherIP_listDef =
+    {"drvEtherIP_list", 0, 0};
+static void drvEtherIP_listCall(const iocshArgBuf * args) {
+	drvEtherIP_list();
+}
+
 static const iocshFuncDef drvEtherIP_dumpDef =
     {"drvEtherIP_dump", 0, 0};
 static void drvEtherIP_dumpCall(const iocshArgBuf * args) {
@@ -116,6 +122,7 @@ void drvEtherIP_Register() {
 	iocshRegister(&drvEtherIP_initDef      , drvEtherIP_initCall);
 	iocshRegister(&drvEtherIP_restartDef   , drvEtherIP_restartCall);
 	iocshRegister(&drvEtherIP_dumpDef      , drvEtherIP_dumpCall);
+	iocshRegister(&drvEtherIP_listDef      , drvEtherIP_listCall);
 	iocshRegister(&drvEtherIP_reset_statisticsDef, drvEtherIP_reset_statisticsCall);
 	iocshRegister(&drvEtherIP_reportDef    , drvEtherIP_reportCall);
 	iocshRegister(&drvEtherIP_define_PLCDef, drvEtherIP_define_PLCCall);

@@ -213,7 +213,8 @@ typedef enum
 {
     C_Identity             = 0x01,
     C_MessageRouter        = 0x02,
-    C_ConnectionManager    = 0x06
+    C_ConnectionManager    = 0x06,
+    C_Symbol               = 0x6B
 }   CN_Classes;
 
 /********************************************************
@@ -229,6 +230,7 @@ typedef enum /* Spec 4, p.36 */
     S_CIP_WriteData        = 0x4D,  /* Logix5000 Data Access */
     S_CM_Unconnected_Send  = 0x52,
     S_CM_Forward_Open      = 0x54,
+    S_Get_Instance_Attr_List = 0x55,
     S_CM_Forward_Close     = 0x4E
 }   CN_Services;
 
@@ -428,7 +430,7 @@ typedef enum
  * followed by UINT length, UINT 0, 82 characters and UINT 0.
  * The 'buffer' thus has room for 84 chars,
  * but it looks like only 82 are used and then there's UINT 0
- * (have also seen UINT 0xA15E); might be a random-valued pad. 
+ * (have also seen UINT 0xA15E); might be a random-valued pad.
  */
 typedef enum
 {
@@ -722,6 +724,9 @@ eip_bool EIP_startup(EIPConnection *c,
                  const char *ip_addr, unsigned short port,
                  int slot,
                  size_t millisec_timeout);
+
+/** List tags */
+eip_bool EIP_list_tags(EIPConnection *c);
 
 /** Disconnect from PLC */
 void EIP_shutdown(EIPConnection *c);

@@ -150,6 +150,8 @@ long drvEtherIP_report(int level);
 
 void drvEtherIP_dump();
 
+void drvEtherIP_list();
+
 void drvEtherIP_reset_statistics();
 
 eip_bool drvEtherIP_define_PLC(const char *PLC_name,

@@ -1054,6 +1054,8 @@ void drvEtherIP_help()
     printf("    -  level = 0..10\n");
     printf("    drvEtherIP_dump\n");
     printf("    -  dump all tags and values; short version of ..._report\n");
+    printf("    drvEtherIP_list\n");
+    printf("    -  list all tags that the PLC publishes\n");
     printf("    drvEtherIP_reset_statistics\n");
     printf("    -  reset error counts and min/max scan times\n");
     printf("    drvEtherIP_restart\n");
@@ -1169,6 +1171,23 @@ void drvEtherIP_dump ()
     }
     epicsMutexUnlock(drvEtherIP_private.lock);
     printf("\n");
+}
+
+void drvEtherIP_list()
+{
+    PLC      *plc;
+
+    epicsMutexLock(drvEtherIP_private.lock);
+    for (plc = DLL_first(PLC,&drvEtherIP_private.PLCs);
+         plc;  plc=DLL_next(PLC,plc))
+    {
+        epicsMutexLock(plc->lock);
+        printf ("Tags on PLC '%s', IP %s, slot %d\n",
+                plc->name, plc->ip_addr, plc->slot);
+        EIP_list_tags(plc->connection);
+        epicsMutexUnlock(plc->lock);
+    }
+    epicsMutexUnlock(drvEtherIP_private.lock);
 }
 
 void drvEtherIP_reset_statistics ()

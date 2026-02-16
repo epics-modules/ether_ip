@@ -45,16 +45,29 @@ allows for simple communication checks.
 Invoke with `-?` to list options:
       
     ether_ip_test -h
-    Usage: bin/linux-x86_64/ether_ip_test <flags> [tag]
+    Usage:
+        eipIoc st.cmd
+    or
+        eipIoc -v verbosity -p Plc1=IP,slot [-m macro=value] -d database.db [-d another.db]
+
+    In the first case, this program acts as an ordinary IOC, executing a startup file
+
+    The second invocation is for a command-line mode similar to the 'softIoc' from EPICS base,
+    extended with options to communicate via etherIp.
+    [ky9@ics-opi-remote1 ~]$ ether_ip/bin/linux-x86_64/ether_ip_test 
+    Usage: ether_ip/bin/linux-x86_64/ether_ip_test <Options> [tag]
     Options:
-        -v verbosity
-        -i ip  (as 123.456.789.001 or DNS name)
-        -p port
-        -s PLC slot in ControlLogix crate (default: 0)
-        -t timeout (ms)
-        -a array size
-        -w <double value to write>
-        -T times-to-do-all-this (default: 1)
+    -l                                 List tags on PLC
+    -v verbosity                       Set verbosity 1-10
+    -i ip                              PLC IP as 123.456.789.001 or DNS name
+    -p port                            Select non-default PLC TCP port
+    -s PLC slot in ControlLogix crate  Default: 0
+    -t timeout                         .. in ms
+    -a array size                      To read array elements
+    -w <double value to write>         Write tag (default: read)
+    -W <64 bit value to write>         .. with larger data type
+    -T times-to-do-all-this            Default: 1
+
       
 
 Example: Read tag "REAL" from plc with IP 128.165.160.146,
@@ -803,7 +816,7 @@ allowed.
 `drvEtherIP_help` shows all user-callable driver routines:
 
     drvEtherIP_help
-    drvEtherIP V3.2 diagnostics routines:
+    drvEtherIP V3.7 diagnostics routines:
     EIP_verbosity(0-10)
     -  define logging detail, currently set to 4
     -  10: Dump all protocol details
@@ -814,12 +827,15 @@ allowed.
         2: show more error info
         1: show severe error messages
         0: keep quiet
+    EIP_timeout(<milliseconds>)
+    -  define the default timeout for connecting to PLC and reading responses
+       (default: 5000 ms)
     drvEtherIP_default_rate(<seconds>)
     -  define the default scan rate
        (if neither SCAN nor INP/OUT provide one)
     EIP_buffer_limit(<bytes>)
     -  Set buffer limit enforced by driver.
-       Currently 440, default: 480
+       Currently 480, default: 480
        The actual PLC limit is unknown, it might depend on the PLC or ENET model.
        Can only be set before driver starts up.
     drvEtherIP_define_PLC(<name>, <ip_addr>, <slot>)
@@ -834,6 +850,8 @@ allowed.
     -  level = 0..10
     drvEtherIP_dump
     -  dump all tags and values; short version of ..._report
+    drvEtherIP_list
+    -  list all tags that the PLC publishes
     drvEtherIP_reset_statistics
     -  reset error counts and min/max scan times
     drvEtherIP_restart

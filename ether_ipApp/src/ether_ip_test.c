@@ -291,17 +291,18 @@ void usage(const char *progname)
 {
     fprintf(stderr, "Usage: %s <Options> [tag]\n", progname);
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, "    -v verbosity (Numerical digit)\n");
-    fprintf(stderr, "    -i ip  (as 123.456.789.001 or DNS name)\n");
-    fprintf(stderr, "    -p port\n");
-    fprintf(stderr, "    -s PLC slot in ControlLogix crate (default: 0)\n");
-    fprintf(stderr, "    -t timeout (ms)\n");
-    fprintf(stderr, "    -a array size\n");
-    fprintf(stderr, "    -w <double value to write>\n");
+    fprintf(stderr, "  -l                                 List tags on PLC\n");
+    fprintf(stderr, "  -v verbosity                       Set verbosity 1-10\n");
+    fprintf(stderr, "  -i ip                              PLC IP as 123.456.789.001 or DNS name\n");
+    fprintf(stderr, "  -p port                            Select non-default PLC TCP port\n");
+    fprintf(stderr, "  -s PLC slot in ControlLogix crate  Default: 0\n");
+    fprintf(stderr, "  -t timeout                         .. in ms\n");
+    fprintf(stderr, "  -a array size                      To read array elements\n");
+    fprintf(stderr, "  -w <double value to write>         Write tag (default: read)\n");
 #ifdef SUPPORT_LINT
-    fprintf(stderr, "    -W <64 bit value to write>\n");
+    fprintf(stderr, "  -W <64 bit value to write>         .. with larger data type\n");
 #endif
-    fprintf(stderr, "    -T times-to-do-all-this (default: 1)\n");
+    fprintf(stderr, "  -T times-to-do-all-this            Default: 1\n");
     exit(-1);
 }
 
@@ -318,6 +319,7 @@ int main (int argc, const char *argv[])
     size_t          i;
     CN_REAL         writeval = 0.0;
     eip_bool        write = false;
+    eip_bool        list = false;
 #ifdef SUPPORT_LINT
     CN_LINT         Writeval = 0x0000000000000000ll;
     eip_bool        Write = false;
@@ -346,48 +348,52 @@ int main (int argc, const char *argv[])
     {
         if (argv[i][0] == '-')
         {
-#define         GETARG                                         \
-            if (argv[i][2])  { arg = &argv[i  ][2]; }          \
-                else         { arg = &argv[i+1][0]; ++i; }
+#define         GETARG                                          \
+                if (argv[i][2])  { arg = &argv[i  ][2];      }  \
+                else             { arg = &argv[i+1][0]; ++i; }
             switch (argv[i][1])
             {
+            case 'l':
+                list = true;
+                break;
             case 'v':
-            GETARG
-                if (arg) {
+                GETARG
+                if (arg)
+                {
                     if (isdigit(*arg) == 0) usage(argv[0]);
                     else EIP_verbosity = atoi(arg);
                 }
                 else usage (argv[0]);
                 break;
             case 'i':
-            GETARG
+                GETARG
                 if (arg) ip = arg;
                 else usage (argv[0]);
-
                 break;
             case 'p':
-            GETARG
+                GETARG
                 if (arg) port = (unsigned short) strtol(arg, 0, 0);
                 else usage (argv[0]);
                 break;
             case 's':
-            GETARG
+                GETARG
                 if (arg) slot = (int) strtol(arg, 0, 0);
                 else usage (argv[0]);
                 break;
             case 'a':
-            GETARG
+                GETARG
                 if (arg) elements = atoi(arg);
                 else usage (argv[0]);
                 break;
             case 't':
-            GETARG
+                GETARG
                 if (arg) timeout_ms = atol(arg);
                 else usage (argv[0]);
                 break;
             case 'w':
-            GETARG
-                if (arg) {
+                GETARG
+                if (arg)
+                {
                     writeval = strtod(arg, NULL);
                     write = true;
                 }
@@ -395,7 +401,7 @@ int main (int argc, const char *argv[])
                 break;
 #ifdef SUPPORT_LINT
             case 'W':
-            GETARG
+                GETARG
                 if (arg) {
                     Writeval = strtoull(arg, NULL, 0);
                     Write = true;
@@ -404,7 +410,7 @@ int main (int argc, const char *argv[])
                 break;
 #endif
             case 'T':
-            GETARG
+                GETARG
                 if (arg) {
                     test_runs = atol(arg);
                     if (test_runs <= 0)
@@ -422,6 +428,7 @@ int main (int argc, const char *argv[])
            tag = EIP_parse_tag(argv[i]);
         }
     }
+
     if (tag && EIP_verbosity >= 3)
     {
         char buffer[EIP_MAX_TAG_LENGTH];
@@ -436,30 +443,36 @@ int main (int argc, const char *argv[])
 #endif
     for (i=0; i<test_runs; ++i)
     {
-        if (EIP_startup(c, ip, port, slot, timeout_ms) && tag)
+        if (EIP_startup(c, ip, port, slot, timeout_ms))
         {
-            const CN_USINT *data = 0;
-            size_t data_len;
-            if (write)
+            if (list)
+                EIP_list_tags(c);
+
+            if (tag)
             {
-                CN_REAL real_buffer;
-                pack_REAL((CN_USINT *)&real_buffer, writeval);
-                EIP_write_tag(c, tag, T_CIP_REAL, 1,(CN_USINT*) &real_buffer, 0, 0);
+                const CN_USINT *data = 0;
+                size_t data_len;
+                if (write)
+                {
+                    CN_REAL real_buffer;
+                    pack_REAL((CN_USINT *)&real_buffer, writeval);
+                    EIP_write_tag(c, tag, T_CIP_REAL, 1,(CN_USINT*) &real_buffer, 0, 0);
+                }
+    #ifdef SUPPORT_LINT
+                else if (Write)
+                {
+                    CN_ULINT ulint_buffer;
+                    pack_LINT((CN_USINT *)&ulint_buffer, Writeval);
+                    EIP_write_tag(c, tag, T_CIP_LINT, 1,(CN_USINT*) &ulint_buffer, 0, 0);
+                }
+    #endif
+                else
+                    data = EIP_read_tag(c, tag, elements, &data_len, 0, 0);
+                if (data)
+                    dump_raw_CIP_data (data, elements);
             }
-#ifdef SUPPORT_LINT
-            if (Write)
-            {
-                CN_ULINT ulint_buffer;
-                pack_LINT((CN_USINT *)&ulint_buffer, Writeval);
-                EIP_write_tag(c, tag, T_CIP_LINT, 1,(CN_USINT*) &ulint_buffer, 0, 0);
-            }
-#endif
-            else
-                data = EIP_read_tag(c, tag, elements, &data_len, 0, 0);
-            if (data)
-                dump_raw_CIP_data (data, elements);
+            EIP_shutdown (c);
         }
-        EIP_shutdown (c);
     }
     EIP_free_ParsedTag (tag);
     tag = 0;
