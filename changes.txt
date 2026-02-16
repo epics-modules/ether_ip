@@ -7,6 +7,18 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
+* 2026, Feb 16 ether_ip-3-9
+Based on info in Rockwell Automation publication 1756-PM020I-EN-P, September 2025,
+"Logix 5000 Controllers Data Access", this module now supports
+listing all tags that the PLC makes avaiable.
+
+The `ether_ip_test` tool now has an `-l` option to list tags,
+and the IOC shell has a new function `drvEtherIP_list`.
+
+This can be useful during development to check if your're talking to the correct PLC,
+or to check spelling errors between the list of tags provided in documentation
+vs. those actually found on the PLC.
+
 * 2026, Feb 6 ether_ip-3-8
 Hao Hao fixed bug in BI bit handling.
 eipIoc has '-v verbosity' option.
@@ -42,7 +54,7 @@ On Mac OS (Darwin) and Linux X86_64, support CIP LINT and ULINT
 
 Beware that Channel Access has no 64 bit data type.
 Values from int64in/out records will be transferred as DBR_DOUBLE,
-which uses a total of 64 bits: 52 bits for the mantissa, 11 bits exponent, 1 sign.
+which usess a total of 64 bits: 52 bits for the mantissa, 11 bits exponent, 1 sign.
 It can represent large as well as small numbers, but with limited granularity.
 It effectively transfers 52 bits of significant detail, that is 13 4-bit nibbles.
 For a 64 bit hex number, which has 16 nibbles, the lowest 3 nibbles are cut
