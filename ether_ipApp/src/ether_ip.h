@@ -214,7 +214,8 @@ typedef enum
     C_Identity             = 0x01,
     C_MessageRouter        = 0x02,
     C_ConnectionManager    = 0x06,
-    C_Symbol               = 0x6B
+    C_Symbol               = 0x6B,
+    C_Template             = 0x6C
 }   CN_Classes;
 
 /********************************************************
@@ -224,6 +225,7 @@ typedef enum
 typedef enum /* Spec 4, p.36 */
 {
     S_Get_Attribute_All    = 0x01,
+    S_Get_Attribute_List   = 0x03,
     S_Get_Attribute_Single = 0x0E,
     S_CIP_MultiRequest     = 0x0A,  /* Logix5000 Data Access */
     S_CIP_ReadData         = 0x4C,  /* Logix5000 Data Access */
@@ -231,6 +233,7 @@ typedef enum /* Spec 4, p.36 */
     S_CM_Unconnected_Send  = 0x52,
     S_CM_Forward_Open      = 0x54,
     S_Get_Instance_Attr_List = 0x55,
+    S_Template_ReadData    = 0x4C,  /* Logix5000 Data Access */
     S_CM_Forward_Close     = 0x4E
 }   CN_Services;
 
@@ -727,6 +730,9 @@ eip_bool EIP_startup(EIPConnection *c,
 
 /** List tags */
 eip_bool EIP_list_tags(EIPConnection *c);
+
+/** Descrive a tag type */
+eip_bool EIP_describe_type(EIPConnection *c, unsigned type_id);
 
 /** Disconnect from PLC */
 void EIP_shutdown(EIPConnection *c);

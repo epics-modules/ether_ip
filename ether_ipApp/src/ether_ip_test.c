@@ -292,6 +292,7 @@ void usage(const char *progname)
     fprintf(stderr, "Usage: %s <Options> [tag]\n", progname);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -l                                 List tags on PLC\n");
+    fprintf(stderr, "  -d type ID                         Describe type using ID from list of tags\n");
     fprintf(stderr, "  -v verbosity                       Set verbosity 1-10\n");
     fprintf(stderr, "  -i ip                              PLC IP as 123.456.789.001 or DNS name\n");
     fprintf(stderr, "  -p port                            Select non-default PLC TCP port\n");
@@ -320,6 +321,7 @@ int main (int argc, const char *argv[])
     CN_REAL         writeval = 0.0;
     eip_bool        write = false;
     eip_bool        list = false;
+    unsigned        type_id = 0;
 #ifdef SUPPORT_LINT
     CN_LINT         Writeval = 0x0000000000000000ll;
     eip_bool        Write = false;
@@ -355,6 +357,11 @@ int main (int argc, const char *argv[])
             {
             case 'l':
                 list = true;
+                break;
+            case 'd':
+                GETARG
+                if (arg) type_id = (unsigned) strtol(arg, 0, 0);
+                else usage (argv[0]);
                 break;
             case 'v':
                 GETARG
@@ -447,6 +454,8 @@ int main (int argc, const char *argv[])
         {
             if (list)
                 EIP_list_tags(c);
+            if (type_id)
+                EIP_describe_type(c, type_id);
 
             if (tag)
             {

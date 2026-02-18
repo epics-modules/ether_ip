@@ -70,6 +70,13 @@ static void drvEtherIP_listCall(const iocshArgBuf * args) {
 	drvEtherIP_list();
 }
 
+static const iocshArg drvEtherIP_describeArg0 = {"type ID", iocshArgInt};
+static const iocshArg *const drvEtherIP_describeArgs[1] = {&drvEtherIP_describeArg0};
+static const iocshFuncDef drvEtherIP_describeDef = {"drvEtherIP_describe", 1, drvEtherIP_describeArgs};
+static void drvEtherIP_describeCall(const iocshArgBuf * args) {
+	drvEtherIP_describe(args[0].ival);
+}
+
 static const iocshFuncDef drvEtherIP_dumpDef =
     {"drvEtherIP_dump", 0, 0};
 static void drvEtherIP_dumpCall(const iocshArgBuf * args) {
@@ -123,6 +130,7 @@ void drvEtherIP_Register() {
 	iocshRegister(&drvEtherIP_restartDef   , drvEtherIP_restartCall);
 	iocshRegister(&drvEtherIP_dumpDef      , drvEtherIP_dumpCall);
 	iocshRegister(&drvEtherIP_listDef      , drvEtherIP_listCall);
+	iocshRegister(&drvEtherIP_describeDef  , drvEtherIP_describeCall);
 	iocshRegister(&drvEtherIP_reset_statisticsDef, drvEtherIP_reset_statisticsCall);
 	iocshRegister(&drvEtherIP_reportDef    , drvEtherIP_reportCall);
 	iocshRegister(&drvEtherIP_define_PLCDef, drvEtherIP_define_PLCCall);

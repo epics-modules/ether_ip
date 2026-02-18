@@ -17,7 +17,7 @@
 #include "dl_list.h"
 
 #define ETHERIP_MAYOR 3
-#define ETHERIP_MINOR 9
+#define ETHERIP_MINOR 10
 
 /* For timing */
 #define EIP_MIN_TIMEOUT         0.1  /* second */
@@ -151,6 +151,8 @@ long drvEtherIP_report(int level);
 void drvEtherIP_dump();
 
 void drvEtherIP_list();
+
+void drvEtherIP_describe(unsigned type_id);
 
 void drvEtherIP_reset_statistics();
 

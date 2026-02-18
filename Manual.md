@@ -816,7 +816,7 @@ allowed.
 `drvEtherIP_help` shows all user-callable driver routines:
 
     drvEtherIP_help
-    drvEtherIP V3.7 diagnostics routines:
+    drvEtherIP V3.10 diagnostics routines:
     EIP_verbosity(0-10)
     -  define logging detail, currently set to 4
     -  10: Dump all protocol details
@@ -852,6 +852,8 @@ allowed.
     -  dump all tags and values; short version of ..._report
     drvEtherIP_list
     -  list all tags that the PLC publishes
+    drvEtherIP_describe(<type ID>)
+    -  describe the tag type, used to inspect custom structures
     drvEtherIP_reset_statistics
     -  reset error counts and min/max scan times
     drvEtherIP_restart

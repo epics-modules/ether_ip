@@ -441,6 +441,7 @@ static const char *EIP_class_name(CN_Classes c)
     case C_MessageRouter:       return "MessageRouter";
     case C_ConnectionManager:   return "ConnectionManager";
     case C_Symbol:              return "Symbol";
+    case C_Template:            return "Template";
     default:                    return "<unknown>";
     }
 }
@@ -796,6 +797,7 @@ static const char *service_name(CN_Services service)
     switch (code)
     {
     case S_Get_Attribute_All:         return "Get_Attribute_All";
+    case S_Get_Attribute_List:        return "Get_Attribute_List";
     case S_Get_Attribute_Single:      return "Get_Attribute_Single";
     case S_CIP_MultiRequest:          return "S_CIP_MultiRequest";
     case S_CIP_ReadData:              return "CIP_ReadData";
@@ -805,6 +807,7 @@ static const char *service_name(CN_Services service)
     case S_CM_Forward_Open:           return "CM_Forward_Open";
 
     case S_Get_Attribute_All|0x80:    return "Get_Attribute_All-Reply";
+    case S_Get_Attribute_List|0x80:   return "Get_Attribute_List-Reply";
     case S_Get_Attribute_Single|0x80: return "Get_Attribute_Single-Reply";
     case S_CIP_MultiRequest|0x80:     return "S_CIP_MultiRequest-Reply";
     case S_CIP_ReadData|0x80:         return "CIP_ReadData-Reply";
@@ -2530,28 +2533,69 @@ typedef char CIPTypeInfoBuffer[50];
  *  Bit 11,..,0: see CIP_Type
  *  0x20C4: DINT[]
  */
-static const char *decode_extended_type(CN_UINT tag_type, CIPTypeInfoBuffer buffer)
+static const char *decode_extended_type(CN_UINT type, CIPTypeInfoBuffer buffer)
 {
-    if ((tag_type & 0xE000) == 0x2000)
-        switch (tag_type & 0x0FFF)
+    if ((type & 0xE000) == 0x0000)
+        switch (type & 0x0FFF)
         {
-            case T_CIP_BOOL:          return " BOOL[]";
-            case T_CIP_SINT:          return " SINT[]";
-            case T_CIP_INT:           return "  INT[]";
-            case T_CIP_UINT:          return " UINT[]";
-            case T_CIP_DINT:          return " DINT[]";
-            case T_CIP_LINT:          return " LINT[]";
-            case T_CIP_ULINT:         return "ULINT[]";
-            case T_CIP_REAL:          return " REAL[]";
-            case T_CIP_LREAL:         return "LREAL[]";
+            case T_CIP_BOOL:   strcpy(buffer, "BOOL");  return buffer;
+            case T_CIP_SINT:   strcpy(buffer, "SINT");  return buffer;
+            case T_CIP_INT:    strcpy(buffer, "INT");   return buffer;
+            case T_CIP_UINT:   strcpy(buffer, "UINT");  return buffer;
+            case T_CIP_DINT:   strcpy(buffer, "DINT");  return buffer;
+            case T_CIP_LINT:   strcpy(buffer, "LINT");  return buffer;
+            case T_CIP_ULINT:  strcpy(buffer, "ULINT"); return buffer;
+            case T_CIP_REAL:   strcpy(buffer, "REAL");  return buffer;
+            case T_CIP_LREAL:  strcpy(buffer, "LREAL"); return buffer;
         }
-    else if ((tag_type & 0xE000) == 0xA000)
-        switch (tag_type & 0x0FFF)
+    else if ((type & 0xE000) == 0x2000)
+        switch (type & 0x0FFF)
         {
-            case T_CIP_STRUCT_STRING: return "Strng[]";
+            case T_CIP_BOOL:   strcpy(buffer, "BOOL[]");  return buffer;
+            case T_CIP_SINT:   strcpy(buffer, "SINT[]");  return buffer;
+            case T_CIP_INT:    strcpy(buffer, "INT[]");   return buffer;
+            case T_CIP_UINT:   strcpy(buffer, "UINT[]");  return buffer;
+            case T_CIP_DINT:   strcpy(buffer, "DINT[]");  return buffer;
+            case T_CIP_LINT:   strcpy(buffer, "LINT[]");  return buffer;
+            case T_CIP_ULINT:  strcpy(buffer, "ULINT[]"); return buffer;
+            case T_CIP_REAL:   strcpy(buffer, "REAL[]");  return buffer;
+            case T_CIP_LREAL:  strcpy(buffer, "LREAL[]"); return buffer;
+        }
+    else if ((type & 0xE000) == 0xA000)
+        switch (type & 0x0FFF)
+        {
+            case T_CIP_STRUCT_STRING: strcpy(buffer, "STRING[]");  return buffer;
         }
 
-    sprintf(buffer, " 0x%04X", tag_type);
+    sprintf(buffer, "0x%04X", type);
+    return buffer;
+}
+
+/** Decode S_Template_ReadData structure element type and info
+ *  type 0x00C4, info 0x0000:  DINT
+ *  type 0x20C2, info 0x0052:  SINT[82] 
+*/
+static const char *decode_type_and_info(CN_UINT type, CN_UINT info, CIPTypeInfoBuffer buffer)
+{
+    // Basic type
+    decode_extended_type(type, buffer);
+    // Does type indicate array? Locate the closing ']'
+    char *arr = strchr(buffer, ']');
+    if (info > 0)
+    {
+        if (type == T_CIP_BOOL)
+        {
+            char *end = buffer + strlen(buffer);
+            sprintf(end, " bit %u", info);
+        }
+        else if (arr)
+            sprintf(arr, "%d]", info);
+        else
+        {
+            char *end = buffer + strlen(buffer);
+            sprintf(end, ", info 0x%04X", info);
+        }
+    }  
     return buffer;
 }
 
@@ -2656,6 +2700,227 @@ eip_bool EIP_list_tags(EIPConnection *c)
         if (! complete)
             ++tag_id;
     }
+    return true;
+}
+
+typedef char CIPTemplateString[50];
+
+static const CN_USINT *getTemplateString(const CN_USINT *buf, const CN_USINT *end, CIPTemplateString text)
+{
+    size_t len = 0;
+    while(buf < end)
+    {   // Copy until zero char
+        text[len] = *(buf++);
+        if (text[len] == '\0')
+            break;
+        ++len;
+    }
+    // Assert termination when reaching end
+    text[len] = '\0';
+
+    return buf;
+}
+
+typedef struct
+{
+    CIPTemplateString name;
+    CN_UINT           info;
+    CN_UINT           type;
+    CN_UDINT          offset;
+
+} StructElementInfo;
+
+eip_bool EIP_describe_type(EIPConnection *c, unsigned type_id)
+{
+    EIP_printf(9, "EIP describe type 0x%04X\n", type_id);
+    size_t path_size = CIA_path_size(C_Template, type_id, 0);
+    size_t msg_size = 1 + 1       // service, path size
+                    + path_size*2 // path size is in words, need bytes
+                    + 5*2;        // requested attributes
+    size_t send_size = CM_Unconnected_Send_size(msg_size);
+
+    TransactionID tid;
+    generateTransactionId(&tid);
+
+    CN_USINT *send_request = EIP_make_SendRRData(c, send_size, &tid);
+    CN_USINT *msg_request = make_CM_Unconnected_Send(send_request, msg_size, c->slot);
+    CN_USINT *buf = make_MR_Request(msg_request, S_Get_Attribute_List, path_size);
+    buf = make_CIA_path(buf, C_Template, type_id, 0);
+    buf = pack_UINT(buf, (CN_INT) 4); // Get 4 attributes
+    buf = pack_UINT(buf, (CN_INT) 4); // attr 4: Words in template object definition
+    buf = pack_UINT(buf, (CN_INT) 5); // attr 5: Bytes in structure data
+    buf = pack_UINT(buf, (CN_INT) 2); // attr 2: Number of structure members
+    buf = pack_UINT(buf, (CN_INT) 1); // attr 1: Tag type
+
+    if (! EIP_send_connection_buffer(c))
+    {
+        EIP_printf(1, "EIP_describe_type: send failed\n");
+        return false;
+    }
+    if (! EIP_read_connection_buffer(c))
+    {
+        EIP_printf(1, "EIP_describe_type: No response\n");
+        return false;
+    }
+
+    EncapsulationRRData rr_data;
+    const CN_USINT *response = EIP_unpack_RRData(c->buffer, &rr_data);
+    if (EIP_verbosity >= 10)
+        EIP_dump_raw_MR_Response(response, rr_data.data_length);
+ 
+    TransactionID rid;
+    extractTransactionId(&rr_data.header,&rid);
+    if (! compareTransactionIds(&tid,&rid))
+    {
+        char tid_str[32], rid_str[32];
+        transactionIdString(&tid,tid_str,sizeof(tid_str));
+        transactionIdString(&rid,rid_str,sizeof(rid_str));
+        EIP_printf(1, "EIP_describe_type: Transaction id mismatch, got %s expected %s\n",rid_str,tid_str);
+        return false;
+    }
+
+    if ((response[0] & 0x7F) != S_Get_Attribute_List)
+    {
+        EIP_printf(1, "EIP_describe_type: Got response 0x%X, not S_Get_Attribute_List\n", response[0]);
+        return false;
+    }
+
+    if (response[2] != 0x00)
+    {
+        EIP_printf(1, "Error in S_Get_Instance_Attr_List response (%s)\n",
+                      CN_error_text(response[2]));
+        return false;
+    }
+
+    size_t data_len;
+    const CN_USINT *data = EIP_raw_MR_Response_data(response, rr_data.data_length, &data_len);
+
+    CN_UINT attr_count;
+    data = unpack_UINT(data, &attr_count);
+    if (attr_count != 4)
+    {
+        EIP_printf(1, "Expected 4 attributes from S_Get_Instance_Attr_List response, got %u\n", attr_count);
+        return false;
+    }
+    CN_UINT struct_handle = 0;
+    CN_UINT member_count = 0;
+    CN_UDINT template_def_size = 0;
+    CN_UDINT struct_size = 0;
+    for (unsigned i=0; i<attr_count; ++i)
+    {
+        CN_UINT attr,status;
+        data = unpack_UINT(data, &attr);
+        data = unpack_UINT(data, &status);
+        if (status != 0)
+        {
+            EIP_printf(1, "Status for S_Get_Instance_Attr_List attr. %d is 0x%04X\n", attr, status);
+            return false;
+        }
+        if (attr == 1)
+            data = unpack_UINT(data, &struct_handle);
+        else if (attr == 2)
+            data = unpack_UINT(data, &member_count);
+        else if (attr == 4)
+            data = unpack_UDINT(data, &template_def_size);
+        else if (attr == 5)
+            data = unpack_UDINT(data, &struct_size);
+        else
+        {
+            EIP_printf(1, "Unknown S_Get_Instance_Attr_List attr. %d\n", attr);
+            return false;
+        }
+    }
+    EIP_printf(1, "Type ID            : 0x%04X\n", struct_handle);
+    EIP_printf(1, "Struct member count: %u\n", member_count);
+    EIP_printf(1, "Template word size : %u\n", template_def_size);
+    EIP_printf(1, "Data byte count    : %u\n", struct_size);
+
+    // Size of the template data for S_Template_ReadData:
+    // bytes of template_def_size - header
+    // Logix Data Access Sept. 2025 p.54
+    unsigned template_data_size = template_def_size*4 - 23;
+
+    msg_size = 1 + 1       // service, path size
+             + path_size*2 // path size is in words, need bytes
+             + 4+2;        // offset, byte count
+    send_size = CM_Unconnected_Send_size(msg_size);
+
+    generateTransactionId(&tid);
+
+    send_request = EIP_make_SendRRData(c, send_size, &tid);
+    msg_request = make_CM_Unconnected_Send(send_request, msg_size, c->slot);
+    buf = make_MR_Request(msg_request, S_Template_ReadData, path_size);
+    buf = make_CIA_path(buf, C_Template, type_id, 0);
+    buf = pack_UDINT(buf, (CN_UDINT) 0);               // Offset 0 (would change for larger data follow-up )
+    buf = pack_UINT(buf, (CN_INT) template_data_size); // Bytes to read
+
+    if (! EIP_send_connection_buffer(c))
+    {
+        EIP_printf(1, "EIP_describe_type: send failed\n");
+        return false;
+    }
+    if (! EIP_read_connection_buffer(c))
+    {
+        EIP_printf(1, "EIP_describe_type: No response\n");
+        return false;
+    }
+
+    response = EIP_unpack_RRData(c->buffer, &rr_data);
+    if (EIP_verbosity >= 10)
+        EIP_dump_raw_MR_Response(response, rr_data.data_length);
+
+    extractTransactionId(&rr_data.header,&rid);
+    if (! compareTransactionIds(&tid,&rid))
+    {
+        char tid_str[32], rid_str[32];
+        transactionIdString(&tid,tid_str,sizeof(tid_str));
+        transactionIdString(&rid,rid_str,sizeof(rid_str));
+        EIP_printf(1, "EIP_describe_type: Transaction id mismatch, got %s expected %s\n",rid_str,tid_str);
+        return false;
+    }
+
+    if ((response[0] & 0x7F) != S_Template_ReadData)
+    {
+        EIP_printf(1, "EIP_describe_type: Got response 0x%X, not S_Template_ReadData\n", response[0]);
+        return false;
+    }
+
+    if (response[2] != 0x00)
+    {
+        EIP_printf(1, "Error in S_Template_ReadData response\n");
+        return false;
+    }
+
+    data = EIP_raw_MR_Response_data(response, rr_data.data_length, &data_len);
+    const CN_USINT *end = data + data_len;
+
+    StructElementInfo *elements = calloc(member_count, sizeof(StructElementInfo));
+    for (unsigned i=0; i<member_count; ++i)
+    {
+        data = unpack_UINT(data, &elements[i].info);
+        data = unpack_UINT(data, &elements[i].type);
+        data = unpack_UDINT(data, &elements[i].offset);
+    }
+    CIPTemplateString name;
+    data = getTemplateString(data, end, name);
+    // Struct name ends at ';', rest to '\0' is undefined
+    char *sep = strchr(name, ';');
+    if (sep)
+        *sep = '\0';
+    EIP_printf(1, "Structure name: '%s'\n", name);
+    for (unsigned i=0; i<member_count; ++i)
+    {
+        data = getTemplateString(data, end, elements[i].name);
+        CIPTypeInfoBuffer type_info;
+        EIP_printf(1, "%2u) offset 0x%08X '%s', %s\n",
+                      i+1,
+                      elements[i].offset,
+                      elements[i].name,
+                      decode_type_and_info(elements[i].type, elements[i].info, type_info));                  
+    }
+
+    free(elements);
+
     return true;
 }
 

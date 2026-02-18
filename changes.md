@@ -1,4 +1,5 @@
--*- outline -*-
+Change Log
+==========
 
 This file contains information about the version numbers
 and what's changed.
@@ -7,7 +8,51 @@ in ether_ipApp/src/drvEtherIP.h are updated accordingly,
 so that you can see the current version at runtime via
 drvEtherIP_report.
 
-* 2026, Feb 16 ether_ip-3-9
+## 2026, Feb 18 ether_ip-3-10
+Based on info in Rockwell Automation publication 1756-PM020I-EN-P, September 2025,
+"Logix 5000 Controllers Data Access", this module now supports
+describing custom structures.
+
+The `ether_ip_test` tool now has a `-d <type>` option,
+and the IOC shell has a new function `drvEtherIP_describe <type>`.
+
+As an example, assume the tag list contains this line:
+```
+epics> drvEtherIP_list
+...
+Tag 0x0026, Type 0x8B14: SomeTagName_A:I
+```
+
+In the type from the tag list, here `0x8B14`, the highes 4 bits indicate
+structures or custom types. The type ID is in the lower 3 nibble, `0xB14`,
+which can be described with the new function:
+
+```
+epics> drvEtherIP_describe 0x0B14
+Type ID            : 0xC40D
+Struct member count: 2
+Template word size : 23
+Data byte count    : 84
+Structure name: 'AB:1756_ENET_10SLOT:I:0'
+ 1) offset 0x00000000 'SlotStatusBits', DINT
+ 2) offset 0x00000004 'Slot', 0xA485, info 0x000A
+ ```
+
+The second structure element is again a structure,
+and this time the elements are basic data types:
+
+```
+epics> drvEtherIP_describe 0x0485
+Type ID            : 0x7E0D
+Struct member count: 2
+Template word size : 20
+Data byte count    : 8
+Structure name: 'AB:1756_ENET_SLOT:I:0'
+ 1) offset 0x00000000 'Fault', DINT
+ 2) offset 0x00000004 'Data', DINT
+```
+
+## 2026, Feb 16 ether_ip-3-9
 Based on info in Rockwell Automation publication 1756-PM020I-EN-P, September 2025,
 "Logix 5000 Controllers Data Access", this module now supports
 listing all tags that the PLC makes avaiable.
@@ -19,36 +64,36 @@ This can be useful during development to check if your're talking to the correct
 or to check spelling errors between the list of tags provided in documentation
 vs. those actually found on the PLC.
 
-* 2026, Feb 6 ether_ip-3-8
+## 2026, Feb 6 ether_ip-3-8
 Hao Hao fixed bug in BI bit handling.
 eipIoc has '-v verbosity' option.
 Support STRING array. Lacking documentation of the string
 data format, implementation is based on data received
 from Control Logix PLCs.
 
-* 2025, April 11
+## 2025, April 11
 Tynan Ford fixed issue with mbbi record connected to a single number AB tag
 
-* 2025, March 4
+## 2025, March 4
 Fix compiler warnings for long-long constants.
 Add SO_ERROR check to connectWithTimeout, which otherwise
 tends to report a good connection even if it can't connect.
 
-* 2023, Jul 27
+## 2023, Jul 27
 Support LREAL ('double',  64 bit).
 
-* 2023, Apr 14
+## 2023, Apr 14
 Support LINT on darwin-aarch64.
 
-* 2022, Dec 1
+## 2022, Dec 1
 Support UINT for ai record.
 
-* 2022, Aug 18 ether_ip-3-7
+## 2022, Aug 18 ether_ip-3-7
 Add support for bo record to reset statistics.
 Updated eip_stat.db example to use it,
 with example warning thresholds and display file.
 
-* 2022, May 6 ether_ip-3-6
+## 2022, May 6 ether_ip-3-6
 On Mac OS (Darwin) and Linux X86_64, support CIP LINT and ULINT
 64 bit data types via the int64in and int64out record types.
 
@@ -63,9 +108,11 @@ if the value extends into the upper 3 nibbles.
 PVAccess has a native 'long' data type for 64 bit integers that can transfer the
 LINT values without problems.
 
+```
 Actual value:        0x000bcdef87654321  0x00abcdef87654321  0x80abcdef87654321
 Read via PVA long:   0x000BCDEF87654321  0x00ABCDEF87654321  0x80ABCDEF87654321
 Read via DBR_DOUBLE: 0x000BCDEF87654321  0x00ABCDEF87654320  0x80ABCDEF87654400
+```
 
 Note how numbers that only use the lower 13 nibbles are perfectly transferred via
 both protocols.
@@ -79,17 +126,18 @@ change, https://github.com/epics-base/epics-base/pull/191.
 Other changes:
 Display unknown CIP types in error messaes as hex (JTGWilson).
 
-* 2022, Feb 4 ether_ip-3-5
+## 2022, Feb 4 ether_ip-3-5
 Make EIP_timeout(ms) configurable.
 Add support for unsigned integer type (0xC7) and string type (0xD0).
 
-* 2021, Sep 3 ether_ip-3-4
+## 2021, Sep 3 ether_ip-3-4
 Log port number as decimal, since that's more familiar than hex.
 
-* 2021, Feb 5 ether_ip-3-3
+## 2021, Feb 5 ether_ip-3-3
 When a multi-request transfer fails, include request/response
 size info to determine how close we got to the buffer limit:
 
+```
 EIP process_ScanList: Error in response
 Tag 0: 'testStr2'
 Tag 1: 'DINT'
@@ -98,18 +146,18 @@ CIP_MultiRequest reply: general status 0x00 (Ok)
    0) service 0xCC (CIP_ReadData-Reply), status 0x06 (Buffer too small, partial data only)
    1) service 0xCC (CIP_ReadData-Reply), ...
 Request size: 36 bytes, response size: 116, buffer limit: 450
+```
 
-
-* 2020, Jan 16
+## 2020, Jan 16
 Add Manual.md, based on ether_ipApp/doc/readme.txt,
 with updates in a slightly modernized format.
 Also tweaked output of drvEtherIP_help.
 
-* 2019, Nov 15 ether_ip-3-2
+## 2019, Nov 15 ether_ip-3-2
 Builds against EPICS 7 no longer generate warnings about the deprecation of
 the 'rset' data type.
 
-* 2019, Nov 13
+## 2019, Nov 13
 When built against Base-3.15.1 or higher, provide device support for the lsi and
 lso (long string input/output) record types. The module can still be built
 against earlier Base versions.
@@ -118,7 +166,7 @@ Hints for using lsi, lso records:
 1) Set field SIZV in the lsi/lso records to the maximum string length.
    The driver always adds a '\0' terminator, so with
 
-     field(SIZV, 60)
+         field(SIZV, 60)
 
    the maximum usable character count is 59.
 2) Via `cainfo`, the record reports a data type of DBR_STRING,
@@ -129,15 +177,15 @@ Hints for using lsi, lso records:
 3) Client then needs to access the character waveform as a 'long string',
    which is selected via the `-S` option of caget/caput:
 
-     caput -S  lso.VAL$ "....+....1....+....2....+....3....+....4....+....5....+...."
+        caput -S  lso.VAL$ "....+....1....+....2....+....3....+....4....+....5....+...."
 
    When trying to access more than SIZV characters (note the implicit '\0' terminator),
    write access will fail like this:
 
-     caput -S  lso.VAL$ "....+....1....+....2....+....3....+....4....+....5....+....6"
-     Error from put operation: Invalid element count requested
+         caput -S  lso.VAL$ "....+....1....+....2....+....3....+....4....+....5....+....6"
+         Error from put operation: Invalid element count requested
 
-* 2019, Nov 11
+## 2019, Nov 11
 Andrew Johnson provided fix for warning
 "case value ‘205’ not in enumerated type ‘CN_Services’".
 
@@ -152,13 +200,13 @@ This replaces CONFIG_APP with CONFIG_SITE.
 
 --> REQUIRES EPICS BASE R3.14.11 OR HIGHER!
 
-* 2019, Aug 15
+## 2019, Aug 15
 Allow compilation on older RHEL 6.9, g++ 4.4.7
 
-* 2018, Apr 24
+## 2018, Apr 24
 Default buffer size reduced from 500 to 480.
 
-* 2018, Mar 19 ether_ip-3-1
+## 2018, Mar 19 ether_ip-3-1
 Replace the constant 'Funstuff' context marker with
 a string that cycled from '00000001' to 'FFFFFFFF',
 then starting over.
@@ -171,7 +219,7 @@ By sending each request with a unique context marker, then comparing the context
 in the response, he was able to detect and then ignore some mismatched replies.
 
 
-* 2017, Jul 21 ether_ip-3-0
+## 2017, Jul 21 ether_ip-3-0
 Support "Extended Device Support" as introduced in EPICS base R3.14.8.
 
 --> REQUIRES EPICS BASE R3.14.8 OR HIGHER!
@@ -184,11 +232,11 @@ To support this, the ether_ip device support needed to change in a way that is
 not compatible with earlier releases, so support for R3.14.7 and earlier, including R3.13.x,
 has been removed.
 
-* 2016, Apr 13 ether_ip-2-27
+## 2016, Apr 13 ether_ip-2-27
 Credit to William Lu for stringout support code.  Works with 40-char limit of
 EPICS stringout.  Version merging and testing (R3.14.12.5) by Wesley Moore.
 
-* 2014, Aug 13 ether_ip-2-26
+## 2014, Aug 13 ether_ip-2-26
 Renamed the 'example' IOC into 'eipIoc', adding command line options to
 allow use similar to the EPICS base 'softIoc'.
 
@@ -197,19 +245,19 @@ Example for defining a PLC, defining macros, loading a database:
     eipIoc -p MyPLC=10.0.1.47 -m "PLC=MyPLC,IOC=test" -d /path/to/some.db
 
 
-* 2014, Jul 31 ether_ip-2-25
+## 2014, Jul 31 ether_ip-2-25
 Hovanes Egiyan found bug in mbboDirect support,
 similar to what Rod Nussbaumer found in a modbus driver (http://www.aps.anl.gov/epics/tech-talk/2012/msg02155.php):
 EtherIP would read PLC updates into mbboDirect.VAL and RVAL, but when record processes, it updates those from
 its B0, B1, B2, .. fields.
 Now EtherIP will also update B0, B1, B2, .. when receiving PLC updates for mbboDirect.
 
-* 2012, Jul 18 ether_ip-2.24.1
+## 2012, Jul 18 ether_ip-2.24.1
 David Dudley provided correction to fix interfernce between BOOL tags
 and register array access.  Boolean tag flag was in the wrong location,
 and would prevent access to variable array elements.
 
-* 2011, Oct 5 ether_ip-2-24
+## 2011, Oct 5 ether_ip-2-24
 David Dudley provided a fix for BOOL tags.
 BOOL[] and bits-in-DINT worked fine, but when attaching
 a bo record to an individual BOOL tag the following could happen:
@@ -224,42 +272,44 @@ With this patch the driver will write 0x00 (all bits cleared)
 for BOOL tags.
 
 
-* 2011, Aug 30 ether_ip-2-23
+## 2011, Aug 30 ether_ip-2-23
 Stephanie Allison added support for 64 bit.
 Andrew Johnson reported successful test of the changes at APS
 and updated the Makefiles for parallel build via "make -j".
 
-* 2011, Mar 31 ether_ip-2-22
+## 2011, Mar 31 ether_ip-2-22
 John Sinclair sent fix for EIP_printf(4, .. call with possible null argument
 
-* 2011, Feb 14 ether_ip-2-21
+## 2011, Feb 14 ether_ip-2-21
 Janet Anderson contributed patches to avoid compile errors from
 EPICS base R3.14.10 on where the RVAL field was changed from unsigned long
 to epicsUInt32.
 
-* 2010, Nov 5 ether_ip-2-20
+## 2010, Nov 5 ether_ip-2-20
 Jeff Hill noticed that driver could invoke for example ao record callbacks,
 i.e. call scanOnce() on a record, while the IOC is still starting up
 and the "onceQ" ring buffer is not initalized.
 Driver now waits until IOC startup is 'done'.
 
-* 2010, Aug 19
+## 2010, Aug 19
 No new version, but sources moved to Source Forge.
 
-* 2009, Sept 1 ether_ip-2-19
+## 2009, Sept 1 ether_ip-2-19
 'do_write' flag got lost when a tag marked for writing
 didn't fit into a network request and was moved into
 the next one.
 
-* 2009, June 1 ether_ip-2-18
+## 2009, June 1 ether_ip-2-18
 Attempt to fix crashes which look like this:
 
+```
 1a1ede4 EIP_write_tag +2490: 1a1ddc4 (19fdf90)
 1a1de34 EIP_write_tag +14e0: EIP_startup (19fdfb0, 19fdf10)
 1a1c60c EIP_startup +70 : 1a1b4e0 (19fdfb0)
 1a1b534 EncapsulationHeader_status+668: 1a1b0dc (19fdfb0)
 1a1b13c EncapsulationHeader_status+270: EIP_reserve_buffer (19fdfc8, 19fdfc4, 18)
 1a1a960 EIP_reserve_buffer+9c : malloc ()
+```
 
 Also with EIP_reserve_buffer(.., 6e) calling free(), and
 examples which don't start in EIP_startup().
@@ -286,6 +336,7 @@ cycle was interrupted by an error:
    so it counts the read size
 6) .. but since is_writing was left on, it actually
    creates a write request
+
 The mismatch between the expected "send" packet size
 in steps 5 and 6 can cause step 6 to write beyond
 the communication buffer size.
@@ -305,7 +356,7 @@ some error messages contain a time stamp,
 and EIP_verbosity=4 is now the default value which
 should give basic initialization and error messages.
 
-* 2009, March 13 ether_ip-2-17
+## 2009, March 13 ether_ip-2-17
 EIP_init_and_connect always re-initialized the EIPConnection
 with zeros, so a previously allocated EIPConnection->buffer
 was lost and then re-allocated, resulting in a memory leak
@@ -320,17 +371,17 @@ and drvEtherIP_restart calls from the IOC shell without
 errors or "definitely lost" memory reports from valgrind
 after exiting the IOC shell.
 
-* 2007, July 19 ether_ip-2-16_3-14-9
+## 2007, July 19 ether_ip-2-16_3-14-9
 R3.14.9
 
-* 2007, 04/16
+## 2007, 04/16
 Pulled better #define setup for bool/true/false
 as suggested by Andrew Johnson into eip_bool.h
 
-* 2006, 10/20 ether_ip-2-16
+## 2006, 10/20 ether_ip-2-16
 Basic 'connection failed' info now also goes to error log.
 
-* 2006, 06/06 V2.15
+## 2006, 06/06 V2.15
 The code for determining the multi-request-count
 had a bug: When a scan list had too many entries,
 it wouldn't work at all (tags remain with "- no data -").
@@ -380,16 +431,18 @@ A packet returned from the PLC that claims to contain >600 bytes
 of data. Instead of running out of memory, the driver will reject
 such responses and disconnect/reconnect.
 
-* 2006, 04/06 V2.14
+## 2006, 04/06 V2.14
 Minor tweak to allow longer product name in Identity,
 since Compact Logix then seems to work ok.
 
-* 2006, 03/10
+## 2006, 03/10
 The error message about hitting the buffer limit is now
 more verbose (at EIP_verbosity 3  or higher) to help
 with finding the culprit:
 
 Assume this output from drvEtherIP_report:
+
+```
 ...
 *** Tag 'P1R0' @ 0x8054278:
   scanlist            : 0x8054220
@@ -407,15 +460,20 @@ Assume this output from drvEtherIP_report:
   data                : -no data-
   transfer time       : 0 secs
 ...
+```
 and
-   EIP_buffer_limit=20
+
+       EIP_buffer_limit=20
+
 in the startup file, you'll get the following error message:
 
+```
 Tag 'P1R0' exceeds buffer limit of 20 bytes,
  Request   size:         10 bytes
  Response  size:         22 bytes
  Total  request:         20 bytes
  Total response:         30 bytes
+```
 
 Meaning:
 The request, something like "CIP read 'P1R0'",
@@ -426,7 +484,7 @@ But the raw data that we expect back would be 22 bytes,
 resulting in a total response packet size of 30 bytes.
 Not OK when we assume that 20 bytes is the limit.
 
-* 2006, 02/07  V2.13
+## 2006, 02/07  V2.13
 The PLC or the ENET module or both have a buffer limit.
 Comments in ether_ipApp/src/ether_ip.h give some details
 on the difficulty in finding the exact limit.
@@ -449,29 +507,33 @@ Before, you simply had INVALID records with no idea why.
 defaulting to 500 because that worked for the CF IOCs.
 The previous default was 538-52 = 486.
 
-* 2005, 12/13  V2.12
+## 2005, 12/13  V2.12
 Fix for the case where the IOC might not fully reconnect
 after a PLC was reprogrammed.
 With EIP_verbosity=10, one could see that the driver
 would reconnect:
-
+```
   EIP connectWithTimeout(my_plc:0xAF12, 5 sec, 0 msec)
   EIP connected to rfq-mod-plc:0xAF12 on socket 52
   EIP sending ListServices encapsulation command
   ....
+```
 and successfully gather some information,
+```
   ------------------------------
   Identity information of target:
       UINT vendor         = 0x0100
   ....
       USINT name          = '1756-ENET/B '
   ------------------------------
+```
 but then immediately disconnect:
+```
   EIP sending UnRegisterSession encapsulation command, session ID 0x0202F900
   ....
   EIP disconnecting socket 52
   drvEtherIP: PLC 'mod' is disconnected
-
+```
 The fault was in the routine which initially reads
 every tag via a new connection in order to obtain
 the data sizes.
@@ -484,11 +546,11 @@ one tries to debug a driver thread.
 Eliminated a vxWorks compiler warning about inet_addr(),
 where the VXW lack the 'const' that Linux uses.
 
-* 2005, 09/26  V2.11
+## 2005, 09/26  V2.11
 In case of communication errors during an initial 'read'
 of all tags, the network socket might have been left open.
 
-* 2005, 04/19  V2.10
+## 2005, 04/19  V2.10
 EIP_verbosity>=10 will now print a message for the initial 'connect'
 call, which might help debug a situation where the driver
 cannot connect: You should now see a difference between a connection
@@ -515,14 +577,14 @@ Tags of type REAL are directly read into respectively written
 from the VAL field, and all those VAL <-> RVAL conversions
 are performed in vain.
 
-* 2005, 01/28  V2.9
+## 2005, 01/28  V2.9
 Driver's delay in disconnecting/reconnecting could be almost
 zero in some cases. Now fixed to ~5 secs.
 Buffer code rejects requests for buffers >> PLC buffer limit,
 trying to avoid memory trouble.
 Turned optimization off.
 
-* 2004, 10/06  V2.8
+## 2004, 10/06  V2.8
 The "-w" flag of ether_ip_test didn't pack the REAL value,
 so it didn't work on all CPU types.
 
@@ -544,14 +606,14 @@ Access to this one failed: 'NESTED.STRUCTs[1].REAL',
 since in general sub-elements of arrays weren't handled.
 This has been fixed.
 
-* 2004, 8/27  V2.7
+## 2004, 8/27  V2.7
 Changes from Stephanie Allison:
 Replaced the registration via a static class instance's
 constructor with a DBD file registrar() entry.
 Removed some compiler warnings from usage of "size_t"
 in printf formats.
 
-* 2004, 8/3  V2.6
+## 2004, 8/3  V2.6
 The SNS was using a patched versions of 2.5 that included
 error messages for the case that the clock jumps:
 The scheduling is based on the current time as
@@ -564,7 +626,7 @@ the next run is that one month ahead (plus 1 second).
 Now, the code attempts some reset in case of running into
 that error.
 
-* 2004, 3/17 V2.5
+## 2004, 3/17 V2.5
 The timing was wrong under R3.13, keeping the driver thread
 from sleeping. The code always uses the R3.14-type epicsTimeStamp,
 epicsTimeGetCurrent, epicsThreadSleep etc.  When running under
@@ -596,7 +658,7 @@ VX ticks (typically 0 ... 0.03 secs) and the driver overslept.
 Compared to the network delays of talking to the PLC, that's
 neglectable and not worth reverting to vxWorks-only code.
 
-* 2004, 3/2 V2.4
+## 2004, 3/2 V2.4
 Review of the R3.14 changes.
 
 Using R3.14 epicsThreadPriorityHigh for the driver thread.
@@ -630,19 +692,19 @@ In case another hangup occurs, try:
 which lists all locked mutexes and the threads
 waiting for them.
 
-* 2004, 02/11 V2.3
+## 2004, 02/11 V2.3
 (CVS Release Tag --> ether_ip-2-3)
 Create munch file to support
 IOC run-time loading (RTL) of
 the ether_ip driver libraries
 
-* 2003, 10/31 V2.2
+## 2003, 10/31 V2.2
 R3.14.4 port
 
 * V2.1
 waveform supports CHAR
 
-* 2003, 04/29 V2.0
+## 2003, 04/29 V2.0
 Stephanie Allison, saa@SLAC.Stanford.EDU,
 ported the EtherIP support to EPICS R3.14!
 This added some #ifdefs, the R3.13 support
@@ -660,7 +722,7 @@ Thanks a lot to Stephanie!
 * V1.11
 forgot what changed
 
-* 2002, 10/16 V1.10
+## 2002, 10/16 V1.10
 Tested read access for various numbers of scalar and array tags.
 Found that all is OK until either the request or response buffer
 reaches 538 bytes. Unclear how "538" relates to the numbers "504"
@@ -670,7 +732,7 @@ Hopefully fixed the driver:
 Before, only the read/write and data portion were limited to 500 bytes,
 now the total is limited to 538 bytes.
 
-* 2002, 10/15
+## 2002, 10/15
 Pilar created a perfectly fine database that causes
 communication errors, causing the PLC to return an error code
 that indicates "does not fit in buffer".
@@ -692,10 +754,10 @@ Introduced a new EIP_PROTOCOL_OVERHEAD macro
 based on the encapsulation header size
 which for now reduces the used buffer size to 446 bytes.
 
-* 2002, 10/02 V1.9
+## 2002, 10/02 V1.9
 Support for stringin record and STRING type tags
 
-* 2002, 09/24 V1.8
+## 2002, 09/24 V1.8
 Better handling of disconnects and re-connects for output
 records.
 
@@ -719,7 +781,7 @@ record change to INVALID/WRITE.
 Now output records get reprocessed not only for value discrepancies
 but also for missing values (disconnect).
 
-* 2002, 08/15 V1.7
+## 2002, 08/15 V1.7
 When you omit the call to
      drvEtherIP_define_PLC  <plc>, <IP>, <slot>
 the driver (actually device support) reports
@@ -742,7 +804,7 @@ is still highly discouraged.
 The fix is just a little nicer than the previous
 behavior.
 
-* 2002, 06/26 V1.6
+## 2002, 06/26 V1.6
 This part is not new but just a description
 of current behavior of AI, AO records:
 When attached to REAL (float) tags,
@@ -755,19 +817,19 @@ but for some reason I happened to transfer them
 as "unsigned".
 New: I now use signed values.
 
-* 2002, 05/09
+## 2002, 05/09
 Log message for "EIP: Cannot read tag"
 didn't show the tag but garbage.
 
-* 2002, 04/30 V1.5
+## 2002, 04/30 V1.5
 SCAN="I/O Intr" was broken.
 
-* 2002, 03/15 V1.4
+## 2002, 03/15 V1.4
 Hopefully fixed a problem that occurs when device requests write while
 driver is in the middle of a read (used to look as if the PLC didn't
 get the write)
 
-* 2002, 02-19 V1.3
+## 2002, 02-19 V1.3
 
 ** Added "FORCE" option to output records
 Per default, output records scan when they are
@@ -779,13 +841,13 @@ With the new force option, the output record will
 try to re-write until the PLC tag matches the
 value of the record.
 
-* 2001, 10-01 V1.2
+## 2001, 10-01 V1.2
 
-** New driver option "drvEtherIP_default_rate"
+* New driver option "drvEtherIP_default_rate"
 
-* 2001, 08-30 (not versioned)
+## 2001, 08-30 (not versioned)
 
-** Patch to output records
+* Patch to output records
 Output records are for writing to the PLC.
 But most of the time they are readong from the PLC
 and if there is a difference between the record's value
@@ -797,7 +859,7 @@ and unless the tag happened to be !=0, the record
 stayed UDF. Now the record will be updated/initialized
 after e.g. a reboot with the tag value.
 
-* 2001, 06-19    V1.1
+## 2001, 06-19    V1.1
 
 ** New "B <bit>" flag:
 Allows connection of binary records to non-BOOL arrays like INT, DINT.
@@ -805,17 +867,19 @@ With B <bit> flag, the array element is used as is
 (no longer interpreted as a bit element) and the bit within the INT
 or DINT is selected via the new flag:
 
-   INP="@plc1 DINTs[40]"
+    INP="@plc1 DINTs[40]"
+
 still results in reading bit 40, that is bit 8 in the second
 DINT.
 
-Now this can be written as
-   INP="@plc1 DINTs[1] B 8"
+Now this can be written as:
+
+    INP="@plc1 DINTs[1] B 8"
 
 A lot of ether_ipApp/doc/readme.txt, the "manual", has been rewritten.
 
 
-* 2001, 05-18    V1.0
+## 2001, 05-18    V1.0
 
 ** New "slot" parameter: drvEtherIP_define_PLC <name>, <ip_addr>, <slot>
 
@@ -828,10 +892,11 @@ when you define the PLC.
 
 ** Some changes to output of drvEtherIP_report
 Now displaying the PLC interface info, e.g.:
+```
   Interface name        : 1756-ENET/A
   Interface vendor      : 0x100
   Interface type        : 0xC00
   Interface revision    : 0x112
   Interface serial      : 0x13D40700
-
+```
 
