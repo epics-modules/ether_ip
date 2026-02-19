@@ -13,7 +13,7 @@ Based on info in Rockwell Automation publication 1756-PM020I-EN-P, September 202
 "Logix 5000 Controllers Data Access", this module now supports
 describing custom structures.
 
-The `ether_ip_test` tool now has a `-d <type>` option,
+The `ether_ip_test` tool gains a `-d <type>` option,
 and the IOC shell has a new function `drvEtherIP_describe <type>`.
 
 As an example, assume the tag list contains this line:
@@ -21,11 +21,12 @@ As an example, assume the tag list contains this line:
 epics> drvEtherIP_list
 ...
 Tag 0x0026, Type 0x8B14: SomeTagName_A:I
+...
 ```
 
-In the type from the tag list, here `0x8B14`, the highes 4 bits indicate
-structures or custom types. The type ID is in the lower 3 nibble, `0xB14`,
-which can be described with the new function:
+In the type from the tag list, here `0x8B14`, the 4 highest bits indicate
+structures or custom types. The type ID is in the lower 3 nibbles, `0xB14`.
+Use the new function to describe type 0xB14:
 
 ```
 epics> drvEtherIP_describe 0x0B14
@@ -38,8 +39,12 @@ Structure name: 'AB:1756_ENET_10SLOT:I:0'
  2) offset 0x00000004 'Slot', 0xA485, info 0x000A
  ```
 
-The second structure element is again a structure,
-and this time the elements are basic data types:
+The first strucure element is a DINT number.
+The second structure element is a nested structure,
+and `info 0x000A` indicates that it's actually an
+array with 10 (0x000A) elements of the type 0x0485 structure.
+When we inspect this nested structure, it consists
+of all basic data types:
 
 ```
 epics> drvEtherIP_describe 0x0485
@@ -50,6 +55,28 @@ Data byte count    : 8
 Structure name: 'AB:1756_ENET_SLOT:I:0'
  1) offset 0x00000000 'Fault', DINT
  2) offset 0x00000004 'Data', DINT
+```
+
+While this software allows you to interactively inspect the tags
+which the PLC makes available for remote access, note that this
+software cannot handle arbitrary structures as a whole.
+For instance, you cannot directly read all of `SomeTagName_A:I` into
+a record. You can, however, read elements of basic types into
+records. For example, one analog input record can read
+`SomeTagName_A:I.SlotStatusBits`
+and another analog input record can read
+`SomeTagName_A:I.Slot[9].Data`.
+
+You can test access to structure elements of basic type from the command line like this:
+
+```
+linux> ether_ip_test -i 10.1.2.3  SomeTagName_A:I.SlotStatusBits
+Tag 'SomeTagName_A:I.SlotStatusBits'
+DINT -1
+
+linux> ether_ip_test -i 10.1.2.3  SomeTagName_A:I.Slot[9].Data
+Tag 'SomeTagName_A:I.Slot[9].Data'
+DINT 0
 ```
 
 ## 2026, Feb 16 ether_ip-3-9

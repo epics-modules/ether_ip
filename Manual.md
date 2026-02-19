@@ -309,17 +309,17 @@ Example:
 
 
 `<tag>` can be a single tag "fred" that is defined in the "Controller
-Tags" section of the PLC ladder logic. It can also be an array tag
+Tags" section of the PLC ladder logic. It can also be an array element tag
 "my_array[5]" as well as a structure element "Local:2:I.Ch0Data".
 
 Array elements are indexed beginning with 0. 
-You can use decimals (2, 10, 15), hex numbers (0x0f) and
-octal numbers (04, 07, 12).
-Mind you this means 08 is invalid because
-it is interpreted as an octal number!
+You can use decimals (2, 10, 15), hex numbers (0x0f) and octal numbers (04, 07, 010).
+__Mind you this means 08 is invalid because
+  it is interpreted as an octal number
+  (8 in octal is 010)!__
 
 The `<tag>` has to be a single elementary item (scalar tag, array
-element, structure element), not a whole array or structure.
+element, structure element) of type INT, DINT, ..., not a whole array or structure.
 
 Common `<flags>` are `S` and `E`.
 Record-specific flags that will be explained
@@ -733,12 +733,11 @@ Any other tag type will result in errors.
 Likewise, only stringin or lsi records can be used with STRING tags.
 Any other record type will fail with STRING tags.
 
-Note that we did not find PLC documentation for the STRING tag data type.
-To the driver, a STRING tag looks like a "CIP structure" and the
-location of the string length and character data in there were
-determined from tests.
-It appears to be an auto-generated custom data type, i.e. in principle
-you can delete it from your Ladder Logic code or re-define it with a different layout.
+Note that "STRING tag data type" here does *not* refer to the "CIP STRING"
+data type 0xD0. Instead, it refers to the "CIP STRUCT" data type 0x02A0
+with structure type 0x0FCE, because that is what Control Logix PLCs happen to provide.
+The structure type 0x0FCE consists of a DINT LEN followed by SINT[82].
+It's overall size is actually 88 bytes because of DINT alignment padding at the end. 
 
 stringout and lso String Output Records
 ---------------------------------------
@@ -754,7 +753,8 @@ The stringout record is limited to 40 characters.
 The lso (long string output) record can hold any length, chosen
 by the SIZV (size of VAL) field at record initialization time.
 
-The stringout and lso records work only with STRING tags.
+The stringout and lso records work only with STRING tags
+as described above.
 Any other tag type will result in errors.
 Likewise, only stringout records must be used with STRING tags.
 Any other record type will fail with STRING tags.
