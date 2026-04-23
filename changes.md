@@ -13,7 +13,7 @@ Based on info in Rockwell Automation publication 1756-PM020I-EN-P, September 202
 "Logix 5000 Controllers Data Access", this module now supports
 describing custom structures.
 
-The `ether_ip_test` tool gains a `-d <type>` option,
+The `ether_ip_test` tool has a new `-d <type>` option,
 and the IOC shell has a new function `drvEtherIP_describe <type>`.
 
 As an example, assume the tag list contains this line:
