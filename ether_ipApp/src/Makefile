@@ -12,6 +12,9 @@ USR_CFLAGS_Darwin += -Wno-unused-value
 # to build the test program
 SYS_PROD_LIBS_WIN32 = wsock32
 
+# Need to enable C99 for VxWorks
+USR_CFLAGS_vxWorks += -std=c99
+
 ifdef BASE_3_15
 devEtherIP_CFLAGS += -DBUILD_LONG_STRING_SUPPORT
 USR_CFLAGS += -DUSE_TYPED_RSET -DUSE_TYPED_DSET -DUSE_TYPED_DRVET
