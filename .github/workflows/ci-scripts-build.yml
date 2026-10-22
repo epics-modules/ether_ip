@@ -1,0 +1,104 @@
+# .github/workflows/ci-scripts-build.yml for use with EPICS Base ci-scripts
+# (see: https://github.com/epics-base/ci-scripts)
+
+# This is YAML - indentation levels are crucial
+
+# Set the 'name:' properties to values that work for you (MYMODULE)
+
+name: ether_ip
+
+# Trigger on pushes and PRs to any branch
+on:
+  push:
+    paths-ignore:
+      - 'documentation/*'
+      - '**/*.html'
+      - '**/*.md'
+  pull_request:
+
+env:
+  SETUP_PATH: .ci-local:.ci
+  # For the sequencer on Linux/Windows/MacOS
+  APT: re2c
+  CHOCO: re2c
+  BREW: re2c
+
+jobs:
+  build-base:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    # Set environment variables from matrix parameters
+    env:
+      CMP: ${{ matrix.cmp }}
+      BCFG: ${{ matrix.configuration }}
+      WINE: ${{ matrix.wine }}
+      RTEMS: ${{ matrix.rtems }}
+      RTEMS_TARGET: ${{ matrix.rtems_target }}
+      EXTRA: ${{ matrix.extra }}
+      TEST: ${{ matrix.test }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Job names also name artifacts, character limitations apply
+        include:
+          - os: ubuntu-24.04
+            cmp: gcc
+            configuration: static
+            extra: "CMD_CXXFLAGS=-std=c++11"
+            name: "Ub-24 gcc C++11, static"
+
+          - os: ubuntu-24.04
+            cmp: clang
+            configuration: default
+            extra: "CMD_CXXFLAGS=-std=c++11"
+            name: "Ub-24 clang C++11"
+
+          - os: ubuntu-22.04
+            cmp: gcc
+            configuration: default
+            cross: "RTEMS-pc686-qemu@5"
+            name: "Ub-22 gcc + RT-5.1 pc686"
+
+          - os: ubuntu-22.04
+            cmp: gcc
+            configuration: default
+            cross: "RTEMS-beatnik@5"
+            test: NO
+            name: "Ub-22 gcc + RT-5.1 beatnik"
+
+          - os: macos-latest
+            cmp: clang
+            configuration: default
+            name: "MacOS clang"
+
+          - os: ubuntu-latest
+            cmp: gcc
+            configuration: default
+            name: "Cross linux-aarch64"
+            cross: linux-aarch64
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: true
+    - name: Automatic core dumper analysis
+      uses: mdavidsaver/ci-core-dumper@master
+    - name: "apt-get install"
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install qemu-system-x86 g++-mingw-w64-x86-64 gdb
+      if: runner.os == 'Linux'
+    - name: Prepare and compile dependencies
+      run: python .ci/cue.py prepare
+    - name: Build main module
+      run: python .ci/cue.py build
+    - name: Run main module tests
+      run: python .ci/cue.py -T 15M test
+    - name: Upload tapfiles Artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: tapfiles ${{ matrix.name }}
+        path: '**/O.*/*.tap'
+    - name: Collect and show test results
+      if: ${{ always() }}
+      run: python .ci/cue.py -T 5M test-results

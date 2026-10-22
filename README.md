@@ -1,3 +1,5 @@
+[![ether_ip](https://github.com/epics-modules/ether_ip/actions/workflows/ci-scripts-build.yml/badge.svg)](https://github.com/epics-modules/ether_ip/actions/workflows/ci-scripts-build.yml)
+
 "EtherIP" driver/device support module for EPICS.
 
 Interfaces Allen Bradley PLCs (see www.ab.com) via Ethernet to EPICS IOCs
@@ -11,6 +13,9 @@ on Linux and several other operating systems supported by EPICS libCom.
 For earlier version of EPICS base, including R3.13, see tags/releases older than ether_ip-3-0.
 VxWorks 5.5 must also use an older version because its compiler requires
 K&R style declarations of all variables at the start of a code block.
+
+Support for 64-bit integer record requires EPICS 7.0 or later.
+Build not tested on Windows.
 
 See 
  * Manual.md for usage.
